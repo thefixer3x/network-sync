@@ -1,4 +1,4 @@
-import { SocialPlatform, Content, SocialMediaError } from '@/types';
+import { SocialPlatform, Content, SocialMediaError } from '../types/typescript-types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from './SocialMediaFactory';
 import { OpenAIService } from './OpenAIService';
@@ -147,10 +147,10 @@ export class EngagementAutomator {
   private async findTwitterOpportunities(rules: EngagementRule[]): Promise<EngagementOpportunity[]> {
     const opportunities: EngagementOpportunity[] = [];
     const twitterClient = new TwitterApi({
-      appKey: process.env.TWITTER_API_KEY!,
-      appSecret: process.env.TWITTER_API_SECRET!,
-      accessToken: process.env.TWITTER_ACCESS_TOKEN!,
-      accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
+      appKey: process.env['TWITTER_API_KEY']!,
+      appSecret: process.env['TWITTER_API_SECRET']!,
+      accessToken: process.env['TWITTER_ACCESS_TOKEN']!,
+      accessSecret: process.env['TWITTER_ACCESS_TOKEN_SECRET']!,
     });
 
     try {

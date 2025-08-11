@@ -12,20 +12,29 @@ import {
   SocialMediaError,
   RateLimitError,
   schemas 
-} from '@/types';
+} from '../types/typescript-types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from '@/services/SocialMediaFactory';
 import { OpenAIService } from '@/services/OpenAIService';
-import { TrendAnalyzer } from '@/services/TrendAnalyzer';
-import { ContentOptimizer } from '@/services/ContentOptimizer';
-import { AnalyticsCollector } from '@/services/AnalyticsCollector';
+import { TrendAnalyzer } from '../services/TrendAnalyzer';
+import { ContentOptimizer } from '../services/ContentOptimizer';
+import { AnalyticsCollector } f    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  async stop(): Promise<void> {rvices/AnalyticsCollector';
 import { addMinutes, addHours, isAfter, format } from 'date-fns';
 
 export class AutomationEngine {
   private logger = new Logger('AutomationEngine');
   private supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env['SUPABASE_URL']!,
+    process.env['SUPABASE_SERVICE_ROLE_KEY']!
   );
   
   private socialServices = new Map();
@@ -50,7 +59,7 @@ export class AutomationEngine {
       
       for (const platform of platforms) {
         try {
-          const service = SocialMediaFactory.create(platform);
+          const service = SocialMediaFactory.create(platform, {});
           await service.authenticate();
           this.socialServices.set(platform, service);
           this.logger.info(`${platform} service initialized successfully`);
@@ -289,7 +298,7 @@ export class AutomationEngine {
       As a business development specialist focused on changing the world one solution at a time, create engaging social media content about: ${trend.topic}
 
       Platform: ${platform}
-      Context: ${platformContext[platform]}
+      Context: ${platformContext[platform as keyof typeof platformContext] || platformContext.twitter}
       Keywords: ${trend.keywords.join(', ')}
       Tone: Professional but approachable, solution-focused, optimistic
       
@@ -406,10 +415,10 @@ export class AutomationEngine {
 
       // Handle rate limiting
       if (error instanceof RateLimitError) {
-        await this.handleRateLimit(content, error.resetTime);
+        await this.handleRateLimit(content, (error as any).resetTime);
       } else {
         await this.updateContentStatus(content.id, 'failed', { 
-          error: error.message 
+          error: error instanceof Error ? error.message : 'Unknown error'
         });
       }
 
@@ -463,7 +472,7 @@ export class AutomationEngine {
         });
       } else {
         await this.updateContentStatus(content.id, 'failed', {
-          error: error.message
+          error: error instanceof Error ? error.message : 'Unknown error'
         });
       }
     }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SocialPlatform } from '@/types';
+import { SocialPlatform } from '../types/typescript-types';
 import { Logger } from '@/utils/Logger';
 import { OpenAIService } from './OpenAIService';
 import { TwitterApi } from 'twitter-api-v2';
@@ -122,10 +122,10 @@ export class HashtagResearcher {
   private async getTwitterTrendingHashtags(): Promise<string[]> {
     try {
       const twitterClient = new TwitterApi({
-        appKey: process.env.TWITTER_API_KEY!,
-        appSecret: process.env.TWITTER_API_SECRET!,
-        accessToken: process.env.TWITTER_ACCESS_TOKEN!,
-        accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
+        appKey: process.env['TWITTER_API_KEY']!,
+        appSecret: process.env['TWITTER_API_SECRET']!,
+        accessToken: process.env['TWITTER_ACCESS_TOKEN']!,
+        accessSecret: process.env['TWITTER_ACCESS_TOKEN_SECRET']!,
       });
 
       // Get trending topics (this requires Twitter API v1.1)
@@ -338,10 +338,10 @@ Return only hashtags with # symbol, one per line:`;
   private async getTwitterHashtagMetrics(hashtag: string): Promise<any> {
     try {
       const twitterClient = new TwitterApi({
-        appKey: process.env.TWITTER_API_KEY!,
-        appSecret: process.env.TWITTER_API_SECRET!,
-        accessToken: process.env.TWITTER_ACCESS_TOKEN!,
-        accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
+        appKey: process.env['TWITTER_API_KEY']!,
+        appSecret: process.env['TWITTER_API_SECRET']!,
+        accessToken: process.env['TWITTER_ACCESS_TOKEN']!,
+        accessSecret: process.env['TWITTER_ACCESS_TOKEN_SECRET']!,
       });
 
       // Search for recent tweets with this hashtag

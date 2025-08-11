@@ -8,7 +8,7 @@ export class Logger {
 
   constructor(context: string, logLevel: LogLevel = 'info') {
     this.context = context;
-    this.logLevel = this.parseLogLevel(process.env.LOG_LEVEL || logLevel);
+    this.logLevel = this.parseLogLevel(process.env['LOG_LEVEL'] || logLevel);
   }
 
   private parseLogLevel(level: string): LogLevel {
