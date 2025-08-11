@@ -41,10 +41,10 @@ export declare const ContentSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    status: "draft" | "scheduled" | "published" | "failed" | "archived";
-    content: string;
     id: string;
+    content: string;
     platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
+    status: "draft" | "scheduled" | "published" | "failed" | "archived";
     hashtags: string[];
     mentions: string[];
     mediaUrls: string[];
@@ -63,16 +63,16 @@ export declare const ContentSchema: z.ZodObject<{
     } | undefined;
     originalTopic?: string | undefined;
 }, {
-    status: "draft" | "scheduled" | "published" | "failed" | "archived";
-    content: string;
     id: string;
+    content: string;
     platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
+    status: "draft" | "scheduled" | "published" | "failed" | "archived";
     createdAt: Date;
     updatedAt: Date;
-    hashtags?: string[] | undefined;
-    mentions?: string[] | undefined;
     scheduledTime?: Date | undefined;
     publishedTime?: Date | undefined;
+    hashtags?: string[] | undefined;
+    mentions?: string[] | undefined;
     mediaUrls?: string[] | undefined;
     metrics?: {
         views?: number | undefined;
@@ -98,29 +98,30 @@ export declare const TrendSchema: z.ZodObject<{
     expiresAt: z.ZodOptional<z.ZodDate>;
     sourceUrls: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
-    keywords: string[];
     id: string;
-    platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-    sentimentScore: number;
     topic: string;
+    platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
     volume: number;
+    sentimentScore: number;
     relevanceScore: number;
+    keywords: string[];
     discoveredAt: Date;
     sourceUrls: string[];
     expiresAt?: Date | undefined;
 }, {
-    keywords: string[];
     id: string;
-    platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-    sentimentScore: number;
     topic: string;
+    platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
     volume: number;
+    sentimentScore: number;
     relevanceScore: number;
+    keywords: string[];
     discoveredAt: Date;
     expiresAt?: Date | undefined;
     sourceUrls?: string[] | undefined;
 }>;
 export type Trend = z.infer<typeof TrendSchema>;
+export type TrendData = Trend;
 export declare const AccountMetricsSchema: z.ZodObject<{
     id: z.ZodString;
     platform: z.ZodEnum<["twitter", "linkedin", "facebook", "instagram", "tiktok"]>;
@@ -191,10 +192,9 @@ export declare const CompetitorAnalysisSchema: z.ZodObject<{
     insights: z.ZodOptional<z.ZodString>;
     analyzedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    content: string;
     id: string;
+    content: string;
     platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-    handle: string;
     hashtags: string[];
     engagementRate: number;
     metrics: {
@@ -204,15 +204,15 @@ export declare const CompetitorAnalysisSchema: z.ZodObject<{
         views?: number | undefined;
     };
     competitorName: string;
+    handle: string;
     postTime: Date;
     contentType: "text" | "image" | "video" | "carousel";
     analyzedAt: Date;
     insights?: string | undefined;
 }, {
-    content: string;
     id: string;
+    content: string;
     platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-    handle: string;
     hashtags: string[];
     engagementRate: number;
     metrics: {
@@ -222,6 +222,7 @@ export declare const CompetitorAnalysisSchema: z.ZodObject<{
         views?: number | undefined;
     };
     competitorName: string;
+    handle: string;
     postTime: Date;
     contentType: "text" | "image" | "video" | "carousel";
     analyzedAt: Date;
@@ -276,8 +277,8 @@ export declare const AutomationConfigSchema: z.ZodObject<{
         minimumVolume: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         keywords: string[];
-        industries: string[];
         enabled: boolean;
+        industries: string[];
         locations: string[];
         minimumVolume: number;
     }, {
@@ -315,17 +316,17 @@ export declare const AutomationConfigSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    name: string;
-    platforms: ("twitter" | "linkedin" | "instagram" | "tiktok" | "facebook")[];
     id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    name: string;
     enabled: boolean;
+    platforms: ("twitter" | "linkedin" | "instagram" | "tiktok" | "facebook")[];
     postingSchedule: {
         timezone: string;
         daysOfWeek: number[];
         timesOfDay: string[];
     };
-    createdAt: Date;
-    updatedAt: Date;
     contentRules: {
         minCharacters: number;
         maxCharacters: number;
@@ -336,8 +337,8 @@ export declare const AutomationConfigSchema: z.ZodObject<{
     };
     trendMonitoring: {
         keywords: string[];
-        industries: string[];
         enabled: boolean;
+        industries: string[];
         locations: string[];
         minimumVolume: number;
     };
@@ -349,16 +350,16 @@ export declare const AutomationConfigSchema: z.ZodObject<{
         }[];
     };
 }, {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
     name: string;
     platforms: ("twitter" | "linkedin" | "instagram" | "tiktok" | "facebook")[];
-    id: string;
     postingSchedule: {
         daysOfWeek: number[];
         timesOfDay: string[];
         timezone?: string | undefined;
     };
-    createdAt: Date;
-    updatedAt: Date;
     contentRules: {
         minCharacters?: number | undefined;
         maxCharacters?: number | undefined;
@@ -426,15 +427,15 @@ export declare const WebhookEventSchema: z.ZodObject<{
     timestamp: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
-    timestamp: Date;
     data: Record<string, any>;
+    timestamp: Date;
+    type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
     platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
 }, {
     id: string;
-    type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
-    timestamp: Date;
     data: Record<string, any>;
+    timestamp: Date;
+    type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
     platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
 }>;
 export type WebhookEvent = z.infer<typeof WebhookEventSchema>;
@@ -547,10 +548,10 @@ export declare const schemas: {
         createdAt: z.ZodDate;
         updatedAt: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
-        status: "draft" | "scheduled" | "published" | "failed" | "archived";
-        content: string;
         id: string;
+        content: string;
         platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
+        status: "draft" | "scheduled" | "published" | "failed" | "archived";
         hashtags: string[];
         mentions: string[];
         mediaUrls: string[];
@@ -569,16 +570,16 @@ export declare const schemas: {
         } | undefined;
         originalTopic?: string | undefined;
     }, {
-        status: "draft" | "scheduled" | "published" | "failed" | "archived";
-        content: string;
         id: string;
+        content: string;
         platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
+        status: "draft" | "scheduled" | "published" | "failed" | "archived";
         createdAt: Date;
         updatedAt: Date;
-        hashtags?: string[] | undefined;
-        mentions?: string[] | undefined;
         scheduledTime?: Date | undefined;
         publishedTime?: Date | undefined;
+        hashtags?: string[] | undefined;
+        mentions?: string[] | undefined;
         mediaUrls?: string[] | undefined;
         metrics?: {
             views?: number | undefined;
@@ -603,24 +604,24 @@ export declare const schemas: {
         expiresAt: z.ZodOptional<z.ZodDate>;
         sourceUrls: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
     }, "strip", z.ZodTypeAny, {
-        keywords: string[];
         id: string;
-        platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-        sentimentScore: number;
         topic: string;
+        platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
         volume: number;
+        sentimentScore: number;
         relevanceScore: number;
+        keywords: string[];
         discoveredAt: Date;
         sourceUrls: string[];
         expiresAt?: Date | undefined;
     }, {
-        keywords: string[];
         id: string;
-        platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-        sentimentScore: number;
         topic: string;
+        platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
         volume: number;
+        sentimentScore: number;
         relevanceScore: number;
+        keywords: string[];
         discoveredAt: Date;
         expiresAt?: Date | undefined;
         sourceUrls?: string[] | undefined;
@@ -694,10 +695,9 @@ export declare const schemas: {
         insights: z.ZodOptional<z.ZodString>;
         analyzedAt: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
-        content: string;
         id: string;
+        content: string;
         platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-        handle: string;
         hashtags: string[];
         engagementRate: number;
         metrics: {
@@ -707,15 +707,15 @@ export declare const schemas: {
             views?: number | undefined;
         };
         competitorName: string;
+        handle: string;
         postTime: Date;
         contentType: "text" | "image" | "video" | "carousel";
         analyzedAt: Date;
         insights?: string | undefined;
     }, {
-        content: string;
         id: string;
+        content: string;
         platform: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook";
-        handle: string;
         hashtags: string[];
         engagementRate: number;
         metrics: {
@@ -725,6 +725,7 @@ export declare const schemas: {
             views?: number | undefined;
         };
         competitorName: string;
+        handle: string;
         postTime: Date;
         contentType: "text" | "image" | "video" | "carousel";
         analyzedAt: Date;
@@ -778,8 +779,8 @@ export declare const schemas: {
             minimumVolume: z.ZodDefault<z.ZodNumber>;
         }, "strip", z.ZodTypeAny, {
             keywords: string[];
-            industries: string[];
             enabled: boolean;
+            industries: string[];
             locations: string[];
             minimumVolume: number;
         }, {
@@ -817,17 +818,17 @@ export declare const schemas: {
         createdAt: z.ZodDate;
         updatedAt: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
-        name: string;
-        platforms: ("twitter" | "linkedin" | "instagram" | "tiktok" | "facebook")[];
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         enabled: boolean;
+        platforms: ("twitter" | "linkedin" | "instagram" | "tiktok" | "facebook")[];
         postingSchedule: {
             timezone: string;
             daysOfWeek: number[];
             timesOfDay: string[];
         };
-        createdAt: Date;
-        updatedAt: Date;
         contentRules: {
             minCharacters: number;
             maxCharacters: number;
@@ -838,8 +839,8 @@ export declare const schemas: {
         };
         trendMonitoring: {
             keywords: string[];
-            industries: string[];
             enabled: boolean;
+            industries: string[];
             locations: string[];
             minimumVolume: number;
         };
@@ -851,16 +852,16 @@ export declare const schemas: {
             }[];
         };
     }, {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
         name: string;
         platforms: ("twitter" | "linkedin" | "instagram" | "tiktok" | "facebook")[];
-        id: string;
         postingSchedule: {
             daysOfWeek: number[];
             timesOfDay: string[];
             timezone?: string | undefined;
         };
-        createdAt: Date;
-        updatedAt: Date;
         contentRules: {
             minCharacters?: number | undefined;
             maxCharacters?: number | undefined;
@@ -893,15 +894,15 @@ export declare const schemas: {
         timestamp: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
         id: string;
-        type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
-        timestamp: Date;
         data: Record<string, any>;
+        timestamp: Date;
+        type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
         platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
     }, {
         id: string;
-        type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
-        timestamp: Date;
         data: Record<string, any>;
+        timestamp: Date;
+        type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
         platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
     }>;
 };

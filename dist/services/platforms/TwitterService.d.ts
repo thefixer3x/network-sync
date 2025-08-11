@@ -1,13 +1,9 @@
-import { SocialPlatform, SocialMediaService } from '@/types';
-export declare class SocialMediaFactory {
-    static create(platform: SocialPlatform): SocialMediaService;
-}
-import { Content, AccountMetrics } from '@/types';
+import { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
 export declare class TwitterService implements SocialMediaService {
     platform: "twitter";
     private client;
     private logger;
-    constructor();
+    constructor(apiKey: string, apiSecret: string, accessToken: string, accessSecret: string);
     authenticate(): Promise<boolean>;
     post(content: Content): Promise<string>;
     getMetrics(): Promise<AccountMetrics>;
@@ -16,5 +12,10 @@ export declare class TwitterService implements SocialMediaService {
     private validateContent;
     private uploadMedia;
     private calculateEngagementRate;
+    private calculateAverageLikes;
+    private calculateAverageComments;
+    private calculateAverageShares;
+    private getTopPerformingPosts;
+    private handleTwitterError;
 }
 //# sourceMappingURL=TwitterService.d.ts.map

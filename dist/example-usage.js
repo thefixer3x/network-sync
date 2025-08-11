@@ -1,7 +1,7 @@
 /**
  * Example Usage of Multi-Agent Orchestration System
  */
-import { orchestrator } from './agent-orchestrator';
+import { orchestrator } from './orchestrator/agent-orchestrator';
 async function demonstrateOrchestration() {
     console.log('🚀 Starting Multi-Agent Orchestration Demo\n');
     // 1. Research Task - Delegated to Perplexity

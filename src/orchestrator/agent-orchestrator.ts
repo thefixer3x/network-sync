@@ -5,9 +5,9 @@
 
 import { PerplexityAgent } from '../agents/perplexity-agent';
 import { ClaudeAgent } from '../agents/claude-agent';
-import { EmbeddingAgent } from './agents/embedding-agent';
-import { GoogleDriveStorage } from './storage/google-drive';
-import { VectorStore } from './storage/vector-store';
+// import { EmbeddingAgent } from '../agents/embedding-agent'; // TODO: Create this file
+// import { GoogleDriveStorage } from '../storage/google-drive'; // TODO: Create this file
+import { VectorStore } from '../storage/vector-store';
 
 export interface AgentTask {
   id: string;
@@ -29,13 +29,13 @@ export class AgentOrchestrator {
   private agents: Map<string, any>;
   private taskQueue: AgentTask[] = [];
   private capabilities: Map<string, AgentCapability>;
-  private driveStorage: GoogleDriveStorage;
+  // private driveStorage: GoogleDriveStorage; // TODO: Uncomment when GoogleDriveStorage is created
   private vectorStore: VectorStore;
 
   constructor() {
     this.initializeAgents();
     this.defineCapabilities();
-    this.driveStorage = new GoogleDriveStorage();
+    // this.driveStorage = new GoogleDriveStorage(); // TODO: Uncomment when GoogleDriveStorage is created
     this.vectorStore = new VectorStore();
   }
 
@@ -43,7 +43,7 @@ export class AgentOrchestrator {
     this.agents = new Map([
       ['perplexity', new PerplexityAgent()],
       ['claude', new ClaudeAgent()],
-      ['embedding', new EmbeddingAgent()]
+      // ['embedding', new EmbeddingAgent()] // TODO: Uncomment when EmbeddingAgent is created
     ]);
   }
 

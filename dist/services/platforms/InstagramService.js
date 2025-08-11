@@ -1,164 +1,147 @@
-throw new AuthenticationError('linkedin', 'Invalid access token');
-throw new SocialMediaError(error.response?.data?.message || error.message || 'Unknown LinkedIn API error', 'linkedin', error.response?.status?.toString());
-// services/platforms/FacebookService.ts
+// services/platforms/InstagramService.ts
 import axios from 'axios';
-import { SocialMediaError } from '@/types';
-import { Logger } from '@/utils/Logger';
-export class FacebookService {
-    constructor() {
-        this.platform = 'facebook';
-        this.logger = new Logger('FacebookService');
+import { SocialMediaError, RateLimitError, AuthenticationError } from '../../types/typescript-types';
+import { Logger } from '../../utils/Logger';
+export class InstagramService {
+    constructor(accessToken, instagramAccountId) {
+        this.platform = 'instagram';
         this.baseURL = 'https://graph.facebook.com/v18.0';
-        this.accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
-        this.pageId = process.env.FACEBOOK_PAGE_ID || '';
+        this.accessToken = accessToken;
+        this.instagramAccountId = instagramAccountId;
+        this.logger = new Logger('InstagramService');
     }
     async authenticate() {
         try {
-            const response = await axios.get(`${this.baseURL}/me`, {
-                params: { access_token: this.accessToken }
+            const response = await axios.get(`${this.baseURL}/me/accounts`, {
+                params: {
+                    access_token: this.accessToken,
+                    fields: 'instagram_business_account'
+                }
             });
-            this.logger.info(`Authenticated as ${response.data.name}`);
+            this.logger.info('Instagram authentication successful');
             return true;
         }
         catch (error) {
-            this.logger.error('Facebook authentication failed:', error);
-            throw new AuthenticationError('facebook', error.response?.data?.error?.message || error.message);
+            this.handleInstagramError(error);
+            return false;
         }
     }
     async post(content) {
+        this.validateContent(content);
+        if (!this.instagramAccountId) {
+            throw new SocialMediaError('Instagram account ID is required for posting', 'instagram', 'MISSING_ACCOUNT_ID');
+        }
         try {
-            this.validateContent(content);
-            const postData = {
-                message: content.content,
-                access_token: this.accessToken
-            };
-            // Add media if present
-            if (content.mediaUrls.length > 0) {
-                // For single image
-                if (content.mediaUrls.length === 1) {
-                    postData.url = content.mediaUrls[0];
-                }
-                else {
-                    // For multiple images, need to use different endpoint
-                    return await this.postMultipleImages(content);
-                }
+            let mediaContainerId;
+            if (content.mediaUrls && content.mediaUrls.length > 0) {
+                // Create media container
+                const containerResponse = await axios.post(`${this.baseURL}/${this.instagramAccountId}/media`, {
+                    image_url: content.mediaUrls[0],
+                    caption: content.content,
+                    access_token: this.accessToken
+                });
+                mediaContainerId = containerResponse.data.id;
             }
-            const endpoint = this.pageId
-                ? `${this.baseURL}/${this.pageId}/posts`
-                : `${this.baseURL}/me/feed`;
-            const response = await axios.post(endpoint, postData);
-            this.logger.info(`Facebook post created successfully: ${response.data.id}`);
-            return response.data.id;
+            else {
+                throw new SocialMediaError('Instagram posts require media content', 'instagram', 'NO_MEDIA');
+            }
+            // Publish the media
+            const publishResponse = await axios.post(`${this.baseURL}/${this.instagramAccountId}/media_publish`, {
+                creation_id: mediaContainerId,
+                access_token: this.accessToken
+            });
+            const postId = publishResponse.data.id;
+            this.logger.info(`Instagram post published successfully: ${postId}`);
+            return postId;
         }
         catch (error) {
-            this.handleFacebookError(error);
+            this.handleInstagramError(error);
             throw error;
         }
     }
-    async postMultipleImages(content) {
-        // Upload images first
-        const mediaIds = [];
-        for (const mediaUrl of content.mediaUrls) {
-            try {
-                const response = await axios.post(`${this.baseURL}/${this.pageId}/photos`, {
-                    url: mediaUrl,
-                    published: false, // Don't publish individual photos
-                    access_token: this.accessToken
-                });
-                mediaIds.push({ media_fbid: response.data.id });
-            }
-            catch (error) {
-                this.logger.error(`Failed to upload image ${mediaUrl}:`, error);
-            }
-        }
-        // Create post with multiple images
-        const response = await axios.post(`${this.baseURL}/${this.pageId}/feed`, {
-            message: content.content,
-            attached_media: mediaIds,
-            access_token: this.accessToken
-        });
-        return response.data.id;
-    }
     async getMetrics() {
+        if (!this.instagramAccountId) {
+            throw new SocialMediaError('Instagram account ID is required for metrics', 'instagram', 'MISSING_ACCOUNT_ID');
+        }
         try {
-            const endpoint = this.pageId
-                ? `${this.baseURL}/${this.pageId}`
-                : `${this.baseURL}/me`;
-            const response = await axios.get(endpoint, {
+            const accountResponse = await axios.get(`${this.baseURL}/${this.instagramAccountId}`, {
                 params: {
-                    fields: 'fan_count,posts.limit(10){likes.summary(true),comments.summary(true),shares}',
-                    access_token: this.accessToken
+                    access_token: this.accessToken,
+                    fields: 'account_type,media_count,followers_count,follows_count'
                 }
             });
-            const data = response.data;
-            const posts = data.posts?.data || [];
-            // Calculate engagement metrics
-            let totalLikes = 0;
-            let totalComments = 0;
-            let totalShares = 0;
-            posts.forEach(post => {
-                totalLikes += post.likes?.summary?.total_count || 0;
-                totalComments += post.comments?.summary?.total_count || 0;
-                totalShares += post.shares?.count || 0;
-            });
+            const accountData = accountResponse.data;
             return {
-                id: crypto.randomUUID(),
-                platform: 'facebook',
-                followersCount: data.fan_count || 0,
-                followingCount: 0, // Not available for pages
-                postsCount: posts.length,
-                engagementRate: posts.length > 0 ? ((totalLikes + totalComments + totalShares) / posts.length) : 0,
-                growthRate: 0, // Requires historical data
-                averageLikes: posts.length > 0 ? totalLikes / posts.length : 0,
-                averageComments: posts.length > 0 ? totalComments / posts.length : 0,
-                averageShares: posts.length > 0 ? totalShares / posts.length : 0,
+                id: `ig-metrics-${Date.now()}`,
+                platform: 'instagram',
+                followersCount: accountData.followers_count || 0,
+                followingCount: accountData.follows_count || 0,
+                postsCount: accountData.media_count || 0,
+                engagementRate: await this.calculateEngagementRate(),
+                growthRate: 0,
+                averageLikes: await this.calculateAverageLikes(),
+                averageComments: await this.calculateAverageComments(),
+                averageShares: 0,
                 topPerformingContent: await this.getTopPerformingPosts(),
                 recordedAt: new Date(),
             };
         }
         catch (error) {
-            this.handleFacebookError(error);
+            this.handleInstagramError(error);
             throw error;
         }
     }
     async deletePost(postId) {
         try {
             await axios.delete(`${this.baseURL}/${postId}`, {
-                params: { access_token: this.accessToken }
+                params: {
+                    access_token: this.accessToken
+                }
             });
-            this.logger.info(`Facebook post ${postId} deleted successfully`);
+            this.logger.info(`Instagram post ${postId} deleted successfully`);
             return true;
         }
         catch (error) {
-            this.handleFacebookError(error);
+            this.handleInstagramError(error);
             throw error;
         }
     }
     async schedulePost(content) {
-        if (!content.scheduledTime) {
-            throw new Error('Scheduled time is required for Facebook scheduling');
+        throw new Error('Instagram post scheduling requires Business API with publish permissions');
+    }
+    validateContent(content) {
+        if (content.content.length > 2200) {
+            throw new SocialMediaError('Instagram caption exceeds 2200 character limit', 'instagram', 'CONTENT_TOO_LONG');
         }
-        try {
-            const postData = {
-                message: content.content,
-                scheduled_publish_time: Math.floor(content.scheduledTime.getTime() / 1000),
-                published: false,
-                access_token: this.accessToken
-            };
-            if (content.mediaUrls.length > 0) {
-                postData.url = content.mediaUrls[0];
-            }
-            const endpoint = this.pageId
-                ? `${this.baseURL}/${this.pageId}/posts`
-                : `${this.baseURL}/me/feed`;
-            const response = await axios.post(endpoint, postData);
-            this.logger.info(`Facebook post scheduled successfully: ${response.data.id}`);
-            return response.data.id;
+        if (!content.mediaUrls || content.mediaUrls.length === 0) {
+            throw new SocialMediaError('Instagram posts require at least one media file', 'instagram', 'NO_MEDIA_REQUIRED');
         }
-        catch (error) {
-            this.handleFacebookError(error);
-            throw error;
+    }
+    async calculateEngagementRate() {
+        return 0;
+    }
+    async calculateAverageLikes() {
+        return 0;
+    }
+    async calculateAverageComments() {
+        return 0;
+    }
+    async getTopPerformingPosts() {
+        return [];
+    }
+    handleInstagramError(error) {
+        const errorData = error.response?.data?.error;
+        if (error.response?.status === 429 || errorData?.code === 4) {
+            const resetTime = new Date(Date.now() + 60 * 60 * 1000);
+            throw new RateLimitError('instagram', resetTime);
         }
+        if (error.response?.status === 401 || errorData?.code === 190) {
+            throw new AuthenticationError('instagram', 'Invalid access token');
+        }
+        if (errorData?.code === 100) {
+            throw new SocialMediaError('Invalid parameter or missing permission', 'instagram', errorData.code.toString());
+        }
+        throw new SocialMediaError(errorData?.message || error.message || 'Unknown Instagram API error', 'instagram', errorData?.code?.toString() || error.response?.status?.toString());
     }
 }
 //# sourceMappingURL=InstagramService.js.map

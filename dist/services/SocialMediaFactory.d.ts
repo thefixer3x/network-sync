@@ -1,11 +1,6 @@
-import { SocialMediaService } from '@/types';
-export declare class InstagramService implements SocialMediaService {
-    platform: "instagram";
-    private accessToken;
-    private businessAccountId;
-    private logger;
-    private baseURL;
-    constructor();
-    authenticate(): Promise<boolean>;
+import { SocialPlatform, SocialMediaService } from '../types/typescript-types';
+export declare class SocialMediaFactory {
+    static create(platform: SocialPlatform, credentials: any): SocialMediaService;
+    static validateCredentials(platform: SocialPlatform, credentials: any): boolean;
 }
 //# sourceMappingURL=SocialMediaFactory.d.ts.map

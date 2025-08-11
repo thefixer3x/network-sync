@@ -1,4 +1,4 @@
-import { APIResponse } from '@/types';
+import { APIResponse } from '../types/typescript-types';
 export declare class AutomationEngine {
     private logger;
     private supabase;

@@ -59,8 +59,8 @@ export interface AnalyticsFilter {
 export class AnalyticsDashboard {
   private logger = new Logger('AnalyticsDashboard');
   private supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env['SUPABASE_URL']!,
+    process.env['SUPABASE_SERVICE_ROLE_KEY']!
   );
   private aiService = new OpenAIService();
   private widgets: Map<string, DashboardWidget> = new Map();

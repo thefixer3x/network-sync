@@ -20,7 +20,6 @@ export declare class AgentOrchestrator {
     private agents;
     private taskQueue;
     private capabilities;
-    private driveStorage;
     private vectorStore;
     constructor();
     private initializeAgents;

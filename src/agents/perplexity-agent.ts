@@ -14,7 +14,7 @@ export class PerplexityAgent {
 
   constructor() {
     this.config = {
-      apiKey: process.env.PERPLEXITY_API_KEY || '',
+      apiKey: process.env['PERPLEXITY_API_KEY'] || '',
       model: 'llama-3.1-sonar-large-128k-online',
       temperature: 0.2 // Lower for factual accuracy
     };

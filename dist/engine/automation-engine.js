@@ -1,18 +1,18 @@
 // src/engine/AutomationEngine.ts
 import cron from 'node-cron';
 import { createClient } from '@supabase/supabase-js';
-import { RateLimitError, schemas } from '@/types';
+import { RateLimitError, schemas } from '../types/typescript-types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from '@/services/SocialMediaFactory';
 import { OpenAIService } from '@/services/OpenAIService';
-import { TrendAnalyzer } from '@/services/TrendAnalyzer';
-import { ContentOptimizer } from '@/services/ContentOptimizer';
-import { AnalyticsCollector } from '@/services/AnalyticsCollector';
+import { TrendAnalyzer } from '../services/TrendAnalyzer';
+import { ContentOptimizer } from '../services/ContentOptimizer';
+import { AnalyticsCollector } from '../services/AnalyticsCollector';
 import { addMinutes, addHours } from 'date-fns';
 export class AutomationEngine {
     constructor() {
         this.logger = new Logger('AutomationEngine');
-        this.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        this.supabase = createClient(process.env['SUPABASE_URL'], process.env['SUPABASE_SERVICE_ROLE_KEY']);
         this.socialServices = new Map();
         this.aiService = new OpenAIService();
         this.trendAnalyzer = new TrendAnalyzer();
@@ -30,7 +30,7 @@ export class AutomationEngine {
             const platforms = ['twitter', 'linkedin', 'facebook', 'instagram'];
             for (const platform of platforms) {
                 try {
-                    const service = SocialMediaFactory.create(platform);
+                    const service = SocialMediaFactory.create(platform, {});
                     await service.authenticate();
                     this.socialServices.set(platform, service);
                     this.logger.info(`${platform} service initialized successfully`);
@@ -222,7 +222,7 @@ export class AutomationEngine {
       As a business development specialist focused on changing the world one solution at a time, create engaging social media content about: ${trend.topic}
 
       Platform: ${platform}
-      Context: ${platformContext[platform]}
+      Context: ${platformContext[platform] || platformContext.twitter}
       Keywords: ${trend.keywords.join(', ')}
       Tone: Professional but approachable, solution-focused, optimistic
       
@@ -294,7 +294,7 @@ export class AutomationEngine {
         if (error) {
             throw new Error(`Failed to fetch scheduled content: ${error.message}`);
         }
-        return (data || []).map(item => schemas.Content.parse(item));
+        return (data || []).map((item) => schemas.Content.parse(item));
     }
     async publishContent(content) {
         try {
@@ -320,7 +320,7 @@ export class AutomationEngine {
             }
             else {
                 await this.updateContentStatus(content.id, 'failed', {
-                    error: error.message
+                    error: error instanceof Error ? error.message : 'Unknown error'
                 });
             }
             throw error;
@@ -363,7 +363,7 @@ export class AutomationEngine {
             }
             else {
                 await this.updateContentStatus(content.id, 'failed', {
-                    error: error.message
+                    error: error instanceof Error ? error.message : 'Unknown error'
                 });
             }
         }
@@ -516,7 +516,7 @@ export class AutomationEngine {
         catch (error) {
             return {
                 success: false,
-                error: error.message,
+                error: error instanceof Error ? error.message : 'Unknown error',
                 timestamp: new Date()
             };
         }
@@ -544,7 +544,7 @@ export class AutomationEngine {
         catch (error) {
             return {
                 success: false,
-                error: error.message,
+                error: error instanceof Error ? error.message : 'Unknown error',
                 timestamp: new Date()
             };
         }

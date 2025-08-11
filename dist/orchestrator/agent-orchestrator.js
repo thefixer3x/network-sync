@@ -2,24 +2,24 @@
  * Multi-Agent Orchestration System
  * Manages task delegation to specialized LLM agents
  */
-import { PerplexityAgent } from './agents/perplexity-agent';
-import { ClaudeAgent } from './agents/claude-agent';
-import { EmbeddingAgent } from './agents/embedding-agent';
-import { GoogleDriveStorage } from './storage/google-drive';
-import { VectorStore } from './storage/vector-store';
+import { PerplexityAgent } from '../agents/perplexity-agent';
+import { ClaudeAgent } from '../agents/claude-agent';
+// import { EmbeddingAgent } from '../agents/embedding-agent'; // TODO: Create this file
+// import { GoogleDriveStorage } from '../storage/google-drive'; // TODO: Create this file
+import { VectorStore } from '../storage/vector-store';
 export class AgentOrchestrator {
     constructor() {
         this.taskQueue = [];
         this.initializeAgents();
         this.defineCapabilities();
-        this.driveStorage = new GoogleDriveStorage();
+        // this.driveStorage = new GoogleDriveStorage(); // TODO: Uncomment when GoogleDriveStorage is created
         this.vectorStore = new VectorStore();
     }
     initializeAgents() {
         this.agents = new Map([
             ['perplexity', new PerplexityAgent()],
             ['claude', new ClaudeAgent()],
-            ['embedding', new EmbeddingAgent()]
+            // ['embedding', new EmbeddingAgent()] // TODO: Uncomment when EmbeddingAgent is created
         ]);
     }
     defineCapabilities() {
