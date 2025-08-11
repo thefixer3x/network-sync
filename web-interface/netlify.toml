@@ -1,0 +1,49 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "8"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = ".netlify/functions"
+
+# Redirects for API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Handle client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+
+# Environment variables template
+# Add these in your Netlify dashboard under Site Settings > Environment Variables
+[context.production.environment]
+  NEXTAUTH_URL = "https://your-domain.netlify.app"
+  NEXTAUTH_SECRET = "your-nextauth-secret"
+  SUPABASE_URL = "your-supabase-url"
+  SUPABASE_ANON_KEY = "your-supabase-anon-key"
+  SUPABASE_SERVICE_ROLE_KEY = "your-supabase-service-role-key"
+  OPENAI_API_KEY = "your-openai-api-key"
+  CLAUDE_API_KEY = "your-claude-api-key"
+  PERPLEXITY_API_KEY = "your-perplexity-api-key"
+  TWITTER_API_KEY = "your-twitter-api-key"
+  TWITTER_API_SECRET = "your-twitter-api-secret"
+  LINKEDIN_CLIENT_ID = "your-linkedin-client-id"
+  LINKEDIN_CLIENT_SECRET = "your-linkedin-client-secret"
+  FACEBOOK_APP_ID = "your-facebook-app-id"
+  FACEBOOK_APP_SECRET = "your-facebook-app-secret"
+  INSTAGRAM_CLIENT_ID = "your-instagram-client-id"
+  INSTAGRAM_CLIENT_SECRET = "your-instagram-client-secret"

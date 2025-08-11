@@ -1,0 +1,8 @@
+{
+  "/_not-found": "app/_not-found.js",
+  "/api/social/accounts/route": "app/api/social/accounts/route.js",
+  "/api/social/connect/route": "app/api/social/connect/route.js",
+  "/api/workflows/route": "app/api/workflows/route.js",
+  "/api/workflows/[id]/toggle/route": "app/api/workflows/[id]/toggle/route.js",
+  "/page": "app/page.js"
+}
