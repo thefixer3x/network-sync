@@ -4,6 +4,6 @@ export declare class TrendAnalyzer {
     analyzeTrends(platform: SocialPlatform, timeframe?: string): Promise<TrendData[]>;
     getTopTrends(platform: SocialPlatform, limit?: number): Promise<TrendData[]>;
     getTrendingSentiment(keyword: string, platform: SocialPlatform): Promise<number>;
-    getTrendingTopics(platform: SocialPlatform, limit?: number): Promise<string[]>;
+    getTrendingTopics(keywords: string[], limit?: number): Promise<TrendData[]>;
 }
 //# sourceMappingURL=TrendAnalyzer.d.ts.map

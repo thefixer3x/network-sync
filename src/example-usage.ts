@@ -162,7 +162,7 @@ async function contentProductionPipeline(topic: string) {
     priority: 7,
     timestamp: new Date(),
     payload: {
-      texts: [content.content, ...variations.map(v => v.content)]
+      texts: [content.content, ...variations.map((v: any) => v.content)]
     }
   });
 

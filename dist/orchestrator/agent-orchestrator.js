@@ -9,18 +9,18 @@ import { ClaudeAgent } from '../agents/claude-agent';
 import { VectorStore } from '../storage/vector-store';
 export class AgentOrchestrator {
     constructor() {
+        this.agents = new Map();
         this.taskQueue = [];
+        this.capabilities = new Map();
         this.initializeAgents();
         this.defineCapabilities();
         // this.driveStorage = new GoogleDriveStorage(); // TODO: Uncomment when GoogleDriveStorage is created
         this.vectorStore = new VectorStore();
     }
     initializeAgents() {
-        this.agents = new Map([
-            ['perplexity', new PerplexityAgent()],
-            ['claude', new ClaudeAgent()],
-            // ['embedding', new EmbeddingAgent()] // TODO: Uncomment when EmbeddingAgent is created
-        ]);
+        this.agents.set('perplexity', new PerplexityAgent());
+        this.agents.set('claude', new ClaudeAgent());
+        // this.agents.set('embedding', new EmbeddingAgent()); // TODO: Uncomment when EmbeddingAgent is created
     }
     defineCapabilities() {
         this.capabilities = new Map([
@@ -138,7 +138,7 @@ export class AgentOrchestrator {
         });
         await this.vectorStore.storeEmbeddings(embeddings);
         return {
-            embeddingIds: embeddings.map(e => e.id),
+            embeddingIds: embeddings.map((e) => e.id),
             dimensions: embeddings[0].dimensions
         };
     }

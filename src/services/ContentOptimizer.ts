@@ -13,7 +13,7 @@ export class ContentOptimizer {
       // Optimize content based on platform requirements
       const optimized: Content = {
         ...content,
-        text: this.truncateText(content.text, platformSpecs.maxLength),
+        content: this.truncateText(content.content, platformSpecs.maxLength),
         hashtags: this.optimizeHashtags(content.hashtags || [], platform),
         mentions: content.mentions || []
       };
@@ -76,7 +76,7 @@ export class ContentOptimizer {
 
     return {
       ...content,
-      text: `${content.text}\n\n${randomCta}`
+      content: `${content.content}\n\n${randomCta}`
     };
   }
 }

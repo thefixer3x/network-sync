@@ -10,21 +10,25 @@ export class TrendAnalyzer {
             const trends = [
                 {
                     id: '1',
-                    keyword: '#AI',
+                    topic: 'AI Technology',
+                    keywords: ['#AI', 'artificial intelligence', 'machine learning'],
                     platform,
                     volume: 15000,
-                    sentiment: 0.7,
-                    growth: 0.15,
-                    createdAt: new Date()
+                    sentimentScore: 0.7,
+                    relevanceScore: 0.85,
+                    discoveredAt: new Date(),
+                    sourceUrls: []
                 },
                 {
                     id: '2',
-                    keyword: '#automation',
+                    topic: 'Automation Solutions',
+                    keywords: ['#automation', 'workflow', 'efficiency'],
                     platform,
                     volume: 8500,
-                    sentiment: 0.65,
-                    growth: 0.22,
-                    createdAt: new Date()
+                    sentimentScore: 0.65,
+                    relevanceScore: 0.78,
+                    discoveredAt: new Date(),
+                    sourceUrls: []
                 }
             ];
             return trends;
@@ -52,27 +56,39 @@ export class TrendAnalyzer {
             return 0;
         }
     }
-    async getTrendingTopics(platform, limit = 10) {
+    async getTrendingTopics(keywords, limit = 10) {
         try {
-            this.logger.info(`Getting trending topics for ${platform}`);
+            this.logger.info(`Getting trending topics for keywords: ${keywords.join(', ')}`);
             // Mock trending topics - would integrate with platform APIs
-            const topics = [
-                'AI automation',
-                'machine learning',
-                'social media marketing',
-                'digital transformation',
-                'remote work',
-                'startup growth',
-                'productivity tips',
-                'tech news',
-                'innovation trends',
-                'business strategy'
+            const trends = [
+                {
+                    id: crypto.randomUUID(),
+                    topic: 'AI automation',
+                    keywords: keywords.filter(k => k.toLowerCase().includes('ai')),
+                    platform: 'twitter',
+                    volume: 12000,
+                    sentimentScore: 0.8,
+                    relevanceScore: 0.9,
+                    discoveredAt: new Date(),
+                    sourceUrls: []
+                },
+                {
+                    id: crypto.randomUUID(),
+                    topic: 'Digital transformation',
+                    keywords: keywords.filter(k => k.toLowerCase().includes('digital') || k.toLowerCase().includes('tech')),
+                    platform: 'linkedin',
+                    volume: 8500,
+                    sentimentScore: 0.7,
+                    relevanceScore: 0.85,
+                    discoveredAt: new Date(),
+                    sourceUrls: []
+                }
             ];
-            return topics.slice(0, limit);
+            return trends.slice(0, limit);
         }
         catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to get trending topics for ${platform}: ${errorMessage}`);
+            this.logger.error(`Failed to get trending topics for keywords: ${keywords.join(', ')}: ${errorMessage}`);
             return [];
         }
     }

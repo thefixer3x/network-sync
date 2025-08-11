@@ -48,7 +48,7 @@ export class PerplexityAgent {
         }
         catch (error) {
             console.error('Perplexity research error:', error);
-            throw new Error(`Research failed: ${error.message}`);
+            throw new Error(`Research failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
     /**
@@ -124,6 +124,8 @@ export class PerplexityAgent {
     extractSummary(content) {
         // Extract first paragraph or up to 280 characters
         const firstParagraph = content.split('\n\n')[0];
+        if (!firstParagraph)
+            return '';
         return firstParagraph.length > 280
             ? firstParagraph.substring(0, 277) + '...'
             : firstParagraph;

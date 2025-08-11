@@ -4,6 +4,7 @@
 export class ClaudeAgent {
     constructor() {
         this.apiEndpoint = 'https://api.anthropic.com/v1/messages';
+        this.brandVoices = new Map();
         this.config = {
             apiKey: process.env['CLAUDE_API_KEY'] || '',
             model: 'claude-3-5-sonnet-20241022',
@@ -63,7 +64,7 @@ export class ClaudeAgent {
         }
         catch (error) {
             console.error('Claude generation error:', error);
-            throw new Error(`Content generation failed: ${error.message}`);
+            throw new Error(`Content generation failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
     /**
@@ -173,7 +174,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
             prompt = `Context:\n${params.context}\n\nTask:\n${prompt}`;
         }
         if (params.sections) {
-            prompt += `\n\nInclude these sections:\n${params.sections.map(s => `- ${s}`).join('\n')}`;
+            prompt += `\n\nInclude these sections:\n${params.sections.map((s) => `- ${s}`).join('\n')}`;
         }
         return prompt;
     }
@@ -192,7 +193,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
             }
         };
         if (format === 'report') {
-            formatted['sections'] = this.extractSections(content);
+            formatted.sections = this.extractSections(content);
         }
         return formatted;
     }
@@ -204,9 +205,11 @@ Maintain consistency throughout the content while ensuring high quality and enga
         const sectionRegex = /##\s+(.+?)\n([\s\S]*?)(?=##\s+|$)/g;
         let match;
         while ((match = sectionRegex.exec(content)) !== null) {
-            const title = match[1].trim();
-            const body = match[2].trim();
-            sections[title] = body;
+            const title = match[1]?.trim();
+            const body = match[2]?.trim();
+            if (title && body !== undefined) {
+                sections[title] = body;
+            }
         }
         return sections;
     }
@@ -235,7 +238,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
             'urgency creation',
             'benefit-focused messaging'
         ];
-        return hypotheses[index % hypotheses.length];
+        return hypotheses[index % hypotheses.length] || 'general optimization';
     }
 }
 //# sourceMappingURL=claude-agent.js.map

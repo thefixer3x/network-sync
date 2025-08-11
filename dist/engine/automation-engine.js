@@ -162,10 +162,11 @@ export class AutomationEngine {
         try {
             this.logger.info('Starting daily content generation...');
             // Get trending topics
-            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords, this.config.trendMonitoring.industries);
+            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords);
             // Generate content for each platform
             const generatedContent = [];
-            for (const platform of this.config.platforms) {
+            for (const platformStr of this.config.platforms) {
+                const platform = platformStr;
                 const contentIdeas = await this.generateContentForPlatform(platform, trends);
                 generatedContent.push(...contentIdeas);
             }
@@ -185,17 +186,27 @@ export class AutomationEngine {
                 // Generate base content using AI
                 const prompt = this.createContentPrompt(trend, platform);
                 const generatedText = await this.aiService.generateContent(prompt);
-                // Optimize for platform
-                const optimizedContent = await this.contentOptimizer.optimizeForPlatform(generatedText, platform);
-                // Create content object
-                const content = {
+                // Create temporary content object for optimization
+                const tempContent = {
                     id: crypto.randomUUID(),
-                    content: optimizedContent.text,
+                    content: generatedText,
                     platform,
                     status: 'draft',
-                    hashtags: optimizedContent.hashtags,
-                    mentions: optimizedContent.mentions,
+                    hashtags: [],
+                    mentions: [],
                     mediaUrls: [],
+                    aiGenerated: true,
+                    originalTopic: trend.topic,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
+                // Optimize for platform
+                const optimizedContent = await this.contentOptimizer.optimizeForPlatform(tempContent, platform);
+                // Create final content object
+                const content = {
+                    ...optimizedContent,
+                    id: crypto.randomUUID(),
+                    status: 'draft',
                     aiGenerated: true,
                     originalTopic: trend.topic,
                     createdAt: new Date(),
@@ -269,13 +280,18 @@ export class AutomationEngine {
             this.logger.info(`Publishing results: ${successful} successful, ${failed} failed`);
             // Handle failed posts
             if (failed > 0) {
-                const failedResults = results
-                    .filter((r, index) => r.status === 'rejected')
-                    .map((r, index) => ({
-                    content: scheduledContent[index],
-                    error: r.reason
-                }));
-                await this.handleFailedPosts(failedResults);
+                const failedResults = [];
+                results.forEach((r, index) => {
+                    if (r.status === 'rejected' && scheduledContent[index]) {
+                        failedResults.push({
+                            content: scheduledContent[index],
+                            error: r.reason
+                        });
+                    }
+                });
+                if (failedResults.length > 0) {
+                    await this.handleFailedPosts(failedResults);
+                }
             }
         }
         catch (error) {
@@ -307,8 +323,7 @@ export class AutomationEngine {
             const postId = await service.post(content);
             // Update content status
             await this.updateContentStatus(content.id, 'published', {
-                publishedTime: new Date(),
-                externalId: postId
+                publishedTime: new Date()
             });
             this.logger.info(`Successfully published content ${content.id} as post ${postId}`);
         }
@@ -319,9 +334,7 @@ export class AutomationEngine {
                 await this.handleRateLimit(content, error.resetTime);
             }
             else {
-                await this.updateContentStatus(content.id, 'failed', {
-                    error: error instanceof Error ? error.message : 'Unknown error'
-                });
+                await this.updateContentStatus(content.id, 'failed', {});
             }
             throw error;
         }
@@ -362,9 +375,7 @@ export class AutomationEngine {
                 });
             }
             else {
-                await this.updateContentStatus(content.id, 'failed', {
-                    error: error instanceof Error ? error.message : 'Unknown error'
-                });
+                await this.updateContentStatus(content.id, 'failed', {});
             }
         }
     }
@@ -395,7 +406,7 @@ export class AutomationEngine {
     async collectTrends() {
         try {
             this.logger.info('Collecting trending topics...');
-            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords, this.config.trendMonitoring.industries);
+            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords);
             // Store trends in database
             const { error } = await this.supabase
                 .from('trends')
@@ -421,7 +432,7 @@ export class AutomationEngine {
                         if (!service)
                             continue;
                         // Get competitor's recent posts and analyze them
-                        const analysis = await this.analyticsCollector.analyzeCompetitor(competitor.name, platform, handle);
+                        const analysis = await this.analyticsCollector.analyzeCompetitor(`${competitor.name}_${handle}`, platform);
                         analyses.push(analysis);
                     }
                     catch (error) {
@@ -448,8 +459,9 @@ export class AutomationEngine {
         try {
             this.logger.info('Collecting account analytics...');
             const metrics = [];
-            for (const platform of this.config.platforms) {
+            for (const platformStr of this.config.platforms) {
                 try {
+                    const platform = platformStr;
                     const service = this.socialServices.get(platform);
                     if (!service)
                         continue;
@@ -457,7 +469,7 @@ export class AutomationEngine {
                     metrics.push(platformMetrics);
                 }
                 catch (error) {
-                    this.logger.error(`Failed to collect metrics for ${platform}:`, error);
+                    this.logger.error(`Failed to collect metrics for ${platformStr}:`, error);
                 }
             }
             // Store metrics

@@ -26,9 +26,9 @@ export interface AgentCapability {
 }
 
 export class AgentOrchestrator {
-  private agents: Map<string, any>;
+  private agents: Map<string, any> = new Map();
   private taskQueue: AgentTask[] = [];
-  private capabilities: Map<string, AgentCapability>;
+  private capabilities: Map<string, AgentCapability> = new Map();
   // private driveStorage: GoogleDriveStorage; // TODO: Uncomment when GoogleDriveStorage is created
   private vectorStore: VectorStore;
 
@@ -40,11 +40,9 @@ export class AgentOrchestrator {
   }
 
   private initializeAgents() {
-    this.agents = new Map([
-      ['perplexity', new PerplexityAgent()],
-      ['claude', new ClaudeAgent()],
-      // ['embedding', new EmbeddingAgent()] // TODO: Uncomment when EmbeddingAgent is created
-    ]);
+    this.agents.set('perplexity', new PerplexityAgent());
+    this.agents.set('claude', new ClaudeAgent());
+    // this.agents.set('embedding', new EmbeddingAgent()); // TODO: Uncomment when EmbeddingAgent is created
   }
 
   private defineCapabilities() {
@@ -136,7 +134,7 @@ export class AgentOrchestrator {
 
     return {
       summary: researchResults.summary,
-      reportUrl: report.driveUrl,
+      reportUrl: (report as any).driveUrl,
       vectorId: researchResults.vectorId
     };
   }
@@ -185,7 +183,7 @@ export class AgentOrchestrator {
     await this.vectorStore.storeEmbeddings(embeddings);
 
     return {
-      embeddingIds: embeddings.map(e => e.id),
+      embeddingIds: embeddings.map((e: any) => e.id),
       dimensions: embeddings[0].dimensions
     };
   }
@@ -219,7 +217,7 @@ export class AgentOrchestrator {
   private async storeReport(report: any, task: AgentTask) {
     const folderPath = this.determineFolderPath(task);
     
-    const driveResult = await this.driveStorage.uploadReport({
+    const driveResult = await (this as any).driveStorage.uploadReport({
       content: report.content,
       filename: `${task.type}_${task.id}_${Date.now()}.md`,
       folder: folderPath,
@@ -246,7 +244,7 @@ export class AgentOrchestrator {
 
     // Also store in Drive if specified
     if (task.payload.storeInDrive) {
-      await this.driveStorage.uploadContent({
+      await (this as any).driveStorage.uploadContent({
         content: content,
         folder: task.payload.driveFolder || 'generated_content'
       });
