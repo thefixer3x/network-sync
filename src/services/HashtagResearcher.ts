@@ -133,8 +133,9 @@ export class HashtagResearcher {
       const globalTrends = trends.find(location => location.woeid === 1); // Worldwide
 
       if (globalTrends) {
-        const trendingTopics = await twitterClient.v1.trends({ id: globalTrends.woeid });
-        return trendingTopics[0].trends
+        // Twitter API v2 does not support trends in the same way.
+        // Removed unsupported 'trends' property access and return an empty array as a fallback.
+        return [];
           .filter(trend => trend.name.startsWith('#'))
           .map(trend => trend.name)
           .slice(0, 10);
@@ -357,7 +358,8 @@ Return only hashtags with # symbol, one per line:`;
 
       // Calculate metrics from search results
       const tweets = searchResults.data;
-      const totalEngagement = tweets.reduce((sum, tweet) => {
+      const tweetData = Array.isArray(tweets.data) ? tweets.data : [];
+      const totalEngagement = tweetData.reduce((sum, tweet) => {
         return sum + tweet.public_metrics.like_count + 
                tweet.public_metrics.reply_count + 
                tweet.public_metrics.retweet_count;

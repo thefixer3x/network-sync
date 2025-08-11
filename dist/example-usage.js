@@ -144,7 +144,7 @@ async function contentProductionPipeline(topic) {
         priority: 7,
         timestamp: new Date(),
         payload: {
-            texts: [content.content, ...variations.map(v => v.content)]
+            texts: [content.content, ...variations.map((v) => v.content)]
         }
     });
     console.log('✅ Embeddings stored for semantic search');

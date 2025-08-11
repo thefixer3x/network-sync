@@ -136,7 +136,9 @@ export class AnalyticsDashboard {
                 .select('engagement_rate')
                 .order('recorded_at', { ascending: false })
                 .limit(10);
-            const avgEngagement = recentMetrics?.reduce((sum, metric) => sum + metric.engagement_rate, 0) / (recentMetrics?.length || 1) || 0;
+            const avgEngagement = (recentMetrics && recentMetrics.length > 0)
+                ? recentMetrics.reduce((sum, metric) => sum + metric.engagement_rate, 0) / recentMetrics.length
+                : 0;
             return {
                 value: Number(avgEngagement.toFixed(2)),
                 target: 5, // 5% target engagement rate
@@ -284,7 +286,7 @@ export class AnalyticsDashboard {
                     break;
             }
             const filter = {
-                platforms,
+                platforms: platforms || ['twitter', 'linkedin', 'facebook', 'instagram'],
                 dateRange: { start: startDate, end: endDate }
             };
             // Gather analytics data

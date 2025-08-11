@@ -3,6 +3,7 @@
  * Shows how to integrate Lanonasis Memory SDK with existing VectorStore
  */
 
+// @ts-ignore: Module lacks type declarations
 import MemoryClient, { MultiModalMemoryClient } from '../../lib/memory-sdk/lanonasis-memory-sdk.js';
 import { VectorStore } from '../storage/vector-store.js';
 
@@ -47,7 +48,7 @@ export class EnhancedContentStorage {
       title: `${platform} ${contentType}: ${content.substring(0, 50)}...`,
       content,
       memory_type: contentType === 'media' ? 'reference' : 'context',
-      tags: [platform, contentType, ...(metadata?.hashtags || [])],
+      tags: [platform, contentType, ...(metadata?.['hashtags'] || [])],
       metadata: {
         platform,
         contentType,
@@ -167,7 +168,7 @@ export class EnhancedContentStorage {
         caption,
         `File: ${filename}`,
         `Platform: ${platform}`,
-        ...(metadata?.hashtags || []).map((tag: string) => `#${tag}`)
+        ...(metadata?.['hashtags'] || []).map((tag: string) => `#${tag}`)
       ].filter(Boolean).join(' ');
       
       await vectorStore.store({

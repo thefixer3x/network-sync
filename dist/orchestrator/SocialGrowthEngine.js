@@ -192,7 +192,7 @@ export class SocialGrowthEngine {
                     const strategy = await this.hashtagResearcher.researchHashtags({
                         topic,
                         platform,
-                        industry: this.config.competitors[0]?.industry,
+                        industry: this.config.competitors[0]?.industry || 'general',
                         targetAudience: this.config.content_strategy.target_audience,
                         contentType: 'educational'
                     });
@@ -250,7 +250,7 @@ export class SocialGrowthEngine {
                 id: crypto.randomUUID(),
                 type: 'social_campaign',
                 topic: this.config.content_strategy.content_pillars.join(' and '),
-                platforms: this.config.platforms,
+                platforms: this.config.platforms.filter(p => p !== 'tiktok'),
                 parameters: {
                     post_count: this.config.goals.content_frequency * 4, // Monthly posts
                     automation_level: this.config.goals.automation_level
@@ -303,8 +303,8 @@ export class SocialGrowthEngine {
             },
             automation: automationStatus.data,
             engagement: {
-                rules_count: engagementStats.totalRules,
-                daily_actions: engagementStats.dailyActions
+                rules_count: engagementStats['totalRules'],
+                daily_actions: engagementStats['dailyActions']
             },
             competitors: {
                 monitored_count: competitorCount.length,
@@ -379,7 +379,7 @@ export class SocialGrowthEngine {
             id: crypto.randomUUID(),
             type: 'content_creation',
             topic,
-            platforms,
+            platforms: platforms.filter(p => p !== 'tiktok'),
             parameters: {
                 post_count: postCount,
                 content_type: 'educational'

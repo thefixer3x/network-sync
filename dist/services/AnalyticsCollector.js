@@ -8,18 +8,18 @@ export class AnalyticsCollector {
             this.logger.info(`Collecting analytics for ${platform} account: ${accountId}`);
             // Mock metrics - in real implementation would call platform APIs
             const metrics = {
+                id: crypto.randomUUID(),
                 platform,
-                accountId,
-                followers: Math.floor(Math.random() * 10000),
-                following: Math.floor(Math.random() * 1000),
-                totalPosts: Math.floor(Math.random() * 500),
-                totalLikes: Math.floor(Math.random() * 5000),
-                totalComments: Math.floor(Math.random() * 1000),
-                totalShares: Math.floor(Math.random() * 500),
+                followersCount: Math.floor(Math.random() * 10000),
+                followingCount: Math.floor(Math.random() * 1000),
+                postsCount: Math.floor(Math.random() * 500),
                 engagementRate: Math.random() * 5,
-                reach: Math.floor(Math.random() * 50000),
-                impressions: Math.floor(Math.random() * 100000),
-                collectedAt: new Date()
+                growthRate: Math.random() * 0.1,
+                averageLikes: Math.floor(Math.random() * 5000),
+                averageComments: Math.floor(Math.random() * 1000),
+                averageShares: Math.floor(Math.random() * 500),
+                topPerformingContent: [],
+                recordedAt: new Date()
             };
             return metrics;
         }

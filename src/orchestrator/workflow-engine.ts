@@ -315,16 +315,15 @@ export class WorkflowEngine {
           query: `${request.topic} ${request.target_audience} trends analysis`,
           sources: ['web', 'news', 'academic'],
           maxResults: 15,
-          includeCompetitors: true,
-          platforms: request.platforms
+          includeImages: true
         });
 
       case 'data_collection':
-        return await this.perplexityAgent.comprehensiveResearch({
-          topic: inputs.research_topic as string,
-          sources: inputs.data_sources as string[] || ['web', 'news', 'academic'],
-          timeRange: inputs.time_range as string || '30d',
-          depth: 'comprehensive'
+        return await this.perplexityAgent.research({
+          query: inputs['research_topic'] as string,
+          sources: inputs['data_sources'] as string[] || ['web', 'news', 'academic'],
+          maxResults: 20,
+          includeImages: false
         });
 
       default:
@@ -342,51 +341,45 @@ export class WorkflowEngine {
   ): Promise<unknown> {
     switch (phase.id) {
       case 'content_alignment':
-        return await this.claudeAgent.createContentStrategy({
-          researchData: inputs.research_data,
-          brandVoice: request.brand_voice || 'professional',
-          goals: request.goals || [],
-          targetAudience: request.target_audience,
-          platforms: request.platforms
+        return await this.claudeAgent.generateContent({
+          prompt: `Create content strategy based on research data: ${JSON.stringify(inputs['research_data'])}`,
+          context: `Brand voice: ${request.brand_voice || 'professional'}. Target: ${request.target_audience}`,
+          maxTokens: 2000
         });
 
       case 'content_generation':
-        return await this.claudeAgent.generateSocialContent({
-          strategy: inputs.content_strategy,
-          messagingFramework: inputs.messaging_framework,
-          platforms: request.platforms,
-          quantity: request.parameters.post_count || 10
+        return await this.claudeAgent.generateContent({
+          prompt: `Generate ${inputs['post_count'] || 10} social media posts using strategy: ${JSON.stringify(inputs['content_strategy'])}`,
+          context: `Platform: ${request.platforms.join(', ')}. Framework: ${JSON.stringify(inputs['messaging_framework'])}`,
+          maxTokens: 3000
         });
 
       case 'content_structuring':
-        return await this.claudeAgent.createContentStructure({
-          researchData: inputs.research_data,
-          contentType: inputs.content_type as string,
-          targetAudience: request.target_audience,
-          brandVoice: request.brand_voice
+        return await this.claudeAgent.generateContent({
+          prompt: `Create content structure for ${inputs['content_type']} based on research data`,
+          context: `Research: ${JSON.stringify(inputs['research_data'])}. Audience: ${request.target_audience}`,
+          maxTokens: 1500
         });
 
       case 'content_writing':
-        return await this.claudeAgent.writeContent({
-          outline: inputs.content_outline,
-          brandVoice: request.brand_voice || 'professional',
-          keyPoints: inputs.key_points,
-          contentType: request.parameters.content_type as string
+        return await this.claudeAgent.generateContent({
+          prompt: `Write content using outline: ${JSON.stringify(inputs['content_outline'])}`,
+          context: `Key points: ${JSON.stringify(inputs['key_points'])}. Brand voice: ${request.brand_voice || 'professional'}`,
+          maxTokens: 4000
         });
 
       case 'analysis':
-        return await this.claudeAgent.analyzeData({
-          data: inputs.processed_data,
-          framework: inputs.analysis_framework || 'comprehensive',
-          focusAreas: request.parameters.focus_areas as string[] || []
+        return await this.claudeAgent.generateContent({
+          prompt: `Analyze data and extract insights: ${JSON.stringify(inputs['processed_data'])}`,
+          context: `Framework: ${inputs['analysis_framework'] || 'comprehensive'}. Focus: ${JSON.stringify(request.parameters['focus_areas'] || [])}`,
+          maxTokens: 3000
         });
 
       case 'report_generation':
-        return await this.claudeAgent.generateReport({
-          insights: inputs.insights,
-          patterns: inputs.patterns,
-          template: inputs.report_template || 'executive',
-          audience: request.target_audience
+        return await this.claudeAgent.generateContent({
+          prompt: `Generate comprehensive report with insights: ${JSON.stringify(inputs['insights'])}`,
+          context: `Patterns: ${JSON.stringify(inputs['patterns'])}. Template: ${inputs['report_template'] || 'executive'}. Audience: ${request.target_audience}`,
+          maxTokens: 5000
         });
 
       default:
@@ -404,7 +397,7 @@ export class WorkflowEngine {
   ): Promise<unknown> {
     // This would be implemented with platform-specific optimization logic
     return {
-      platform_content: this.optimizeForPlatforms(inputs.content_strategy, request.platforms),
+      platform_content: this.optimizeForPlatforms(inputs['content_strategy'], request.platforms),
       posting_schedule: this.generatePostingSchedule(request.platforms),
       hashtag_strategy: this.generateHashtagStrategy(request.topic, request.platforms)
     };
@@ -434,9 +427,9 @@ export class WorkflowEngine {
     request: WorkflowRequest
   ): Promise<unknown> {
     return {
-      processed_data: this.processRawData(inputs.raw_data),
-      data_quality_report: this.generateDataQualityReport(inputs.raw_data),
-      filtered_sources: this.filterSources(inputs.source_credibility)
+      processed_data: this.processRawData(inputs['raw_data']),
+      data_quality_report: this.generateDataQualityReport(inputs['raw_data']),
+      filtered_sources: this.filterSources(inputs['source_credibility'])
     };
   }
 
@@ -449,9 +442,9 @@ export class WorkflowEngine {
     request: WorkflowRequest
   ): Promise<unknown> {
     return {
-      optimized_content: this.optimizeContent(inputs.final_content, request.platforms),
-      seo_metadata: this.generateSEOMetadata(inputs.final_content),
-      engagement_hooks: this.createEngagementHooks(inputs.final_content, request.platforms)
+      optimized_content: this.optimizeContent(inputs['final_content'], request.platforms),
+      seo_metadata: this.generateSEOMetadata(inputs['final_content']),
+      engagement_hooks: this.createEngagementHooks(inputs['final_content'], request.platforms)
     };
   }
 
@@ -462,11 +455,11 @@ export class WorkflowEngine {
     const inputs: Record<string, unknown> = {};
     
     // Add data from request
-    inputs.topic = execution.request.topic;
-    inputs.platforms = execution.request.platforms;
-    inputs.brand_voice = execution.request.brand_voice;
-    inputs.target_audience = execution.request.target_audience;
-    inputs.goals = execution.request.goals;
+    inputs['topic'] = execution.request.topic;
+    inputs['platforms'] = execution.request.platforms;
+    inputs['brand_voice'] = execution.request.brand_voice;
+    inputs['target_audience'] = execution.request.target_audience;
+    inputs['goals'] = execution.request.goals;
     
     // Add parameters
     Object.assign(inputs, execution.request.parameters);
@@ -490,7 +483,7 @@ export class WorkflowEngine {
     await this.memoryStorage.storeContent({
       content: summary,
       platform: 'workflow_engine',
-      contentType: 'workflow_result',
+      contentType: 'post',
       metadata: {
         workflow_id: execution.id,
         workflow_type: execution.request.type,

@@ -53,7 +53,8 @@ async function demonstrateCompleteWorkflow() {
                         twitter: 'techstartupco',
                         linkedin: 'company/techstartup-co',
                         facebook: '',
-                        instagram: ''
+                        instagram: '',
+                        tiktok: ''
                     },
                     industry: 'Technology'
                 },
@@ -63,7 +64,8 @@ async function demonstrateCompleteWorkflow() {
                         twitter: 'innovatenow',
                         linkedin: 'company/innovatenow',
                         facebook: '',
-                        instagram: ''
+                        instagram: '',
+                        tiktok: ''
                     },
                     industry: 'Business Innovation'
                 }

@@ -117,8 +117,8 @@ export class CompetitorMonitor {
                 'tweet.fields': ['public_metrics', 'created_at', 'entities'],
                 exclude: ['retweets']
             });
-            // Analyze tweets
-            const tweetData = tweets.data || [];
+            // Analyze tweets - ensure we have an array
+            const tweetData = Array.isArray(tweets.data) ? tweets.data : [];
             const analysis = this.analyzeTweetData(tweetData);
             // Get follower growth (would require historical data in practice)
             const followerGrowthRate = this.estimateGrowthRate(user.data.public_metrics);

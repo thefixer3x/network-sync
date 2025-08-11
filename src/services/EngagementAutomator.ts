@@ -73,13 +73,50 @@ export class EngagementAutomator {
   constructor() {
     this.initializeSocialServices();
   }
+  private getServiceConfig(platform: SocialPlatform): any {
+      switch (platform) {
+          case 'twitter':
+              return {
+                  apiKey: process.env['TWITTER_API_KEY'],
+                  apiSecret: process.env['TWITTER_API_SECRET'],
+                  accessToken: process.env['TWITTER_ACCESS_TOKEN'],
+                  accessSecret: process.env['TWITTER_ACCESS_SECRET']
+              };
+          case 'linkedin':
+              return {
+                  accessToken: process.env['LINKEDIN_ACCESS_TOKEN'],
+                  personId: process.env['LINKEDIN_PERSON_ID']
+              };
+          case 'facebook':
+              return {
+                  accessToken: process.env['FACEBOOK_ACCESS_TOKEN'],
+                  pageId: process.env['FACEBOOK_PAGE_ID']
+              };
+          case 'instagram':
+              return {
+                  accessToken: process.env['INSTAGRAM_ACCESS_TOKEN'],
+                  instagramAccountId: process.env['INSTAGRAM_ACCOUNT_ID']
+              };
+          default:
+              throw new Error(`Unsupported platform: ${platform}`);
+      }
+  }
+
 
   private async initializeSocialServices(): Promise<void> {
     const platforms: SocialPlatform[] = ['twitter', 'linkedin', 'facebook', 'instagram'];
     
     for (const platform of platforms) {
       try {
-        const service = SocialMediaFactory.create(platform);
+        const service = SocialMediaFactory.create(platform, {
+          apiKey: process.env['TWITTER_API_KEY'],
+          apiSecret: process.env['TWITTER_API_SECRET'],
+          accessToken: process.env['TWITTER_ACCESS_TOKEN'],
+          accessSecret: process.env['TWITTER_ACCESS_SECRET'],
+          personId: process.env['LINKEDIN_PERSON_ID'], // For LinkedIn
+          pageId: process.env['FACEBOOK_PAGE_ID'],     // For Facebook
+          instagramAccountId: process.env['INSTAGRAM_ACCOUNT_ID'] // For Instagram
+        });
         await service.authenticate();
         this.socialServices.set(platform, service);
         this.logger.info(`${platform} service initialized for engagement`);
@@ -183,7 +220,8 @@ export class EngagementAutomator {
         if (!searchResults.data) continue;
 
         // Process each tweet
-        for (const tweet of searchResults.data) {
+        const tweetData = Array.isArray(searchResults.data) ? searchResults.data : [];
+        for (const tweet of tweetData) {
           const author = searchResults.includes?.users?.find(u => u.id === tweet.author_id);
           if (!author) continue;
 
@@ -210,7 +248,7 @@ export class EngagementAutomator {
             relevanceScore,
             engagementScore,
             authorMetrics: {
-              followers: author.public_metrics.followers_count,
+              followers: author.public_metrics?.followers_count ?? 0,
               verified: author.verified || false,
               engagementRate: this.calculateAuthorEngagementRate(author)
             },
@@ -451,7 +489,8 @@ Generate only the reply text, ready to post:`;
         "This is spot on. Have you found any other approaches that work?",
         "Interesting point! I'd love to hear more about your thoughts on this."
       ];
-      return genericReplies[Math.floor(Math.random() * genericReplies.length)];
+      const randomIndex = Math.floor(Math.random() * genericReplies.length);
+      return genericReplies[randomIndex] || 'Thank you for your feedback!';
     }
   }
 
@@ -494,10 +533,20 @@ Generate only the reply text, ready to post:`;
   }
 
   async getEngagementStats(platform?: SocialPlatform): Promise<Record<string, any>> {
-    const stats: Record<string, any> = {
+    const stats: {
+        totalRules: number;
+        activeRules: number;
+        dailyActions: Record<string, Record<string, number>>;
+        recentActions: any[];
+    } = {
       totalRules: this.activeRules.length,
       activeRules: this.activeRules.filter(r => r.enabled).length,
-      dailyActions: {},
+      dailyActions: {
+          twitter: {},
+          linkedin: {},
+          facebook: {},
+          instagram: {}
+      } as Record<SocialPlatform, Record<string, number>>,
       recentActions: []
     };
 
@@ -505,12 +554,12 @@ Generate only the reply text, ready to post:`;
     const today = new Date().getDate();
     for (const [key, count] of this.dailyActionCounts.entries()) {
       if (key.endsWith(`:${today}`)) {
-        const [plat, action] = key.split(':');
+        const [plat, action] = key.split(':') as [SocialPlatform, string];
         if (!platform || plat === platform) {
-          if (!stats.dailyActions[plat]) {
-            stats.dailyActions[plat] = {};
+          if (!stats['dailyActions'][plat]) {
+            stats['dailyActions'][plat] = {};
           }
-          stats.dailyActions[plat][action] = count;
+          stats['dailyActions'][plat]![action] = count;
         }
       }
     }
@@ -532,7 +581,7 @@ Generate only the reply text, ready to post:`;
     const today = new Date().getDate();
     for (const key of this.dailyActionCounts.keys()) {
       const [, , day] = key.split(':');
-      if (parseInt(day) !== today && parseInt(day) !== today - 1) {
+      if (day && parseInt(day) !== today && parseInt(day) !== today - 1) {
         this.dailyActionCounts.delete(key);
       }
     }
