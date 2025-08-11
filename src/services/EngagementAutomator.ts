@@ -545,7 +545,8 @@ Generate only the reply text, ready to post:`;
           twitter: {},
           linkedin: {},
           facebook: {},
-          instagram: {}
+          instagram: {},
+          tiktok: {}
       } as Record<SocialPlatform, Record<string, number>>,
       recentActions: []
     };
@@ -556,9 +557,6 @@ Generate only the reply text, ready to post:`;
       if (key.endsWith(`:${today}`)) {
         const [plat, action] = key.split(':') as [SocialPlatform, string];
         if (!platform || plat === platform) {
-          if (!stats['dailyActions'][plat]) {
-            stats['dailyActions'][plat] = {};
-          }
           stats['dailyActions'][plat]![action] = count;
         }
       }
