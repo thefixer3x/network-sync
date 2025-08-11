@@ -7,7 +7,7 @@ import { VectorStore } from '../storage/vector-store.js';
 // Initialize both systems
 const memory = new MultiModalMemoryClient({
     apiUrl: 'https://api.lanonasis.com',
-    apiKey: process.env.LANONASIS_API_KEY || 'your-api-key'
+    apiKey: process.env['LANONASIS_API_KEY'] || 'your-api-key'
 });
 const vectorStore = new VectorStore();
 /**

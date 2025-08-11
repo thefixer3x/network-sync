@@ -18,7 +18,7 @@ interface BrandVoice {
 export class ClaudeAgent {
   private config: ClaudeConfig;
   private apiEndpoint = 'https://api.anthropic.com/v1/messages';
-  private brandVoices: Map<string, BrandVoice>;
+  private brandVoices: Map<string, BrandVoice> = new Map();
 
   constructor() {
     this.config = {
@@ -91,7 +91,7 @@ export class ClaudeAgent {
       return this.formatContent(data, params.format);
     } catch (error) {
       console.error('Claude generation error:', error);
-      throw new Error(`Content generation failed: ${error.message}`);
+      throw new Error(`Content generation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -146,10 +146,10 @@ Provide:
       instagram: { maxLength: 2200, style: 'visual', emojis: true },
       blog: { maxLength: null, style: 'comprehensive', structure: 'full' },
       email: { maxLength: null, style: 'personalized', cta: true }
-    };
+    } as const;
 
-    const fromSpec = platformSpecs[params.fromPlatform];
-    const toSpec = platformSpecs[params.toPlatform];
+    const fromSpec = platformSpecs[params.fromPlatform as keyof typeof platformSpecs];
+    const toSpec = platformSpecs[params.toPlatform as keyof typeof platformSpecs];
 
     const prompt = `Adapt this ${params.fromPlatform} content for ${params.toPlatform}:
 
@@ -233,7 +233,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
     }
     
     if (params.sections) {
-      prompt += `\n\nInclude these sections:\n${params.sections.map(s => `- ${s}`).join('\n')}`;
+      prompt += `\n\nInclude these sections:\n${params.sections.map((s: string) => `- ${s}`).join('\n')}`;
     }
     
     return prompt;
@@ -256,7 +256,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
     };
 
     if (format === 'report') {
-      formatted['sections'] = this.extractSections(content);
+      (formatted as any).sections = this.extractSections(content);
     }
 
     return formatted;
@@ -265,15 +265,17 @@ Maintain consistency throughout the content while ensuring high quality and enga
   /**
    * Extract sections from formatted content
    */
-  private extractSections(content: string): any {
-    const sections = {};
+  private extractSections(content: string): Record<string, string> {
+    const sections: Record<string, string> = {};
     const sectionRegex = /##\s+(.+?)\n([\s\S]*?)(?=##\s+|$)/g;
     let match;
 
     while ((match = sectionRegex.exec(content)) !== null) {
-      const title = match[1].trim();
-      const body = match[2].trim();
-      sections[title] = body;
+      const title = match[1]?.trim();
+      const body = match[2]?.trim();
+      if (title && body !== undefined) {
+        sections[title] = body;
+      }
     }
 
     return sections;
@@ -308,6 +310,6 @@ Maintain consistency throughout the content while ensuring high quality and enga
       'benefit-focused messaging'
     ];
     
-    return hypotheses[index % hypotheses.length];
+    return hypotheses[index % hypotheses.length] || 'general optimization';
   }
 }

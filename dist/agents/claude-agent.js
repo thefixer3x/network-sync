@@ -5,7 +5,7 @@ export class ClaudeAgent {
     constructor() {
         this.apiEndpoint = 'https://api.anthropic.com/v1/messages';
         this.config = {
-            apiKey: process.env.CLAUDE_API_KEY || '',
+            apiKey: process.env['CLAUDE_API_KEY'] || '',
             model: 'claude-3-5-sonnet-20241022',
             maxTokens: 4096
         };

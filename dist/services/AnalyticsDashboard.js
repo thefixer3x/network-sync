@@ -5,7 +5,7 @@ import { addDays, subDays, format, startOfWeek, endOfWeek } from 'date-fns';
 export class AnalyticsDashboard {
     constructor() {
         this.logger = new Logger('AnalyticsDashboard');
-        this.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        this.supabase = createClient(process.env['SUPABASE_URL'], process.env['SUPABASE_SERVICE_ROLE_KEY']);
         this.aiService = new OpenAIService();
         this.widgets = new Map();
         this.refreshIntervals = new Map();
