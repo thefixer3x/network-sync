@@ -437,7 +437,7 @@ Return only hashtags with # symbol, one per line:`;
       facebook: ['9:00 AM', '1:00 PM', '7:00 PM']
     };
     
-    return times[platform as string] || times['twitter'];
+    return times[platform as string] ?? times['twitter'] ?? [];
   }
 
   private determineTrend(metrics: any): 'rising' | 'falling' | 'stable' {
