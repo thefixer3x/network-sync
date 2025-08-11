@@ -6,7 +6,7 @@ import { HashtagResearcher } from '../services/HashtagResearcher';
 import { CompetitorMonitor } from '../services/CompetitorMonitor';
 import { AnalyticsDashboard } from '../services/AnalyticsDashboard';
 import { WorkflowEngine, WorkflowRequest } from './workflow-engine';
-import { SocialPlatform } from '@/types';
+import { SocialPlatform } from '../types/typescript-types';
 
 export interface SocialGrowthConfig {
   platforms: SocialPlatform[];

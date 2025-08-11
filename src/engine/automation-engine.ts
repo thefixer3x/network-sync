@@ -18,16 +18,7 @@ import { SocialMediaFactory } from '@/services/SocialMediaFactory';
 import { OpenAIService } from '@/services/OpenAIService';
 import { TrendAnalyzer } from '../services/TrendAnalyzer';
 import { ContentOptimizer } from '../services/ContentOptimizer';
-import { AnalyticsCollector } f    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date()
-      };
-    }
-  }
-
-  async stop(): Promise<void> {rvices/AnalyticsCollector';
+import { AnalyticsCollector } from '../services/AnalyticsCollector';
 import { addMinutes, addHours, isAfter, format } from 'date-fns';
 
 export class AutomationEngine {
@@ -386,7 +377,7 @@ export class AutomationEngine {
       throw new Error(`Failed to fetch scheduled content: ${error.message}`);
     }
 
-    return (data || []).map(item => schemas.Content.parse(item));
+    return (data || []).map((item: any) => schemas.Content.parse(item));
   }
 
   private async publishContent(content: Content): Promise<void> {
@@ -661,7 +652,7 @@ export class AutomationEngine {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date()
       };
     }
@@ -693,7 +684,7 @@ export class AutomationEngine {
     } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date()
       };
     }

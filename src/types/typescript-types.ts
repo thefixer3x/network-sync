@@ -52,6 +52,7 @@ export const TrendSchema = z.object({
 });
 
 export type Trend = z.infer<typeof TrendSchema>;
+export type TrendData = Trend; // Alias for backwards compatibility
 
 // Account Metrics Schema
 export const AccountMetricsSchema = z.object({

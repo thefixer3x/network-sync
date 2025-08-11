@@ -85,6 +85,34 @@ export class AnalyticsCollector {
     }
   }
 
+  async analyzeCompetitor(competitorId: string, platform: SocialPlatform): Promise<any> {
+    try {
+      this.logger.info(`Analyzing competitor: ${competitorId} on ${platform}`);
+      
+      // Mock competitor analysis data
+      return {
+        competitorId,
+        platform,
+        followers: Math.floor(Math.random() * 100000),
+        avgEngagement: Math.random() * 5,
+        postFrequency: Math.floor(Math.random() * 10) + 1,
+        topContent: [
+          { id: '1', likes: 1200, comments: 89, shares: 45 },
+          { id: '2', likes: 890, comments: 67, shares: 23 }
+        ],
+        hashtags: ['#marketing', '#business', '#growth'],
+        contentTypes: ['image', 'video', 'text'],
+        postingTimes: ['9:00', '13:00', '17:00'],
+        analyzedAt: new Date()
+      };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to analyze competitor: ${errorMessage}`);
+      throw error;
+    }
+  }
+
   async generateReport(platform: SocialPlatform, period: string = '7d'): Promise<any> {
     try {
       const metrics = await this.collectMetrics(platform, 'mock-account');

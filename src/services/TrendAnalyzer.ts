@@ -57,4 +57,31 @@ export class TrendAnalyzer {
       return 0;
     }
   }
+
+  async getTrendingTopics(platform: SocialPlatform, limit: number = 10): Promise<string[]> {
+    try {
+      this.logger.info(`Getting trending topics for ${platform}`);
+      
+      // Mock trending topics - would integrate with platform APIs
+      const topics = [
+        'AI automation',
+        'machine learning',
+        'social media marketing', 
+        'digital transformation',
+        'remote work',
+        'startup growth',
+        'productivity tips',
+        'tech news',
+        'innovation trends',
+        'business strategy'
+      ];
+
+      return topics.slice(0, limit);
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to get trending topics for ${platform}: ${errorMessage}`);
+      return [];
+    }
+  }
 }

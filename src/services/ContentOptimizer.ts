@@ -65,7 +65,7 @@ export class ContentOptimizer {
   async addCallToAction(content: Content, platform: SocialPlatform): Promise<Content> {
     const ctas = {
       twitter: ['What do you think?', 'Share your thoughts!', 'Retweet if you agree!'],
-      linkedin: ['What's your experience?', 'Thoughts?', 'Would love to hear from you in the comments.'],
+      linkedin: ['What\'s your experience?', 'Thoughts?', 'Would love to hear from you in the comments.'],
       facebook: ['Let us know in the comments!', 'What do you think?', 'Share your thoughts!'],
       instagram: ['Tag a friend who needs to see this!', 'Double tap if you agree!', 'What do you think?'],
       tiktok: ['Duet this!', 'What do you think?', 'Try this and let me know!']

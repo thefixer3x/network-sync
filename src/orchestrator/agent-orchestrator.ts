@@ -3,8 +3,8 @@
  * Manages task delegation to specialized LLM agents
  */
 
-import { PerplexityAgent } from './agents/perplexity-agent';
-import { ClaudeAgent } from './agents/claude-agent';
+import { PerplexityAgent } from '../agents/perplexity-agent';
+import { ClaudeAgent } from '../agents/claude-agent';
 import { EmbeddingAgent } from './agents/embedding-agent';
 import { GoogleDriveStorage } from './storage/google-drive';
 import { VectorStore } from './storage/vector-store';
