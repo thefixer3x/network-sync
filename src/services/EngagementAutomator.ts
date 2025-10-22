@@ -1,6 +1,6 @@
 import { SocialPlatform, Content, SocialMediaError } from '../types/typescript-types';
 import { Logger } from '@/utils/Logger';
-import { SocialMediaFactory } from './SocialMediaFactory';
+import { SocialMediaFactory, PlatformCredentials } from './SocialMediaFactory';
 import { OpenAIService } from './OpenAIService';
 import { TwitterApi } from 'twitter-api-v2';
 
@@ -108,15 +108,8 @@ export class EngagementAutomator {
     
     for (const platform of platforms) {
       try {
-        const service = SocialMediaFactory.create(platform, {
-          apiKey: process.env['TWITTER_API_KEY'],
-          apiSecret: process.env['TWITTER_API_SECRET'],
-          accessToken: process.env['TWITTER_ACCESS_TOKEN'],
-          accessSecret: process.env['TWITTER_ACCESS_SECRET'],
-          personId: process.env['LINKEDIN_PERSON_ID'], // For LinkedIn
-          pageId: process.env['FACEBOOK_PAGE_ID'],     // For Facebook
-          instagramAccountId: process.env['INSTAGRAM_ACCOUNT_ID'] // For Instagram
-        });
+        const credentials = this.resolvePlatformCredentials(platform);
+        const service = SocialMediaFactory.create(platform, credentials);
         await service.authenticate();
         this.socialServices.set(platform, service);
         this.logger.info(`${platform} service initialized for engagement`);
@@ -124,6 +117,43 @@ export class EngagementAutomator {
         this.logger.error(`Failed to initialize ${platform} for engagement:`, error);
       }
     }
+  }
+
+  private resolvePlatformCredentials(platform: SocialPlatform): PlatformCredentials {
+    const credentials: PlatformCredentials = {};
+
+    switch (platform) {
+      case 'twitter':
+        if (process.env['TWITTER_API_KEY']) credentials.apiKey = process.env['TWITTER_API_KEY'];
+        if (process.env['TWITTER_API_SECRET']) credentials.apiSecret = process.env['TWITTER_API_SECRET'];
+        if (process.env['TWITTER_ACCESS_TOKEN']) credentials.accessToken = process.env['TWITTER_ACCESS_TOKEN'];
+        if (process.env['TWITTER_ACCESS_SECRET']) {
+          credentials.accessSecret = process.env['TWITTER_ACCESS_SECRET'];
+        } else if (process.env['TWITTER_ACCESS_TOKEN_SECRET']) {
+          credentials.accessSecret = process.env['TWITTER_ACCESS_TOKEN_SECRET'];
+        }
+        break;
+      case 'linkedin':
+        if (process.env['LINKEDIN_ACCESS_TOKEN']) credentials.accessToken = process.env['LINKEDIN_ACCESS_TOKEN'];
+        if (process.env['LINKEDIN_PERSON_ID']) credentials.personId = process.env['LINKEDIN_PERSON_ID'];
+        break;
+      case 'facebook':
+        if (process.env['FACEBOOK_ACCESS_TOKEN']) credentials.accessToken = process.env['FACEBOOK_ACCESS_TOKEN'];
+        if (process.env['FACEBOOK_PAGE_ID']) credentials.pageId = process.env['FACEBOOK_PAGE_ID'];
+        break;
+      case 'instagram':
+        if (process.env['INSTAGRAM_ACCESS_TOKEN']) credentials.accessToken = process.env['INSTAGRAM_ACCESS_TOKEN'];
+        if (process.env['INSTAGRAM_ACCOUNT_ID']) {
+          credentials.instagramAccountId = process.env['INSTAGRAM_ACCOUNT_ID'];
+        } else if (process.env['INSTAGRAM_BUSINESS_ACCOUNT_ID']) {
+          credentials.instagramAccountId = process.env['INSTAGRAM_BUSINESS_ACCOUNT_ID'];
+        }
+        break;
+      default:
+        break;
+    }
+
+    return credentials;
   }
 
   async addEngagementRule(rule: Omit<EngagementRule, 'id' | 'createdAt' | 'updatedAt'>): Promise<EngagementRule> {

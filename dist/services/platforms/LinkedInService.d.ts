@@ -1,11 +1,15 @@
 import { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
+type LinkedInCredentials = Partial<{
+    accessToken: string;
+    personId: string;
+}>;
 export declare class LinkedInService implements SocialMediaService {
     platform: "linkedin";
-    private baseURL;
     private accessToken;
     private personId;
     private logger;
-    constructor(accessToken: string, personId?: string);
+    private baseURL;
+    constructor(credentials?: LinkedInCredentials);
     authenticate(): Promise<boolean>;
     post(content: Content): Promise<string>;
     getMetrics(): Promise<AccountMetrics>;
@@ -22,4 +26,5 @@ export declare class LinkedInService implements SocialMediaService {
     private getTopPerformingPosts;
     private handleLinkedInError;
 }
+export {};
 //# sourceMappingURL=LinkedInService.d.ts.map

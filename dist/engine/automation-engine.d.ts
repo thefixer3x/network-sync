@@ -1,13 +1,13 @@
-import { APIResponse } from '../types/typescript-types';
+import { APIResponse } from '@/types';
 export declare class AutomationEngine {
-    private logger;
-    private supabase;
-    private socialServices;
-    private aiService;
-    private trendAnalyzer;
-    private contentOptimizer;
-    private analyticsCollector;
-    private scheduledJobs;
+    private readonly logger;
+    private readonly supabase;
+    private readonly socialServices;
+    private readonly aiService;
+    private readonly trendAnalyzer;
+    private readonly contentOptimizer;
+    private readonly analyticsCollector;
+    private readonly scheduledJobs;
     private isRunning;
     private config;
     constructor();

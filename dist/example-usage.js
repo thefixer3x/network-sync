@@ -95,7 +95,7 @@ async function demonstrateOrchestration() {
 async function contentProductionPipeline(topic) {
     console.log(`🏭 Starting Content Production Pipeline for: ${topic}\n`);
     // Phase 1: Research
-    const research = await orchestrator.delegateTask({
+    const research = (await orchestrator.delegateTask({
         id: 'research_001',
         type: 'research',
         priority: 10,
@@ -105,10 +105,10 @@ async function contentProductionPipeline(topic) {
             maxResults: 20,
             includeImages: true
         }
-    });
+    }));
     console.log('✅ Research completed:', research.summary);
     // Phase 2: Content Creation
-    const content = await orchestrator.delegateTask({
+    const content = (await orchestrator.delegateTask({
         id: 'content_001',
         type: 'writing',
         priority: 9,
@@ -120,10 +120,10 @@ async function contentProductionPipeline(topic) {
             format: 'social_media_series',
             sections: ['Hook', 'Value Proposition', 'Call to Action']
         }
-    });
+    }));
     console.log('✅ Content created');
     // Phase 3: A/B Testing Variations
-    const variations = await orchestrator.delegateTask({
+    const variations = (await orchestrator.delegateTask({
         id: 'variations_001',
         type: 'writing',
         priority: 8,
@@ -135,18 +135,21 @@ async function contentProductionPipeline(topic) {
             variationType: 'headline',
             testingGoal: 'maximize engagement'
         }
-    });
+    }));
     console.log('✅ A/B variations generated:', variations.length);
     // Phase 4: Analytics Embedding
-    const embeddings = await orchestrator.delegateTask({
+    const embeddings = (await orchestrator.delegateTask({
         id: 'embed_001',
         type: 'embedding',
         priority: 7,
         timestamp: new Date(),
         payload: {
-            texts: [content.content, ...variations.map((v) => v.content)]
+            texts: [
+                content.content,
+                ...variations.map((variation) => variation.content)
+            ]
         }
-    });
+    }));
     console.log('✅ Embeddings stored for semantic search');
     return {
         research,
@@ -160,7 +163,7 @@ async function monitorTrends() {
     console.log('📈 Starting Trend Monitoring...\n');
     // Set up recurring monitoring
     const monitoringInterval = setInterval(async () => {
-        const trends = await orchestrator.delegateTask({
+        const trends = (await orchestrator.delegateTask({
             id: `monitor_${Date.now()}`,
             type: 'research',
             priority: 5,
@@ -170,10 +173,11 @@ async function monitorTrends() {
                 sources: ['twitter', 'reddit', 'tiktok'],
                 maxResults: 10
             }
-        });
+        }));
         console.log('📊 Trending Now:', trends.summary);
         // Auto-generate content for trending topics
-        if (trends.citations?.length > 5) {
+        const citations = trends.citations ?? [];
+        if (citations.length > 5) {
             console.log('🔥 Hot topic detected! Generating content...');
             await orchestrator.delegateTask({
                 id: `trend_content_${Date.now()}`,

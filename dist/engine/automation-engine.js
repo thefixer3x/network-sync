@@ -1,18 +1,19 @@
-// src/engine/AutomationEngine.ts
+// src/engine/automation-engine.ts
+import { randomUUID } from 'node:crypto';
 import cron from 'node-cron';
 import { createClient } from '@supabase/supabase-js';
-import { RateLimitError, schemas } from '../types/typescript-types';
+import { RateLimitError, schemas } from '@/types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from '@/services/SocialMediaFactory';
 import { OpenAIService } from '@/services/OpenAIService';
-import { TrendAnalyzer } from '../services/TrendAnalyzer';
-import { ContentOptimizer } from '../services/ContentOptimizer';
-import { AnalyticsCollector } from '../services/AnalyticsCollector';
+import { TrendAnalyzer } from '@/services/TrendAnalyzer';
+import { ContentOptimizer } from '@/services/ContentOptimizer';
+import { AnalyticsCollector } from '@/services/AnalyticsCollector';
 import { addMinutes, addHours } from 'date-fns';
+const getErrorMessage = (error) => error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
 export class AutomationEngine {
     constructor() {
         this.logger = new Logger('AutomationEngine');
-        this.supabase = createClient(process.env['SUPABASE_URL'], process.env['SUPABASE_SERVICE_ROLE_KEY']);
         this.socialServices = new Map();
         this.aiService = new OpenAIService();
         this.trendAnalyzer = new TrendAnalyzer();
@@ -21,7 +22,13 @@ export class AutomationEngine {
         this.scheduledJobs = new Map();
         this.isRunning = false;
         this.config = null;
-        this.initializeServices();
+        const supabaseUrl = process.env['SUPABASE_URL'];
+        const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+        if (!supabaseUrl || !serviceRoleKey) {
+            throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.');
+        }
+        this.supabase = createClient(supabaseUrl, serviceRoleKey);
+        void this.initializeServices();
         this.setupErrorHandling();
     }
     async initializeServices() {
@@ -30,7 +37,7 @@ export class AutomationEngine {
             const platforms = ['twitter', 'linkedin', 'facebook', 'instagram'];
             for (const platform of platforms) {
                 try {
-                    const service = SocialMediaFactory.create(platform, {});
+                    const service = SocialMediaFactory.create(platform);
                     await service.authenticate();
                     this.socialServices.set(platform, service);
                     this.logger.info(`${platform} service initialized successfully`);
@@ -125,7 +132,7 @@ export class AutomationEngine {
         }
         catch (error) {
             this.logger.error('Failed to load configuration:', error);
-            throw error;
+            throw error instanceof Error ? error : new Error(getErrorMessage(error));
         }
     }
     async scheduleAutomationTasks() {
@@ -162,11 +169,10 @@ export class AutomationEngine {
         try {
             this.logger.info('Starting daily content generation...');
             // Get trending topics
-            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords);
+            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords, this.config.trendMonitoring.industries);
             // Generate content for each platform
             const generatedContent = [];
-            for (const platformStr of this.config.platforms) {
-                const platform = platformStr;
+            for (const platform of this.config.platforms) {
                 const contentIdeas = await this.generateContentForPlatform(platform, trends);
                 generatedContent.push(...contentIdeas);
             }
@@ -186,27 +192,17 @@ export class AutomationEngine {
                 // Generate base content using AI
                 const prompt = this.createContentPrompt(trend, platform);
                 const generatedText = await this.aiService.generateContent(prompt);
-                // Create temporary content object for optimization
-                const tempContent = {
-                    id: crypto.randomUUID(),
-                    content: generatedText,
+                // Optimize for platform
+                const optimizedContent = await this.contentOptimizer.optimizeForPlatform(generatedText, platform);
+                // Create content object
+                const content = {
+                    id: randomUUID(),
+                    content: optimizedContent.text,
                     platform,
                     status: 'draft',
-                    hashtags: [],
-                    mentions: [],
+                    hashtags: optimizedContent.hashtags,
+                    mentions: optimizedContent.mentions,
                     mediaUrls: [],
-                    aiGenerated: true,
-                    originalTopic: trend.topic,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                };
-                // Optimize for platform
-                const optimizedContent = await this.contentOptimizer.optimizeForPlatform(tempContent, platform);
-                // Create final content object
-                const content = {
-                    ...optimizedContent,
-                    id: crypto.randomUUID(),
-                    status: 'draft',
                     aiGenerated: true,
                     originalTopic: trend.topic,
                     createdAt: new Date(),
@@ -224,16 +220,17 @@ export class AutomationEngine {
     }
     createContentPrompt(trend, platform) {
         const platformContext = {
-            twitter: "Create a concise, engaging tweet that drives discussion and includes relevant hashtags.",
-            linkedin: "Write a professional LinkedIn post that provides business insights and encourages professional networking.",
+            twitter: 'Create a concise, engaging tweet that drives discussion and includes relevant hashtags.',
+            linkedin: 'Write a professional LinkedIn post that provides business insights and encourages professional networking.',
             facebook: "Craft a Facebook post that's conversational, engaging, and suitable for community discussion.",
-            instagram: "Create an Instagram caption that's visually appealing, uses relevant hashtags, and encourages engagement."
+            instagram: "Create an Instagram caption that's visually appealing, uses relevant hashtags, and encourages engagement.",
+            tiktok: 'Outline a TikTok script that captures attention quickly, leverages current trends, and delivers clear value.'
         };
         return `
       As a business development specialist focused on changing the world one solution at a time, create engaging social media content about: ${trend.topic}
 
       Platform: ${platform}
-      Context: ${platformContext[platform] || platformContext.twitter}
+      Context: ${platformContext[platform]}
       Keywords: ${trend.keywords.join(', ')}
       Tone: Professional but approachable, solution-focused, optimistic
       
@@ -259,7 +256,7 @@ export class AutomationEngine {
         }
         catch (error) {
             this.logger.error('Failed to store generated content:', error);
-            throw error;
+            throw error instanceof Error ? error : new Error(getErrorMessage(error));
         }
     }
     async executeScheduledPosting() {
@@ -280,18 +277,14 @@ export class AutomationEngine {
             this.logger.info(`Publishing results: ${successful} successful, ${failed} failed`);
             // Handle failed posts
             if (failed > 0) {
-                const failedResults = [];
-                results.forEach((r, index) => {
-                    if (r.status === 'rejected' && scheduledContent[index]) {
-                        failedResults.push({
-                            content: scheduledContent[index],
-                            error: r.reason
-                        });
-                    }
-                });
-                if (failedResults.length > 0) {
-                    await this.handleFailedPosts(failedResults);
-                }
+                const failedResults = results
+                    .map((result, index) => ({ result, content: scheduledContent[index] }))
+                    .filter((item) => item.result.status === 'rejected')
+                    .map(({ result, content }) => ({
+                    content,
+                    error: result.reason
+                }));
+                await this.handleFailedPosts(failedResults);
             }
         }
         catch (error) {
@@ -310,7 +303,7 @@ export class AutomationEngine {
         if (error) {
             throw new Error(`Failed to fetch scheduled content: ${error.message}`);
         }
-        return (data || []).map((item) => schemas.Content.parse(item));
+        return (data || []).map(item => schemas.Content.parse(item));
     }
     async publishContent(content) {
         try {
@@ -323,20 +316,20 @@ export class AutomationEngine {
             const postId = await service.post(content);
             // Update content status
             await this.updateContentStatus(content.id, 'published', {
-                publishedTime: new Date()
+                publishedTime: new Date(),
+                externalId: postId
             });
             this.logger.info(`Successfully published content ${content.id} as post ${postId}`);
         }
         catch (error) {
             this.logger.error(`Failed to publish content ${content.id}:`, error);
-            // Handle rate limiting
             if (error instanceof RateLimitError) {
                 await this.handleRateLimit(content, error.resetTime);
             }
             else {
-                await this.updateContentStatus(content.id, 'failed', {});
+                await this.updateContentStatus(content.id, 'failed');
             }
-            throw error;
+            throw error instanceof Error ? error : new Error(getErrorMessage(error));
         }
     }
     async updateContentStatus(contentId, status, updates = {}) {
@@ -361,22 +354,22 @@ export class AutomationEngine {
     }
     async handleFailedPosts(failedPosts) {
         for (const { content, error } of failedPosts) {
-            // Implement retry logic based on error type
             if (error instanceof RateLimitError) {
-                continue; // Already handled in handleRateLimit
+                continue;
             }
-            // For other errors, mark as failed and potentially schedule retry
-            const retryable = error.retryable || false;
+            const retryable = typeof error === 'object' && error !== null && 'retryable' in error
+                ? Boolean(error.retryable)
+                : false;
             if (retryable) {
-                // Schedule retry in 1 hour
                 const retryTime = addHours(new Date(), 1);
                 await this.updateContentStatus(content.id, 'scheduled', {
                     scheduledTime: retryTime
                 });
             }
             else {
-                await this.updateContentStatus(content.id, 'failed', {});
+                await this.updateContentStatus(content.id, 'failed');
             }
+            this.logger.error(`Content ${content.id} failed to publish: ${getErrorMessage(error)}`);
         }
     }
     async startTrendMonitoring() {
@@ -406,7 +399,7 @@ export class AutomationEngine {
     async collectTrends() {
         try {
             this.logger.info('Collecting trending topics...');
-            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords);
+            const trends = await this.trendAnalyzer.getTrendingTopics(this.config.trendMonitoring.keywords, this.config.trendMonitoring.industries);
             // Store trends in database
             const { error } = await this.supabase
                 .from('trends')
@@ -432,7 +425,7 @@ export class AutomationEngine {
                         if (!service)
                             continue;
                         // Get competitor's recent posts and analyze them
-                        const analysis = await this.analyticsCollector.analyzeCompetitor(`${competitor.name}_${handle}`, platform);
+                        const analysis = await this.analyticsCollector.analyzeCompetitor(competitor.name, platform, handle);
                         analyses.push(analysis);
                     }
                     catch (error) {
@@ -459,9 +452,8 @@ export class AutomationEngine {
         try {
             this.logger.info('Collecting account analytics...');
             const metrics = [];
-            for (const platformStr of this.config.platforms) {
+            for (const platform of this.config.platforms) {
                 try {
-                    const platform = platformStr;
                     const service = this.socialServices.get(platform);
                     if (!service)
                         continue;
@@ -469,7 +461,7 @@ export class AutomationEngine {
                     metrics.push(platformMetrics);
                 }
                 catch (error) {
-                    this.logger.error(`Failed to collect metrics for ${platformStr}:`, error);
+                    this.logger.error(`Failed to collect metrics for ${platform}:`, error);
                 }
             }
             // Store metrics
@@ -528,7 +520,7 @@ export class AutomationEngine {
         catch (error) {
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
+                error: getErrorMessage(error),
                 timestamp: new Date()
             };
         }
@@ -556,7 +548,7 @@ export class AutomationEngine {
         catch (error) {
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
+                error: getErrorMessage(error),
                 timestamp: new Date()
             };
         }

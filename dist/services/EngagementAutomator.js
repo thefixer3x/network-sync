@@ -12,11 +12,40 @@ export class EngagementAutomator {
         this.dailyActionCounts = new Map();
         this.initializeSocialServices();
     }
+    getServiceConfig(platform) {
+        switch (platform) {
+            case 'twitter':
+                return {
+                    apiKey: process.env['TWITTER_API_KEY'],
+                    apiSecret: process.env['TWITTER_API_SECRET'],
+                    accessToken: process.env['TWITTER_ACCESS_TOKEN'],
+                    accessSecret: process.env['TWITTER_ACCESS_SECRET']
+                };
+            case 'linkedin':
+                return {
+                    accessToken: process.env['LINKEDIN_ACCESS_TOKEN'],
+                    personId: process.env['LINKEDIN_PERSON_ID']
+                };
+            case 'facebook':
+                return {
+                    accessToken: process.env['FACEBOOK_ACCESS_TOKEN'],
+                    pageId: process.env['FACEBOOK_PAGE_ID']
+                };
+            case 'instagram':
+                return {
+                    accessToken: process.env['INSTAGRAM_ACCESS_TOKEN'],
+                    instagramAccountId: process.env['INSTAGRAM_ACCOUNT_ID']
+                };
+            default:
+                throw new Error(`Unsupported platform: ${platform}`);
+        }
+    }
     async initializeSocialServices() {
         const platforms = ['twitter', 'linkedin', 'facebook', 'instagram'];
         for (const platform of platforms) {
             try {
-                const service = SocialMediaFactory.create(platform);
+                const credentials = this.resolvePlatformCredentials(platform);
+                const service = SocialMediaFactory.create(platform, credentials);
                 await service.authenticate();
                 this.socialServices.set(platform, service);
                 this.logger.info(`${platform} service initialized for engagement`);
@@ -25,6 +54,50 @@ export class EngagementAutomator {
                 this.logger.error(`Failed to initialize ${platform} for engagement:`, error);
             }
         }
+    }
+    resolvePlatformCredentials(platform) {
+        const credentials = {};
+        switch (platform) {
+            case 'twitter':
+                if (process.env['TWITTER_API_KEY'])
+                    credentials.apiKey = process.env['TWITTER_API_KEY'];
+                if (process.env['TWITTER_API_SECRET'])
+                    credentials.apiSecret = process.env['TWITTER_API_SECRET'];
+                if (process.env['TWITTER_ACCESS_TOKEN'])
+                    credentials.accessToken = process.env['TWITTER_ACCESS_TOKEN'];
+                if (process.env['TWITTER_ACCESS_SECRET']) {
+                    credentials.accessSecret = process.env['TWITTER_ACCESS_SECRET'];
+                }
+                else if (process.env['TWITTER_ACCESS_TOKEN_SECRET']) {
+                    credentials.accessSecret = process.env['TWITTER_ACCESS_TOKEN_SECRET'];
+                }
+                break;
+            case 'linkedin':
+                if (process.env['LINKEDIN_ACCESS_TOKEN'])
+                    credentials.accessToken = process.env['LINKEDIN_ACCESS_TOKEN'];
+                if (process.env['LINKEDIN_PERSON_ID'])
+                    credentials.personId = process.env['LINKEDIN_PERSON_ID'];
+                break;
+            case 'facebook':
+                if (process.env['FACEBOOK_ACCESS_TOKEN'])
+                    credentials.accessToken = process.env['FACEBOOK_ACCESS_TOKEN'];
+                if (process.env['FACEBOOK_PAGE_ID'])
+                    credentials.pageId = process.env['FACEBOOK_PAGE_ID'];
+                break;
+            case 'instagram':
+                if (process.env['INSTAGRAM_ACCESS_TOKEN'])
+                    credentials.accessToken = process.env['INSTAGRAM_ACCESS_TOKEN'];
+                if (process.env['INSTAGRAM_ACCOUNT_ID']) {
+                    credentials.instagramAccountId = process.env['INSTAGRAM_ACCOUNT_ID'];
+                }
+                else if (process.env['INSTAGRAM_BUSINESS_ACCOUNT_ID']) {
+                    credentials.instagramAccountId = process.env['INSTAGRAM_BUSINESS_ACCOUNT_ID'];
+                }
+                break;
+            default:
+                break;
+        }
+        return credentials;
     }
     async addEngagementRule(rule) {
         const newRule = {
@@ -104,7 +177,8 @@ export class EngagementAutomator {
                 if (!searchResults.data)
                     continue;
                 // Process each tweet
-                for (const tweet of searchResults.data) {
+                const tweetData = Array.isArray(searchResults.data) ? searchResults.data : [];
+                for (const tweet of tweetData) {
                     const author = searchResults.includes?.users?.find(u => u.id === tweet.author_id);
                     if (!author)
                         continue;
@@ -130,7 +204,7 @@ export class EngagementAutomator {
                         relevanceScore,
                         engagementScore,
                         authorMetrics: {
-                            followers: author.public_metrics.followers_count,
+                            followers: author.public_metrics?.followers_count ?? 0,
                             verified: author.verified || false,
                             engagementRate: this.calculateAuthorEngagementRate(author)
                         },
@@ -341,7 +415,8 @@ Generate only the reply text, ready to post:`;
                 "This is spot on. Have you found any other approaches that work?",
                 "Interesting point! I'd love to hear more about your thoughts on this."
             ];
-            return genericReplies[Math.floor(Math.random() * genericReplies.length)];
+            const randomIndex = Math.floor(Math.random() * genericReplies.length);
+            return genericReplies[randomIndex] || 'Thank you for your feedback!';
         }
     }
     canPerformAction(platform, action) {
@@ -378,7 +453,13 @@ Generate only the reply text, ready to post:`;
         const stats = {
             totalRules: this.activeRules.length,
             activeRules: this.activeRules.filter(r => r.enabled).length,
-            dailyActions: {},
+            dailyActions: {
+                twitter: {},
+                linkedin: {},
+                facebook: {},
+                instagram: {},
+                tiktok: {}
+            },
             recentActions: []
         };
         // Calculate daily action counts
@@ -387,10 +468,7 @@ Generate only the reply text, ready to post:`;
             if (key.endsWith(`:${today}`)) {
                 const [plat, action] = key.split(':');
                 if (!platform || plat === platform) {
-                    if (!stats.dailyActions[plat]) {
-                        stats.dailyActions[plat] = {};
-                    }
-                    stats.dailyActions[plat][action] = count;
+                    stats['dailyActions'][plat][action] = count;
                 }
             }
         }
@@ -408,7 +486,7 @@ Generate only the reply text, ready to post:`;
         const today = new Date().getDate();
         for (const key of this.dailyActionCounts.keys()) {
             const [, , day] = key.split(':');
-            if (parseInt(day) !== today && parseInt(day) !== today - 1) {
+            if (day && parseInt(day) !== today && parseInt(day) !== today - 1) {
                 this.dailyActionCounts.delete(key);
             }
         }

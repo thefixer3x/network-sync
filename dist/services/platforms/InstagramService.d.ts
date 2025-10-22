@@ -1,21 +1,24 @@
 import { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
+type InstagramCredentials = Partial<{
+    accessToken: string;
+    instagramAccountId: string;
+}>;
 export declare class InstagramService implements SocialMediaService {
     platform: "instagram";
-    private baseURL;
     private accessToken;
-    private instagramAccountId;
+    private businessAccountId;
     private logger;
-    constructor(accessToken: string, instagramAccountId?: string);
+    private baseURL;
+    constructor(credentials?: InstagramCredentials);
     authenticate(): Promise<boolean>;
     post(content: Content): Promise<string>;
+    private createMediaContainers;
     getMetrics(): Promise<AccountMetrics>;
     deletePost(postId: string): Promise<boolean>;
     schedulePost(content: Content): Promise<string>;
     private validateContent;
-    private calculateEngagementRate;
-    private calculateAverageLikes;
-    private calculateAverageComments;
     private getTopPerformingPosts;
     private handleInstagramError;
 }
+export {};
 //# sourceMappingURL=InstagramService.d.ts.map

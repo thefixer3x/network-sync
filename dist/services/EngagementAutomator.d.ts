@@ -63,7 +63,9 @@ export declare class EngagementAutomator {
     private actionLog;
     private dailyActionCounts;
     constructor();
+    private getServiceConfig;
     private initializeSocialServices;
+    private resolvePlatformCredentials;
     addEngagementRule(rule: Omit<EngagementRule, 'id' | 'createdAt' | 'updatedAt'>): Promise<EngagementRule>;
     findEngagementOpportunities(platform: SocialPlatform): Promise<EngagementOpportunity[]>;
     private findTwitterOpportunities;

@@ -5,8 +5,8 @@
 
 import { PerplexityAgent } from '../agents/perplexity-agent';
 import { ClaudeAgent } from '../agents/claude-agent';
-// import { EmbeddingAgent } from '../agents/embedding-agent'; // TODO: Create this file
-// import { GoogleDriveStorage } from '../storage/google-drive'; // TODO: Create this file
+import { EmbeddingAgent } from '../agents/embedding-agent';
+import { GoogleDriveStorage } from '../storage/google-drive';
 import { VectorStore } from '../storage/vector-store';
 
 export interface AgentTask {
@@ -25,56 +25,78 @@ export interface AgentCapability {
   speedRating: number;
 }
 
+type AgentKey = 'perplexity' | 'claude' | 'embedding';
+type AgentInstance = PerplexityAgent | ClaudeAgent | EmbeddingAgent;
+
+type GeneratedReport = {
+  content: string;
+  metadata: {
+    generatedAt: Date;
+    taskId: string;
+    type: string;
+  };
+  driveUrl?: string;
+};
+
 export class AgentOrchestrator {
-  private agents: Map<string, any> = new Map();
+  private agents: Map<AgentKey, AgentInstance> = new Map();
   private taskQueue: AgentTask[] = [];
-  private capabilities: Map<string, AgentCapability> = new Map();
-  // private driveStorage: GoogleDriveStorage; // TODO: Uncomment when GoogleDriveStorage is created
-  private vectorStore: VectorStore;
+  private capabilities: Map<AgentKey, AgentCapability> = new Map();
+  private readonly driveStorage: GoogleDriveStorage;
+  private readonly vectorStore: VectorStore;
 
   constructor() {
     this.initializeAgents();
     this.defineCapabilities();
-    // this.driveStorage = new GoogleDriveStorage(); // TODO: Uncomment when GoogleDriveStorage is created
+    this.driveStorage = new GoogleDriveStorage();
     this.vectorStore = new VectorStore();
   }
 
   private initializeAgents() {
+    this.agents.clear();
     this.agents.set('perplexity', new PerplexityAgent());
     this.agents.set('claude', new ClaudeAgent());
-    // this.agents.set('embedding', new EmbeddingAgent()); // TODO: Uncomment when EmbeddingAgent is created
+    this.agents.set('embedding', new EmbeddingAgent());
   }
 
   private defineCapabilities() {
-    this.capabilities = new Map([
-      ['perplexity', {
+    this.capabilities.clear();
+    this.capabilities.set('perplexity', {
         agent: 'perplexity',
         strengths: ['real-time research', 'web search', 'fact checking', 'current events'],
         weaknesses: ['creative writing', 'code generation'],
         costPerToken: 0.0001,
         speedRating: 9
-      }],
-      ['claude', {
+    });
+    this.capabilities.set('claude', {
         agent: 'claude-3.5-sonnet',
         strengths: ['creative writing', 'analysis', 'code generation', 'complex reasoning'],
         weaknesses: ['real-time data', 'web search'],
         costPerToken: 0.003,
         speedRating: 7
-      }],
-      ['embedding', {
+    });
+    this.capabilities.set('embedding', {
         agent: 'text-embedding-3',
         strengths: ['vector embeddings', 'semantic search', 'similarity analysis'],
         weaknesses: ['content generation', 'reasoning'],
         costPerToken: 0.00002,
         speedRating: 10
-      }]
-    ]);
+    });
+  }
+
+  private getAgent<T extends AgentInstance>(key: AgentKey): T {
+    const agent = this.agents.get(key);
+    if (!agent) {
+      throw new Error(`Agent "${key}" is not initialized`);
+    }
+
+    return agent as T;
   }
 
   /**
    * Route task to most appropriate agent based on task type and content
    */
-  async delegateTask(task: AgentTask): Promise<any> {
+  async delegateTask(task: AgentTask): Promise<unknown> {
     const bestAgent = this.selectBestAgent(task);
     
     console.log(`📋 Delegating ${task.type} task to ${bestAgent}`);
@@ -94,22 +116,22 @@ export class AgentOrchestrator {
   /**
    * Smart agent selection based on task requirements
    */
-  private selectBestAgent(task: AgentTask): string {
-    const taskTypeMapping = {
-      'research': 'perplexity',
-      'writing': 'claude',
-      'analysis': 'claude',
-      'embedding': 'embedding'
+  private selectBestAgent(task: AgentTask): AgentKey {
+    const taskTypeMapping: Record<AgentTask['type'], AgentKey> = {
+      research: 'perplexity',
+      writing: 'claude',
+      analysis: 'claude',
+      embedding: 'embedding'
     };
 
-    return taskTypeMapping[task.type] || 'claude';
+    return taskTypeMapping[task.type] ?? 'claude';
   }
 
   /**
    * Research Task Handler - Perplexity
    */
   private async handleResearchTask(task: AgentTask) {
-    const agent = this.agents.get('perplexity');
+    const agent = this.getAgent<PerplexityAgent>('perplexity');
     
     // Perform research
     const researchResults = await agent.research({
@@ -119,7 +141,7 @@ export class AgentOrchestrator {
     });
 
     // Store raw research in vector database
-    await this.vectorStore.store({
+    const vectorId = await this.vectorStore.store({
       content: researchResults,
       metadata: {
         taskId: task.id,
@@ -134,8 +156,8 @@ export class AgentOrchestrator {
 
     return {
       summary: researchResults.summary,
-      reportUrl: (report as any).driveUrl,
-      vectorId: researchResults.vectorId
+      reportUrl: report.driveUrl,
+      vectorId
     };
   }
 
@@ -143,7 +165,7 @@ export class AgentOrchestrator {
    * Writing Task Handler - Claude
    */
   private async handleWritingTask(task: AgentTask) {
-    const agent = this.agents.get('claude');
+    const agent = this.getAgent<ClaudeAgent>('claude');
     
     // Retrieve context from vector store if needed
     let context = '';
@@ -155,7 +177,7 @@ export class AgentOrchestrator {
     }
 
     // Generate content with brand voice
-    const content = await agent.generateContent({
+    const contentResult = await agent.generateContent({
       prompt: task.payload.prompt,
       context: context,
       brandVoice: task.payload.brandVoice || 'professional',
@@ -164,37 +186,43 @@ export class AgentOrchestrator {
     });
 
     // Store generated content
-    await this.storeContent(content, task);
+    await this.storeContent(contentResult, task);
 
-    return content;
+    return contentResult.content;
   }
 
   /**
    * Embedding Task Handler
    */
   private async handleEmbeddingTask(task: AgentTask) {
-    const agent = this.agents.get('embedding');
-    
+    const agent = this.getAgent<EmbeddingAgent>('embedding');
+
     const embeddings = await agent.createEmbeddings({
       texts: task.payload.texts,
       model: 'text-embedding-3-small'
     });
 
-    await this.vectorStore.storeEmbeddings(embeddings);
+    await this.vectorStore.storeEmbeddings(
+      embeddings.map(({ content, embedding, metadata }) => ({
+        content,
+        embedding,
+        metadata
+      }))
+    );
 
     return {
-      embeddingIds: embeddings.map((e: any) => e.id),
-      dimensions: embeddings[0].dimensions
+      embeddingIds: embeddings.map((embedding) => embedding.id),
+      dimensions: embeddings[0]?.dimensions ?? 0
     };
   }
 
   /**
    * Generate structured report from research
    */
-  private async generateReport(data: any, task: AgentTask) {
-    const claudeAgent = this.agents.get('claude');
-    
-    const report = await claudeAgent.generateContent({
+  private async generateReport(data: unknown, task: AgentTask): Promise<GeneratedReport> {
+    const claudeAgent = this.getAgent<ClaudeAgent>('claude');
+
+    const reportContent = await claudeAgent.generateContent({
       prompt: `Create a comprehensive report from the following research data`,
       context: JSON.stringify(data),
       format: 'report',
@@ -202,7 +230,7 @@ export class AgentOrchestrator {
     });
 
     return {
-      content: report,
+      content: reportContent.content,
       metadata: {
         generatedAt: new Date(),
         taskId: task.id,
@@ -214,10 +242,10 @@ export class AgentOrchestrator {
   /**
    * Store report in designated Google Drive folder
    */
-  private async storeReport(report: any, task: AgentTask) {
+  private async storeReport(report: GeneratedReport, task: AgentTask) {
     const folderPath = this.determineFolderPath(task);
     
-    const driveResult = await (this as any).driveStorage.uploadReport({
+    const driveResult = await this.driveStorage.uploadReport({
       content: report.content,
       filename: `${task.type}_${task.id}_${Date.now()}.md`,
       folder: folderPath,
@@ -231,10 +259,15 @@ export class AgentOrchestrator {
   /**
    * Store generated content
    */
-  private async storeContent(content: any, task: AgentTask) {
-    // Store in vector database for future reference
+  private async storeContent(content: unknown, task: AgentTask) {
+    const textContent = typeof content === 'string' ? content : (content as { content?: string })?.content;
+
+    if (!textContent) {
+      return;
+    }
+
     await this.vectorStore.store({
-      content: content,
+      content: textContent,
       metadata: {
         taskId: task.id,
         type: 'generated_content',
@@ -244,8 +277,8 @@ export class AgentOrchestrator {
 
     // Also store in Drive if specified
     if (task.payload.storeInDrive) {
-      await (this as any).driveStorage.uploadContent({
-        content: content,
+      await this.driveStorage.uploadContent({
+        content: textContent,
         folder: task.payload.driveFolder || 'generated_content'
       });
     }
