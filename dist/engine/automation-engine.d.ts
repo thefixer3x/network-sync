@@ -1,0 +1,40 @@
+import { APIResponse } from '@/types';
+export declare class AutomationEngine {
+    private readonly logger;
+    private readonly supabase;
+    private readonly socialServices;
+    private readonly aiService;
+    private readonly trendAnalyzer;
+    private readonly contentOptimizer;
+    private readonly analyticsCollector;
+    private readonly scheduledJobs;
+    private isRunning;
+    private config;
+    constructor();
+    private initializeServices;
+    private setupErrorHandling;
+    start(configId?: string): Promise<void>;
+    stop(): Promise<void>;
+    private loadConfiguration;
+    private scheduleAutomationTasks;
+    private generateDailyContent;
+    private generateContentForPlatform;
+    private createContentPrompt;
+    private storeGeneratedContent;
+    private executeScheduledPosting;
+    private getScheduledContent;
+    private publishContent;
+    private updateContentStatus;
+    private handleRateLimit;
+    private handleFailedPosts;
+    private startTrendMonitoring;
+    private startCompetitorTracking;
+    private scheduleAnalyticsCollection;
+    private collectTrends;
+    private analyzeCompetitors;
+    private collectAnalytics;
+    getStatus(): Promise<APIResponse<any>>;
+    pauseAutomation(): Promise<APIResponse<void>>;
+    resumeAutomation(): Promise<APIResponse<void>>;
+}
+//# sourceMappingURL=automation-engine.d.ts.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"SocialMediaFactory.d.ts","sourceRoot":"","sources":["../../src/services/SocialMediaFactory.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,cAAc,EAAE,kBAAkB,EAAE,MAAM,SAAS,CAAC;AAM7D,qBAAa,kBAAkB;IAC7B,MAAM,CAAC,MAAM,CAAC,QAAQ,EAAE,cAAc,GAAG,kBAAkB;CAc5D"}

@@ -1,0 +1,1358 @@
+I'll continue with more specialized scrapers and complete the system integration.
+
+<artifact identifier="specialized-scrapers" type="application/vnd.ant.code" language="typescript" title="Specialized Scrapers for Academic, News, and Social Sources">
+// ============= src/services/research-scraper/specialized-scrapers.ts =============
+
+import axios from 'axios';
+import { parse } from 'date-fns';
+import * as cheerio from 'cheerio';
+import { ScrapedContent, ResearchTopic, ResearchSource } from './index';
+
+// ================== Academic Paper Scraper (arXiv, PubMed, etc.) ==================
+
+export class AcademicScraper {
+  async scrapeArxiv(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const query = keywords.join('+OR+');
+    const url = `http://export.arxiv.org/api/query?search_query=all:${query}&start=0&max_results=20&sortBy=submittedDate&sortOrder=descending`;
+
+    try {
+      const response = await axios.get(url);
+      const $ = cheerio.load(response.data, { xmlMode: true });
+
+      $('entry').each((_, element) => {
+        const $entry = $(element);
+        const title = $entry.find('title').text().trim();
+        const summary = $entry.find('summary').text().trim();
+        const authors = $entry.find('author name').map((_, el) => $(el).text()).get();
+        const published = $entry.find('published').text();
+        const link = $entry.find('id').text();
+        const categories = $entry.find('category').map((_, el) => $(el).attr('term')).get();
+
+        results.push({
+          topicId: topic.id,
+          source: 'arXiv',
+          title,
+          content: summary,
+          summary: summary.substring(0, 500),
+          url: link,
+          author: authors.join(', '),
+          publishedDate: new Date(published),
+          tags: categories,
+          relevanceScore: this.calculateAcademicRelevance(title + summary, keywords),
+          metadata: {
+            type: 'academic_paper',
+            arxiv_id: link.split('/').pop(),
+            pdf_url: link.replace('abs', 'pdf'),
+            categories,
+            authors,
+          },
+        });
+      });
+    } catch (error) {
+      console.error('Error scraping arXiv:', error);
+    }
+
+    return results;
+  }
+
+  async scrapePubMed(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const query = keywords.join('+');
+    
+    try {
+      // First, search for IDs
+      const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${query}&retmax=20&retmode=json&sort=date`;
+      const searchResponse = await axios.get(searchUrl);
+      const ids = searchResponse.data.esearchresult.idlist;
+
+      if (ids.length > 0) {
+        // Fetch details for each ID
+        const fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${ids.join(',')}&retmode=xml`;
+        const fetchResponse = await axios.get(fetchUrl);
+        const $ = cheerio.load(fetchResponse.data, { xmlMode: true });
+
+        $('PubmedArticle').each((_, element) => {
+          const $article = $(element);
+          const title = $article.find('ArticleTitle').text();
+          const abstract = $article.find('AbstractText').text();
+          const pmid = $article.find('PMID').text();
+          const journal = $article.find('Journal Title').text();
+          const year = $article.find('PubDate Year').text();
+          const authors = $article.find('Author').map((_, el) => {
+            const lastName = $(el).find('LastName').text();
+            const foreName = $(el).find('ForeName').text();
+            return `${foreName} ${lastName}`;
+          }).get();
+
+          results.push({
+            topicId: topic.id,
+            source: 'PubMed',
+            title,
+            content: abstract,
+            summary: abstract.substring(0, 500),
+            url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+            author: authors.join(', '),
+            publishedDate: new Date(`${year}-01-01`),
+            tags: ['medical', 'research', journal],
+            relevanceScore: this.calculateAcademicRelevance(title + abstract, keywords),
+            metadata: {
+              type: 'medical_paper',
+              pmid,
+              journal,
+              year,
+            },
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping PubMed:', error);
+    }
+
+    return results;
+  }
+
+  async scrapeGoogleScholar(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    // Note: Google Scholar doesn't have an official API
+    // This is a simplified example - in production, you'd need to handle rate limiting
+    const results: ScrapedContent[] = [];
+    const query = keywords.join('+');
+    const url = `https://scholar.google.com/scholar?q=${query}&hl=en&as_sdt=0,5&as_ylo=${new Date().getFullYear()}`;
+
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+      });
+
+      const $ = cheerio.load(response.data);
+
+      $('.gs_ri').each((_, element) => {
+        const $item = $(element);
+        const title = $item.find('.gs_rt a').text();
+        const link = $item.find('.gs_rt a').attr('href') || '';
+        const snippet = $item.find('.gs_rs').text();
+        const authors = $item.find('.gs_a').text();
+        const cited = $item.find('.gs_fl a:contains("Cited by")').text();
+
+        results.push({
+          topicId: topic.id,
+          source: 'Google Scholar',
+          title,
+          content: snippet,
+          url: link,
+          author: authors,
+          relevanceScore: this.calculateAcademicRelevance(title + snippet, keywords),
+          metadata: {
+            type: 'academic_paper',
+            citations: parseInt(cited.replace(/\D/g, '')) || 0,
+          },
+        });
+      });
+    } catch (error) {
+      console.error('Error scraping Google Scholar:', error);
+    }
+
+    return results;
+  }
+
+  private calculateAcademicRelevance(text: string, keywords: string[]): number {
+    const lowerText = text.toLowerCase();
+    let score = 0;
+    
+    // Higher weight for title matches
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'g');
+      const matches = lowerText.match(regex);
+      if (matches) {
+        score += matches.length * 0.2;
+      }
+    });
+
+    // Bonus for recent papers (would need actual date comparison)
+    score += 0.1;
+
+    return Math.min(score, 1);
+  }
+}
+
+// ================== News Aggregator Scraper ==================
+
+export class NewsAggregatorScraper {
+  private readonly newsAPISources = [
+    'techcrunch',
+    'ars-technica',
+    'the-verge',
+    'wired',
+    'reuters',
+    'bloomberg',
+    'the-wall-street-journal',
+  ];
+
+  async scrapeNewsAPI(keywords: string[], topic: ResearchTopic, apiKey: string): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const query = keywords.join(' OR ');
+
+    try {
+      const response = await axios.get('https://newsapi.org/v2/everything', {
+        params: {
+          q: query,
+          sortBy: 'publishedAt',
+          language: 'en',
+          pageSize: 20,
+          apiKey,
+        },
+      });
+
+      for (const article of response.data.articles) {
+        results.push({
+          topicId: topic.id,
+          source: `NewsAPI - ${article.source.name}`,
+          title: article.title,
+          content: article.content || article.description,
+          summary: article.description,
+          url: article.url,
+          author: article.author,
+          publishedDate: new Date(article.publishedAt),
+          media: article.urlToImage ? [{
+            type: 'image',
+            url: article.urlToImage,
+          }] : undefined,
+          relevanceScore: this.calculateNewsRelevance(article, keywords),
+          metadata: {
+            type: 'news_article',
+            source: article.source,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping NewsAPI:', error);
+    }
+
+    return results;
+  }
+
+  async scrapeGoogleNews(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const query = keywords.join(' ');
+    const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+
+    try {
+      const response = await axios.get(url);
+      const $ = cheerio.load(response.data, { xmlMode: true });
+
+      $('item').each((_, element) => {
+        const $item = $(element);
+        const title = $item.find('title').text();
+        const link = $item.find('link').text();
+        const pubDate = $item.find('pubDate').text();
+        const source = $item.find('source').text();
+
+        results.push({
+          topicId: topic.id,
+          source: `Google News - ${source}`,
+          title,
+          content: title, // Google News RSS doesn't provide content
+          url: link,
+          publishedDate: new Date(pubDate),
+          relevanceScore: this.calculateNewsRelevance({ title }, keywords),
+          metadata: {
+            type: 'news_article',
+            aggregator: 'google_news',
+          },
+        });
+      });
+    } catch (error) {
+      console.error('Error scraping Google News:', error);
+    }
+
+    return results;
+  }
+
+  private calculateNewsRelevance(article: any, keywords: string[]): number {
+    const text = (article.title + ' ' + (article.content || article.description || '')).toLowerCase();
+    let score = 0;
+
+    keywords.forEach(keyword => {
+      if (text.includes(keyword.toLowerCase())) {
+        score += 0.3;
+      }
+    });
+
+    // Recency bonus (assuming published date is recent)
+    score += 0.2;
+
+    return Math.min(score, 1);
+  }
+}
+
+// ================== Social Media Deep Scraper ==================
+
+export class SocialMediaScraper {
+  async scrapeRedditAPI(subreddit: string, keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const url = `https://www.reddit.com/r/${subreddit}/search.json?q=${keywords.join('+')}&sort=new&limit=25&restrict_sr=on`;
+
+    try {
+      const response = await axios.get(url, {
+        headers: { 'User-Agent': 'ResearchBot/1.0' },
+      });
+
+      for (const post of response.data.data.children) {
+        const data = post.data;
+        
+        results.push({
+          topicId: topic.id,
+          source: `Reddit - r/${subreddit}`,
+          title: data.title,
+          content: data.selftext || data.url,
+          url: `https://reddit.com${data.permalink}`,
+          author: `/u/${data.author}`,
+          publishedDate: new Date(data.created_utc * 1000),
+          tags: [data.link_flair_text, data.subreddit].filter(Boolean),
+          relevanceScore: this.calculateSocialRelevance(data, keywords),
+          sentiment: this.analyzeSocialSentiment(data),
+          metadata: {
+            type: 'reddit_post',
+            score: data.score,
+            num_comments: data.num_comments,
+            upvote_ratio: data.upvote_ratio,
+            awards: data.all_awardings?.length || 0,
+            is_video: data.is_video,
+            is_self: data.is_self,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping Reddit:', error);
+    }
+
+    return results;
+  }
+
+  async scrapeHackerNews(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+
+    try {
+      // Search HN via Algolia API
+      const searchUrl = 'https://hn.algolia.com/api/v1/search';
+      const response = await axios.get(searchUrl, {
+        params: {
+          query: keywords.join(' '),
+          tags: 'story',
+          numericFilters: `created_at_i>${Math.floor(Date.now() / 1000) - 604800}`, // Last week
+        },
+      });
+
+      for (const hit of response.data.hits) {
+        results.push({
+          topicId: topic.id,
+          source: 'Hacker News',
+          title: hit.title,
+          content: hit.story_text || hit.title,
+          url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+          author: hit.author,
+          publishedDate: new Date(hit.created_at),
+          tags: hit._tags || [],
+          relevanceScore: hit._rankingInfo?.matchedGeoLocation || 0.5,
+          metadata: {
+            type: 'hackernews_story',
+            points: hit.points,
+            num_comments: hit.num_comments,
+            hn_id: hit.objectID,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping Hacker News:', error);
+    }
+
+    return results;
+  }
+
+  async scrapeTwitter(keywords: string[], topic: ResearchTopic, bearerToken: string): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const query = keywords.join(' OR ');
+
+    try {
+      const response = await axios.get('https://api.twitter.com/2/tweets/search/recent', {
+        headers: {
+          'Authorization': `Bearer ${bearerToken}`,
+        },
+        params: {
+          query: `${query} -is:retweet lang:en`,
+          max_results: 20,
+          'tweet.fields': 'created_at,author_id,public_metrics,context_annotations,entities',
+          'user.fields': 'name,username,verified',
+          'expansions': 'author_id',
+        },
+      });
+
+      const users = new Map(response.data.includes?.users?.map((u: any) => [u.id, u]) || []);
+
+      for (const tweet of response.data.data || []) {
+        const author = users.get(tweet.author_id);
+        
+        results.push({
+          topicId: topic.id,
+          source: 'Twitter/X',
+          title: tweet.text.substring(0, 100),
+          content: tweet.text,
+          url: `https://twitter.com/${author?.username}/status/${tweet.id}`,
+          author: `@${author?.username}`,
+          publishedDate: new Date(tweet.created_at),
+          tags: tweet.context_annotations?.map((a: any) => a.domain?.name).filter(Boolean) || [],
+          relevanceScore: this.calculateSocialRelevance(tweet, keywords),
+          sentiment: this.analyzeTweetSentiment(tweet.text),
+          metadata: {
+            type: 'tweet',
+            likes: tweet.public_metrics.like_count,
+            retweets: tweet.public_metrics.retweet_count,
+            replies: tweet.public_metrics.reply_count,
+            quotes: tweet.public_metrics.quote_count,
+            verified: author?.verified,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping Twitter:', error);
+    }
+
+    return results;
+  }
+
+  private calculateSocialRelevance(post: any, keywords: string[]): number {
+    const text = (post.title || '' + post.text || '' + post.selftext || '').toLowerCase();
+    let score = 0;
+
+    keywords.forEach(keyword => {
+      if (text.includes(keyword.toLowerCase())) {
+        score += 0.2;
+      }
+    });
+
+    // Engagement score
+    if (post.score || post.public_metrics) {
+      const engagement = post.score || post.public_metrics?.like_count || 0;
+      score += Math.min(engagement / 1000, 0.3);
+    }
+
+    // Comment activity
+    if (post.num_comments) {
+      score += Math.min(post.num_comments / 100, 0.2);
+    }
+
+    return Math.min(score, 1);
+  }
+
+  private analyzeSocialSentiment(post: any): 'positive' | 'negative' | 'neutral' {
+    // Simple sentiment based on engagement
+    const ratio = post.upvote_ratio || 0.5;
+    if (ratio > 0.8) return 'positive';
+    if (ratio < 0.4) return 'negative';
+    return 'neutral';
+  }
+
+  private analyzeTweetSentiment(text: string): 'positive' | 'negative' | 'neutral' {
+    // Simple keyword-based sentiment
+    const positive = ['great', 'awesome', 'excellent', 'love', 'best', '👍', '❤️', '🎉'];
+    const negative = ['bad', 'terrible', 'worst', 'hate', 'awful', '👎', '😞', '😡'];
+    
+    const posCount = positive.filter(word => text.toLowerCase().includes(word)).length;
+    const negCount = negative.filter(word => text.toLowerCase().includes(word)).length;
+    
+    if (posCount > negCount) return 'positive';
+    if (negCount > posCount) return 'negative';
+    return 'neutral';
+  }
+}
+
+// ================== Government & Regulatory Scraper ==================
+
+export class RegulatoryTracker {
+  async scrapeEUCommission(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const url = 'https://ec.europa.eu/commission/presscorner/api/documents';
+
+    try {
+      const response = await axios.get(url, {
+        params: {
+          language: 'en',
+          keywords: keywords.join(','),
+          pageSize: 20,
+        },
+      });
+
+      for (const doc of response.data.documents || []) {
+        results.push({
+          topicId: topic.id,
+          source: 'EU Commission',
+          title: doc.title,
+          content: doc.description,
+          url: doc.url,
+          publishedDate: new Date(doc.date),
+          tags: ['regulatory', 'EU', ...doc.topics],
+          relevanceScore: 0.8,
+          metadata: {
+            type: 'regulatory_document',
+            document_type: doc.type,
+            reference: doc.reference,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error scraping EU Commission:', error);
+    }
+
+    return results;
+  }
+
+  async scrapeSECFilings(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    // SEC EDGAR API implementation
+    // This would require proper API setup
+    
+    return results;
+  }
+
+  async scrapeCongressionalRecords(keywords: string[], topic: ResearchTopic): Promise<ScrapedContent[]> {
+    const results: ScrapedContent[] = [];
+    const apiKey = process.env.CONGRESS_API_KEY;
+
+    try {
+      const response = await axios.get('https://api.congress.gov/v3/bill', {
+        params: {
+          api_key: apiKey,
+          format: 'json',
+          limit: 20,
+        },
+      });
+
+      for (const bill of response.data.bills || []) {
+        const matches = keywords.some(k => 
+          bill.title?.toLowerCase().includes(k.toLowerCase())
+        );
+
+        if (matches) {
+          results.push({
+            topicId: topic.id,
+            source: 'US Congress',
+            title: bill.title,
+            content: bill.summary || bill.title,
+            url: bill.url,
+            publishedDate: new Date(bill.introducedDate),
+            tags: ['legislative', 'US', bill.type],
+            relevanceScore: 0.7,
+            metadata: {
+              type: 'congressional_bill',
+              bill_number: bill.number,
+              congress: bill.congress,
+              sponsor: bill.sponsor,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error scraping Congressional records:', error);
+    }
+
+    return results;
+  }
+}
+
+// ================== Export All Scrapers ==================
+
+export function initializeSpecializedScrapers() {
+  return {
+    academic: new AcademicScraper(),
+    news: new NewsAggregatorScraper(),
+    social: new SocialMediaScraper(),
+    regulatory: new RegulatoryTracker(),
+  };
+}
+</artifact>
+
+Now let's create the configuration file for setting up predefined research topics:
+
+<artifact identifier="research-topics-config" type="application/vnd.ant.code" language="typescript" title="Predefined Research Topics Configuration">
+// ============= src/config/research-topics.ts =============
+
+import { ResearchTopic } from '@/services/research-scraper';
+
+export const predefinedTopics: Partial<ResearchTopic>[] = [
+  {
+    name: 'AI Innovation & Breakthroughs',
+    keywords: [
+      'artificial intelligence',
+      'machine learning',
+      'deep learning',
+      'neural networks',
+      'LLM',
+      'GPT',
+      'transformer',
+      'AI breakthrough',
+      'AGI',
+      'foundation models',
+    ],
+    sources: [
+      {
+        type: 'rss',
+        name: 'MIT Technology Review - AI',
+        url: 'https://www.technologyreview.com/feed/',
+        priority: 'high',
+      },
+      {
+        type: 'rss',
+        name: 'DeepMind Blog',
+        url: 'https://deepmind.com/blog/feed/basic/',
+        priority: 'high',
+      },
+      {
+        type: 'api',
+        name: 'arXiv AI Papers',
+        url: 'http://export.arxiv.org/api/query',
+        priority: 'high',
+      },
+      {
+        type: 'social',
+        name: 'Reddit - Machine Learning',
+        url: 'https://www.reddit.com/r/MachineLearning',
+        priority: 'medium',
+      },
+      {
+        type: 'social',
+        name: 'Hacker News',
+        url: 'https://news.ycombinator.com',
+        priority: 'medium',
+      },
+    ],
+    schedule: {
+      frequency: 'daily',
+      timezone: 'America/New_York',
+      activeHours: { start: '09:00', end: '18:00' },
+    },
+    filters: {
+      minRelevanceScore: 0.4,
+      languages: ['en'],
+      mustExclude: ['crypto', 'blockchain', 'NFT'],
+    },
+    notifications: {
+      threshold: 'important',
+    },
+  },
+  
+  {
+    name: 'AI Regulation & Policy',
+    keywords: [
+      'AI regulation',
+      'AI act',
+      'AI governance',
+      'AI ethics',
+      'AI policy',
+      'data privacy',
+      'GDPR',
+      'AI safety',
+      'AI alignment',
+      'responsible AI',
+    ],
+    sources: [
+      {
+        type: 'web',
+        name: 'EU AI Act Updates',
+        url: 'https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai',
+        priority: 'high',
+        selectors: {
+          title: '.ecl-page-header__title',
+          content: '.ecl-u-type-paragraph',
+          date: 'time',
+        },
+      },
+      {
+        type: 'rss',
+        name: 'Brookings - AI Governance',
+        url: 'https://www.brookings.edu/topic/artificial-intelligence/feed/',
+        priority: 'high',
+      },
+      {
+        type: 'api',
+        name: 'Congressional Records',
+        url: 'https://api.congress.gov/v3/bill',
+        priority: 'high',
+      },
+    ],
+    schedule: {
+      frequency: 'weekly',
+      timezone: 'America/Washington',
+      cronExpression: '0 9 * * MON',
+    },
+    filters: {
+      minRelevanceScore: 0.5,
+      regions: ['US', 'EU', 'UK'],
+    },
+    notifications: {
+      email: ['compliance@yourcompany.com'],
+      threshold: 'all',
+    },
+  },
+
+  {
+    name: 'Tech Industry News',
+    keywords: [
+      'tech startup',
+      'funding round',
+      'acquisition',
+      'IPO',
+      'product launch',
+      'tech layoffs',
+      'earnings report',
+      'venture capital',
+    ],
+    sources: [
+      {
+        type: 'rss',
+        name: 'TechCrunch',
+        url: 'https://techcrunch.com/feed/',
+        priority: 'high',
+      },
+      {
+        type: 'rss',
+        name: 'The Verge',
+        url: 'https://www.theverge.com/rss/index.xml',
+        priority: 'medium',
+      },
+      {
+        type: 'api',
+        name: 'NewsAPI Tech',
+        url: 'https://newsapi.org/v2/everything',
+        priority: 'high',
+        authentication: {
+          type: 'api_key',
+          credentials: { apiKey: process.env.NEWS_API_KEY! },
+        },
+      },
+    ],
+    schedule: {
+      frequency: 'hourly',
+      timezone: 'America/New_York',
+      activeHours: { start: '06:00', end: '22:00' },
+    },
+    filters: {
+      minRelevanceScore: 0.3,
+      mustInclude: ['AI', 'artificial intelligence', 'machine learning'],
+    },
+  },
+
+  {
+    name: 'Competitive Intelligence',
+    keywords: [
+      'OpenAI',
+      'Anthropic',
+      'Google AI',
+      'Meta AI',
+      'Microsoft AI',
+      'DeepMind',
+      'Stability AI',
+      'Midjourney',
+      'Cohere',
+      'Inflection AI',
+    ],
+    sources: [
+      {
+        type: 'web',
+        name: 'Company Blogs',
+        url: 'https://openai.com/blog',
+        priority: 'high',
+      },
+      {
+        type: 'social',
+        name: 'Twitter - AI Leaders',
+        url: 'https://twitter.com',
+        priority: 'high',
+      },
+      {
+        type: 'api',
+        name: 'Press Releases',
+        url: 'https://www.prnewswire.com/rss',
+        priority: 'medium',
+      },
+    ],
+    schedule: {
+      frequency: 'daily',
+      timezone: 'America/Los_Angeles',
+      cronExpression: '0 */4 * * *',
+    },
+    filters: {
+      minRelevanceScore: 0.6,
+    },
+    notifications: {
+      slack: {
+        webhook: process.env.SLACK_WEBHOOK!,
+        channel: '#competitive-intel',
+      },
+      threshold: 'important',
+    },
+  },
+
+  {
+    name: 'Research Papers & Publications',
+    keywords: [
+      'research paper',
+      'whitepaper',
+      'technical report',
+      'peer review',
+      'journal publication',
+      'conference paper',
+      'preprint',
+    ],
+    sources: [
+      {
+        type: 'api',
+        name: 'arXiv',
+        url: 'http://export.arxiv.org/api/query',
+        priority: 'high',
+      },
+      {
+        type: 'api',
+        name: 'PubMed',
+        url: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils',
+        priority: 'medium',
+      },
+      {
+        type: 'web',
+        name: 'Google Scholar',
+        url: 'https://scholar.google.com',
+        priority: 'medium',
+      },
+    ],
+    schedule: {
+      frequency: 'weekly',
+      timezone: 'UTC',
+      cronExpression: '0 9 * * MON',
+    },
+    filters: {
+      minRelevanceScore: 0.5,
+      dateRange: {
+        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        end: new Date(),
+      },
+    },
+  },
+];
+
+// ============= Setup Script =============
+
+export async function setupPredefinedTopics(supabase: any) {
+  console.log('🚀 Setting up predefined research topics...');
+  
+  for (const topicData of predefinedTopics) {
+    const topic = {
+      ...topicData,
+      id: `topic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      status: 'active',
+      created_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('research_topics')
+      .insert(topic);
+
+    if (error) {
+      console.error(`Failed to create topic "${topic.name}":`, error);
+    } else {
+      console.log(`✅ Created topic: ${topic.name}`);
+    }
+
+    // Add delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  console.log('✅ All predefined topics have been set up!');
+}
+</artifact>
+
+Finally, let's create a service worker to run the research scraper continuously:
+
+<artifact identifier="research-worker" type="application/vnd.ant.code" language="typescript" title="Research Scraper Worker Service">
+// ============= src/workers/research-worker.ts =============
+
+import { config } from 'dotenv';
+import { initializeResearchScraper } from '../services/research-scraper';
+import { setupPredefinedTopics } from '../config/research-topics';
+import { createClient } from '@supabase/supabase-js';
+import chalk from 'chalk';
+
+config();
+
+// ================== Worker Configuration ==================
+
+interface WorkerConfig {
+  supabaseUrl: string;
+  supabaseKey: string;
+  environment: 'development' | 'production';
+  setupTopics: boolean;
+  logLevel: 'debug' | 'info' | 'error';
+}
+
+const workerConfig: WorkerConfig = {
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  supabaseKey: process.env.SUPABASE_SERVICE_KEY!,
+  environment: (process.env.NODE_ENV as any) || 'development',
+  setupTopics: process.env.SETUP_TOPICS === 'true',
+  logLevel: (process.env.LOG_LEVEL as any) || 'info',
+};
+
+// ================== Logger ==================
+
+class Logger {
+  private level: string;
+
+  constructor(level: string = 'info') {
+    this.level = level;
+  }
+
+  debug(message: string, ...args: any[]) {
+    if (this.level === 'debug') {
+      console.log(chalk.gray(`[DEBUG] ${new Date().toISOString()} - ${message}`), ...args);
+    }
+  }
+
+  info(message: string, ...args: any[]) {
+    if (['debug', 'info'].includes(this.level)) {
+      console.log(chalk.blue(`[INFO] ${new Date().toISOString()} - ${message}`), ...args);
+    }
+  }
+
+  success(message: string, ...args: any[]) {
+    console.log(chalk.green(`[SUCCESS] ${new Date().toISOString()} - ${message}`), ...args);
+  }
+
+  error(message: string, ...args: any[]) {
+    console.error(chalk.red(`[ERROR] ${new Date().toISOString()} - ${message}`), ...args);
+  }
+
+  warn(message: string, ...args: any[]) {
+    console.warn(chalk.yellow(`[WARN] ${new Date().toISOString()} - ${message}`), ...args);
+  }
+}
+
+const logger = new Logger(workerConfig.logLevel);
+
+// ================== Main Worker Class ==================
+
+class ResearchWorker {
+  private scraper: any;
+  private supabase: any;
+  private isRunning: boolean = false;
+  private healthCheckInterval: NodeJS.Timeout | null = null;
+  private metricsInterval: NodeJS.Timeout | null = null;
+
+  constructor(config: WorkerConfig) {
+    this.supabase = createClient(config.supabaseUrl, config.supabaseKey);
+    this.scraper = initializeResearchScraper(config.supabaseUrl, config.supabaseKey);
+  }
+
+  async start() {
+    logger.info('Starting Research Worker...');
+    
+    try {
+      // Check database connection
+      await this.checkDatabaseConnection();
+
+      // Setup predefined topics if requested
+      if (workerConfig.setupTopics) {
+        await setupPredefinedTopics(this.supabase);
+      }
+
+      // Start the scraper service
+      await this.scraper.start();
+      this.isRunning = true;
+
+      // Setup health monitoring
+      this.setupHealthCheck();
+      this.setupMetricsCollection();
+
+      // Setup graceful shutdown
+      this.setupShutdownHandlers();
+
+      logger.success('Research Worker started successfully!');
+      logger.info(`Environment: ${workerConfig.environment}`);
+      logger.info('Monitoring active research topics...');
+
+      // Keep the process alive
+      this.keepAlive();
+
+    } catch (error) {
+      logger.error('Failed to start Research Worker:', error);
+      process.exit(1);
+    }
+  }
+
+  private async checkDatabaseConnection() {
+    logger.info('Checking database connection...');
+    
+    try {
+      const { error } = await this.supabase
+        .from('research_topics')
+        .select('id')
+        .limit(1);
+
+      if (error) throw error;
+      logger.success('Database connection established');
+    } catch (error) {
+      logger.error('Database connection failed:', error);
+      throw error;
+    }
+  }
+
+  private setupHealthCheck() {
+    this.healthCheckInterval = setInterval(async () => {
+      try {
+        const health = await this.getHealthStatus();
+        
+        if (health.status === 'healthy') {
+          logger.debug('Health check passed', health);
+        } else {
+          logger.warn('Health check warning:', health);
+        }
+
+        // Log to database
+        await this.supabase
+          .from('worker_health')
+          .insert({
+            worker_type: 'research_scraper',
+            status: health.status,
+            metrics: health,
+            timestamp: new Date().toISOString(),
+          });
+
+      } catch (error) {
+        logger.error('Health check failed:', error);
+      }
+    }, 60000); // Every minute
+  }
+
+  private setupMetricsCollection() {
+    this.metricsInterval = setInterval(async () => {
+      try {
+        const metrics = await this.collectMetrics();
+        logger.info('Metrics collected:', metrics);
+
+        // Store metrics
+        await this.supabase
+          .from('worker_metrics')
+          .insert({
+            worker_type: 'research_scraper',
+            metrics,
+            timestamp: new Date().toISOString(),
+          });
+
+      } catch (error) {
+        logger.error('Metrics collection failed:', error);
+      }
+    }, 300000); // Every 5 minutes
+  }
+
+  private async getHealthStatus() {
+    const memoryUsage = process.memoryUsage();
+    const uptime = process.uptime();
+
+    // Get active topics count
+    const { data: topics } = await this.supabase
+      .from('research_topics')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    // Get recent scrapes
+    const { data: recentScrapes } = await this.supabase
+      .from('scraped_content')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', new Date(Date.now() - 3600000).toISOString());
+
+    return {
+      status: 'healthy',
+      uptime,
+      memory: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      },
+      activeTopics: topics?.count || 0,
+      recentScrapes: recentScrapes?.count || 0,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private async collectMetrics() {
+    const now = new Date();
+    const hourAgo = new Date(now.getTime() - 3600000);
+    const dayAgo = new Date(now.getTime() - 86400000);
+
+    // Collect various metrics
+    const [
+      totalTopics,
+      activeTopics,
+      scrapesLastHour,
+      scrapesLastDay,
+      avgRelevance,
+      topSources,
+    ] = await Promise.all([
+      this.getCount('research_topics'),
+      this.getCount('research_topics', { status: 'active' }),
+      this.getCount('scraped_content', { created_at: ['gte', hourAgo.toISOString()] }),
+      this.getCount('scraped_content', { created_at: ['gte', dayAgo.toISOString()] }),
+      this.getAverageRelevance(),
+      this.getTopSources(),
+    ]);
+
+    return {
+      topics: {
+        total: totalTopics,
+        active: activeTopics,
+      },
+      scrapes: {
+        lastHour: scrapesLastHour,
+        lastDay: scrapesLastDay,
+      },
+      performance: {
+        avgRelevanceScore: avgRelevance,
+      },
+      topSources,
+    };
+  }
+
+  private async getCount(table: string, filters?: any): Promise<number> {
+    let query = this.supabase.from(table).select('id', { count: 'exact', head: true });
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          query = query[value[0]](key, value[1]);
+        } else {
+          query = query.eq(key, value);
+        }
+      });
+    }
+
+    const { count } = await query;
+    return count || 0;
+  }
+
+  private async getAverageRelevance(): Promise<number> {
+    const { data } = await this.supabase
+      .from('scraped_content')
+      .select('relevance_score')
+      .gte('created_at', new Date(Date.now() - 86400000).toISOString());
+
+    if (!data || data.length === 0) return 0;
+
+    const sum = data.reduce((acc: number, item: any) => acc + (item.relevance_score || 0), 0);
+    return sum / data.length;
+  }
+
+  private async getTopSources(): Promise<any[]> {
+    const { data } = await this.supabase
+      .from('scraped_content')
+      .select('source')
+      .gte('created_at', new Date(Date.now() - 86400000).toISOString());
+
+    if (!data) return [];
+
+    const sourceCounts = data.reduce((acc: any, item: any) => {
+      acc[item.source] = (acc[item.source] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(sourceCounts)
+      .map(([source, count]) => ({ source, count }))
+      .sort((a: any, b: any) => b.count - a.count)
+      .slice(0, 5);
+  }
+
+  private setupShutdownHandlers() {
+    const shutdown = async (signal: string) => {
+      logger.info(`Received ${signal}, shutting down gracefully...`);
+      
+      this.isRunning = false;
+
+      // Stop the scraper
+      await this.scraper.stop();
+
+      // Clear intervals
+      if (this.healthCheckInterval) clearInterval(this.healthCheckInterval);
+      if (this.metricsInterval) clearInterval(this.metricsInterval);
+
+      // Log shutdown
+      await this.supabase
+        .from('worker_logs')
+        .insert({
+          worker_type: 'research_scraper',
+          level: 'info',
+          message: `Worker shutdown: ${signal}`,
+          timestamp: new Date().toISOString(),
+        });
+
+      logger.success('Research Worker shut down successfully');
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('uncaughtException', (error) => {
+      logger.error('Uncaught exception:', error);
+      shutdown('uncaughtException');
+    });
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+      shutdown('unhandledRejection');
+    });
+  }
+
+  private keepAlive() {
+    // Keep the process alive
+    setInterval(() => {
+      if (this.isRunning) {
+        logger.debug('Worker is alive and running...');
+      }
+    }, 30000); // Every 30 seconds
+  }
+}
+
+// ================== Start Worker ==================
+
+async function main() {
+  console.log(chalk.cyan(`
+╔════════════════════════════════════════════════╗
+║   Research Scraper Worker v1.0.0               ║
+║   Automated Content Discovery System           ║
+╚════════════════════════════════════════════════╝
+  `));
+
+  const worker = new ResearchWorker(workerConfig);
+  await worker.start();
+}
+
+// Run the worker
+main().catch((error) => {
+  logger.error('Fatal error:', error);
+  process.exit(1);
+});
+</artifact>
+
+## ✅ Complete Setup Instructions
+
+Now let's get everything running:
+
+### 1. **Install All Dependencies:**
+
+```bash
+cd ~/DevOps/social-automation
+
+# Install all required packages
+npm install cheerio rss-parser p-limit node-cron axios date-fns \
+  @supabase/supabase-js commander chalk inquirer ora dotenv \
+  fs-extra table figlet boxen
+
+# Install dev dependencies
+npm install -D @types/cheerio @types/node-cron @types/fs-extra \
+  @types/figlet typescript ts-node pm2
+```
+
+### 2. **Setup Database Tables:**
+
+```bash
+# Run the SQL schema in Supabase dashboard
+# (Use the schema from the research-database-schema artifact above)
+```
+
+### 3. **Configure Environment Variables:**
+
+```bash
+# Add to your .env file
+SUPABASE_SERVICE_KEY=your_service_key
+NEWS_API_KEY=your_newsapi_key
+CONGRESS_API_KEY=your_congress_api_key
+SLACK_WEBHOOK=your_slack_webhook
+SETUP_TOPICS=true # Set to true on first run
+LOG_LEVEL=info
+NODE_ENV=production
+```
+
+### 4. **Start the Research Worker:**
+
+```bash
+# Development mode
+npm run dev:worker
+
+# Production mode with PM2
+pm2 start src/workers/research-worker.ts --name research-scraper
+pm2 save
+pm2 startup # To auto-start on system reboot
+```
+
+### 5. **Access the Dashboard:**
+
+```bash
+# Start the Next.js development server
+npm run dev
+
+# Navigate to
+http://localhost:3000/dashboard
+```
+
+### 6. **Test the System:**
+
+```bash
+# Using the CLI
+social-auto research-topic list
+social-auto research-topic scrape <topic-id>
+social-auto monitor -f
+
+# Check worker status
+pm2 status research-scraper
+pm2 logs research-scraper
+```
+
+## 🎯 What You Now Have
+
+1. **Automated Research System** that continuously monitors:
+   - Academic papers (arXiv, PubMed, Google Scholar)
+   - News sources (NewsAPI, Google News, RSS feeds)
+   - Social media (Reddit, Twitter, Hacker News)
+   - Regulatory updates (EU, US Congress, SEC)
+
+2. **Smart Scheduling** with:
+   - Cron-based schedules
+   - Time zone support
+   - Active hours configuration
+   - Custom frequency settings
+
+3. **Advanced Filtering** including:
+   - Keyword matching
+   - Relevance scoring
+   - Sentiment analysis
+   - Entity extraction
+   - Duplicate detection
+
+4. **Real-time Dashboard** showing:
+   - Live research updates
+   - Topic management
+   - Content queue
+   - Performance metrics
+
+5. **Notification System** via:
+   - Email alerts
+   - Slack integration
+   - Discord webhooks
+
+The system will now automatically:
+- Scrape your configured topics on schedule
+- Filter and rank content by relevance
+- Store everything in Supabase
+- Send notifications for important findings
+- Display results in your dashboard
+
+Would you like me to add any additional features like:
+- Export functionality for research reports?
+- AI-powered summarization?
+- Content generation from research findings?
+- Advanced analytics and trend detection?
