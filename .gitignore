@@ -64,3 +64,6 @@ temp/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+.cache_ggshield
+.env-backup-20251025-201216/.env.preview.local
+web-interface/.env.vercel
