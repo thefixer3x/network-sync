@@ -4,8 +4,8 @@
  */
 import { PerplexityAgent } from '../agents/perplexity-agent';
 import { ClaudeAgent } from '../agents/claude-agent';
-// import { EmbeddingAgent } from '../agents/embedding-agent'; // TODO: Create this file
-// import { GoogleDriveStorage } from '../storage/google-drive'; // TODO: Create this file
+import { EmbeddingAgent } from '../agents/embedding-agent';
+import { GoogleDriveStorage } from '../storage/google-drive';
 import { VectorStore } from '../storage/vector-store';
 export class AgentOrchestrator {
     constructor() {
@@ -14,38 +14,45 @@ export class AgentOrchestrator {
         this.capabilities = new Map();
         this.initializeAgents();
         this.defineCapabilities();
-        // this.driveStorage = new GoogleDriveStorage(); // TODO: Uncomment when GoogleDriveStorage is created
+        this.driveStorage = new GoogleDriveStorage();
         this.vectorStore = new VectorStore();
     }
     initializeAgents() {
+        this.agents.clear();
         this.agents.set('perplexity', new PerplexityAgent());
         this.agents.set('claude', new ClaudeAgent());
-        // this.agents.set('embedding', new EmbeddingAgent()); // TODO: Uncomment when EmbeddingAgent is created
+        this.agents.set('embedding', new EmbeddingAgent());
     }
     defineCapabilities() {
-        this.capabilities = new Map([
-            ['perplexity', {
-                    agent: 'perplexity',
-                    strengths: ['real-time research', 'web search', 'fact checking', 'current events'],
-                    weaknesses: ['creative writing', 'code generation'],
-                    costPerToken: 0.0001,
-                    speedRating: 9
-                }],
-            ['claude', {
-                    agent: 'claude-3.5-sonnet',
-                    strengths: ['creative writing', 'analysis', 'code generation', 'complex reasoning'],
-                    weaknesses: ['real-time data', 'web search'],
-                    costPerToken: 0.003,
-                    speedRating: 7
-                }],
-            ['embedding', {
-                    agent: 'text-embedding-3',
-                    strengths: ['vector embeddings', 'semantic search', 'similarity analysis'],
-                    weaknesses: ['content generation', 'reasoning'],
-                    costPerToken: 0.00002,
-                    speedRating: 10
-                }]
-        ]);
+        this.capabilities.clear();
+        this.capabilities.set('perplexity', {
+            agent: 'perplexity',
+            strengths: ['real-time research', 'web search', 'fact checking', 'current events'],
+            weaknesses: ['creative writing', 'code generation'],
+            costPerToken: 0.0001,
+            speedRating: 9
+        });
+        this.capabilities.set('claude', {
+            agent: 'claude-3.5-sonnet',
+            strengths: ['creative writing', 'analysis', 'code generation', 'complex reasoning'],
+            weaknesses: ['real-time data', 'web search'],
+            costPerToken: 0.003,
+            speedRating: 7
+        });
+        this.capabilities.set('embedding', {
+            agent: 'text-embedding-3',
+            strengths: ['vector embeddings', 'semantic search', 'similarity analysis'],
+            weaknesses: ['content generation', 'reasoning'],
+            costPerToken: 0.00002,
+            speedRating: 10
+        });
+    }
+    getAgent(key) {
+        const agent = this.agents.get(key);
+        if (!agent) {
+            throw new Error(`Agent "${key}" is not initialized`);
+        }
+        return agent;
     }
     /**
      * Route task to most appropriate agent based on task type and content
@@ -69,18 +76,18 @@ export class AgentOrchestrator {
      */
     selectBestAgent(task) {
         const taskTypeMapping = {
-            'research': 'perplexity',
-            'writing': 'claude',
-            'analysis': 'claude',
-            'embedding': 'embedding'
+            research: 'perplexity',
+            writing: 'claude',
+            analysis: 'claude',
+            embedding: 'embedding'
         };
-        return taskTypeMapping[task.type] || 'claude';
+        return taskTypeMapping[task.type] ?? 'claude';
     }
     /**
      * Research Task Handler - Perplexity
      */
     async handleResearchTask(task) {
-        const agent = this.agents.get('perplexity');
+        const agent = this.getAgent('perplexity');
         // Perform research
         const researchResults = await agent.research({
             query: task.payload.query,
@@ -88,7 +95,7 @@ export class AgentOrchestrator {
             maxResults: task.payload.maxResults || 10
         });
         // Store raw research in vector database
-        await this.vectorStore.store({
+        const vectorId = await this.vectorStore.store({
             content: researchResults,
             metadata: {
                 taskId: task.id,
@@ -102,21 +109,21 @@ export class AgentOrchestrator {
         return {
             summary: researchResults.summary,
             reportUrl: report.driveUrl,
-            vectorId: researchResults.vectorId
+            vectorId
         };
     }
     /**
      * Writing Task Handler - Claude
      */
     async handleWritingTask(task) {
-        const agent = this.agents.get('claude');
+        const agent = this.getAgent('claude');
         // Retrieve context from vector store if needed
         let context = '';
         if (task.payload.useContext) {
             context = await this.vectorStore.retrieveRelevant(task.payload.topic, task.payload.contextLimit || 5);
         }
         // Generate content with brand voice
-        const content = await agent.generateContent({
+        const contentResult = await agent.generateContent({
             prompt: task.payload.prompt,
             context: context,
             brandVoice: task.payload.brandVoice || 'professional',
@@ -124,37 +131,41 @@ export class AgentOrchestrator {
             maxTokens: task.payload.maxTokens || 2000
         });
         // Store generated content
-        await this.storeContent(content, task);
-        return content;
+        await this.storeContent(contentResult, task);
+        return contentResult.content;
     }
     /**
      * Embedding Task Handler
      */
     async handleEmbeddingTask(task) {
-        const agent = this.agents.get('embedding');
+        const agent = this.getAgent('embedding');
         const embeddings = await agent.createEmbeddings({
             texts: task.payload.texts,
             model: 'text-embedding-3-small'
         });
-        await this.vectorStore.storeEmbeddings(embeddings);
+        await this.vectorStore.storeEmbeddings(embeddings.map(({ content, embedding, metadata }) => ({
+            content,
+            embedding,
+            metadata
+        })));
         return {
-            embeddingIds: embeddings.map((e) => e.id),
-            dimensions: embeddings[0].dimensions
+            embeddingIds: embeddings.map((embedding) => embedding.id),
+            dimensions: embeddings[0]?.dimensions ?? 0
         };
     }
     /**
      * Generate structured report from research
      */
     async generateReport(data, task) {
-        const claudeAgent = this.agents.get('claude');
-        const report = await claudeAgent.generateContent({
+        const claudeAgent = this.getAgent('claude');
+        const reportContent = await claudeAgent.generateContent({
             prompt: `Create a comprehensive report from the following research data`,
             context: JSON.stringify(data),
             format: 'report',
             sections: ['Executive Summary', 'Key Findings', 'Analysis', 'Recommendations']
         });
         return {
-            content: report,
+            content: reportContent.content,
             metadata: {
                 generatedAt: new Date(),
                 taskId: task.id,
@@ -180,9 +191,12 @@ export class AgentOrchestrator {
      * Store generated content
      */
     async storeContent(content, task) {
-        // Store in vector database for future reference
+        const textContent = typeof content === 'string' ? content : content?.content;
+        if (!textContent) {
+            return;
+        }
         await this.vectorStore.store({
-            content: content,
+            content: textContent,
             metadata: {
                 taskId: task.id,
                 type: 'generated_content',
@@ -192,7 +206,7 @@ export class AgentOrchestrator {
         // Also store in Drive if specified
         if (task.payload.storeInDrive) {
             await this.driveStorage.uploadContent({
-                content: content,
+                content: textContent,
                 folder: task.payload.driveFolder || 'generated_content'
             });
         }

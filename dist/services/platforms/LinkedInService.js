@@ -1,14 +1,18 @@
 // services/platforms/LinkedInService.ts
 import axios from 'axios';
+import { randomUUID } from 'crypto';
 import { SocialMediaError, RateLimitError, AuthenticationError } from '../../types/typescript-types';
 import { Logger } from '../../utils/Logger';
 export class LinkedInService {
-    constructor(accessToken, personId) {
+    constructor(credentials = {}) {
         this.platform = 'linkedin';
-        this.baseURL = 'https://api.linkedin.com/v2';
-        this.accessToken = accessToken;
-        this.personId = personId;
         this.logger = new Logger('LinkedInService');
+        this.baseURL = 'https://api.linkedin.com/v2';
+        this.accessToken = credentials.accessToken ?? process.env['LINKEDIN_ACCESS_TOKEN'] ?? '';
+        this.personId = credentials.personId ?? process.env['LINKEDIN_PERSON_ID'] ?? '';
+        if (!this.accessToken) {
+            throw new AuthenticationError('linkedin', 'Missing LinkedIn access token');
+        }
     }
     async authenticate() {
         try {
@@ -18,26 +22,17 @@ export class LinkedInService {
                     'X-Restli-Protocol-Version': '2.0.0'
                 }
             });
-            this.personId = response.data.id;
-            this.logger.info(`Authenticated as ${response.data.firstName} ${response.data.lastName}`);
+            this.logger.info(`Authenticated as ${response.data.localizedFirstName} ${response.data.localizedLastName}`);
             return true;
         }
         catch (error) {
-            this.handleLinkedInError(error);
-            return false;
+            this.logger.error('LinkedIn authentication failed:', error);
+            throw new AuthenticationError('linkedin', error.response?.data?.message || error.message);
         }
     }
     async post(content) {
-        this.validateContent(content);
-        if (!this.personId) {
-            throw new SocialMediaError('Person ID is required. Please authenticate first.', 'linkedin', 'MISSING_PERSON_ID');
-        }
         try {
-            let mediaAssets = [];
-            // Upload media if present
-            if (content.mediaUrls && content.mediaUrls.length > 0) {
-                mediaAssets = await this.uploadMedia(content.mediaUrls);
-            }
+            this.validateContent(content);
             const postData = {
                 author: `urn:li:person:${this.personId}`,
                 lifecycleState: 'PUBLISHED',
@@ -46,14 +41,16 @@ export class LinkedInService {
                         shareCommentary: {
                             text: content.content
                         },
-                        shareMediaCategory: mediaAssets.length > 0 ? 'IMAGE' : 'NONE'
+                        shareMediaCategory: content.mediaUrls.length > 0 ? 'IMAGE' : 'NONE'
                     }
                 },
                 visibility: {
                     'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
                 }
             };
-            if (mediaAssets.length > 0) {
+            // Add media if present
+            if (content.mediaUrls.length > 0) {
+                const mediaAssets = await this.uploadMedia(content.mediaUrls);
                 postData.specificContent['com.linkedin.ugc.ShareContent'].media = mediaAssets;
             }
             const response = await axios.post(`${this.baseURL}/ugcPosts`, postData, {
@@ -64,7 +61,7 @@ export class LinkedInService {
                 }
             });
             const postId = this.extractPostId(response.data.id);
-            this.logger.info(`LinkedIn post published successfully: ${postId}`);
+            this.logger.info(`LinkedIn post created successfully: ${postId}`);
             return postId;
         }
         catch (error) {
@@ -96,7 +93,7 @@ export class LinkedInService {
                 this.logger.warn('Could not fetch connections count:', error.response?.data);
             }
             return {
-                id: `linkedin-metrics-${Date.now()}`,
+                id: randomUUID(),
                 platform: 'linkedin',
                 followersCount: connectionsCount, // LinkedIn uses connections instead of followers
                 followingCount: 0, // Not available in LinkedIn API

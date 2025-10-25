@@ -14,7 +14,12 @@ export class Logger {
     }
     formatMessage(level, message, ...args) {
         const timestamp = new Date().toISOString();
-        const formattedArgs = args.length > 0 ? ' ' + args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)).join(' ') : '';
+        const formattedArgs = args.length > 0
+            ? ' ' +
+                args
+                    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)))
+                    .join(' ')
+            : '';
         return `[${timestamp}] [${level.toUpperCase()}] [${this.context}] ${message}${formattedArgs}`;
     }
     debug(message, ...args) {
@@ -49,8 +54,9 @@ export class Logger {
     }
     progress(step, total, message) {
         if (this.shouldLog('info')) {
-            const percentage = Math.round((step / total) * 100);
-            const progressBar = '█'.repeat(Math.floor(percentage / 5)) + '░'.repeat(20 - Math.floor(percentage / 5));
+            const percentage = total === 0 ? 0 : Math.round((step / total) * 100);
+            const filledBars = Math.min(20, Math.floor(percentage / 5));
+            const progressBar = '█'.repeat(filledBars) + '░'.repeat(20 - filledBars);
             console.log(chalk.magenta(this.formatMessage('info', `📊 [${progressBar}] ${percentage}% ${message}`)));
         }
     }

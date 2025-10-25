@@ -14,25 +14,26 @@
     "cli": "bun run src/cli/cli-interface.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.0",
-    "@supabase/supabase-js": "^2.54.0",
-    "axios": "^1.11.0",
-    "chalk": "^5.3.0",
-    "commander": "^11.1.0",
-    "date-fns": "^4.1.0",
-    "dotenv": "^16.4.5",
+    "@anthropic-ai/sdk": "^0.20.9",
+    "@supabase/supabase-js": "^2.76.1",
     "googleapis": "^144.0.0",
-    "inquirer": "^9.2.12",
+    "openai": "^4.104.0",
+    "dotenv": "^16.6.1",
+    "zod": "^3.25.76",
+    "commander": "^11.1.0",
+    "chalk": "^5.6.2",
+    "inquirer": "^9.3.8",
     "node-cron": "^3.0.3",
-    "openai": "^4.67.0",
-    "twitter-api-v2": "^1.24.0",
-    "zod": "^3.23.8"
+    "twitter-api-v2": "^1.27.0",
+    "axios": "^1.12.2",
+    "date-fns": "^3.6.0"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^24.2.1",
+    "@types/node": "^22.18.12",
+    "@types/inquirer": "^9.0.7",
     "@types/node-cron": "^3.0.11",
-    "typescript": "^5.6.0"
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

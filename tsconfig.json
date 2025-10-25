@@ -28,13 +28,11 @@
     "noPropertyAccessFromIndexSignature": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@memory-sdk/*": ["lib/memory-sdk/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": [
-    "src/**/*",
-    "lib/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

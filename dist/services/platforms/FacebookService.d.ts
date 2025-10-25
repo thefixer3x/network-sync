@@ -1,25 +1,24 @@
 import { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
+type FacebookCredentials = Partial<{
+    accessToken: string;
+    pageId: string;
+}>;
 export declare class FacebookService implements SocialMediaService {
     platform: "facebook";
-    private baseURL;
     private accessToken;
     private pageId;
     private logger;
-    constructor(accessToken: string, pageId?: string);
+    private baseURL;
+    constructor(credentials?: FacebookCredentials);
     authenticate(): Promise<boolean>;
     post(content: Content): Promise<string>;
+    private postMultipleImages;
     getMetrics(): Promise<AccountMetrics>;
     deletePost(postId: string): Promise<boolean>;
     schedulePost(content: Content): Promise<string>;
     private validateContent;
-    private uploadMedia;
-    private extractPostId;
-    private getPostsCount;
     private getTopPerformingPosts;
-    private calculateEngagementRate;
-    private calculateAverageLikes;
-    private calculateAverageComments;
-    private calculateAverageShares;
     private handleFacebookError;
 }
+export {};
 //# sourceMappingURL=FacebookService.d.ts.map

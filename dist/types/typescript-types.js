@@ -24,6 +24,7 @@ export const ContentSchema = z.object({
     }).optional(),
     aiGenerated: z.boolean().default(false),
     originalTopic: z.string().optional(),
+    externalId: z.string().optional(),
     createdAt: z.date(),
     updatedAt: z.date(),
 });

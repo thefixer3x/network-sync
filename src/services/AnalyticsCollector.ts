@@ -1,145 +1,119 @@
-import { Logger } from '../utils/Logger';
-import { SocialPlatform, AccountMetrics, Content } from '../types/typescript-types';
+import { randomUUID } from 'node:crypto';
+import { AccountMetrics, CompetitorAnalysis, SocialPlatform } from '@/types';
+import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from './SocialMediaFactory';
+import { OpenAIService } from './OpenAIService';
 
 export class AnalyticsCollector {
-  private logger = new Logger('AnalyticsCollector');
+  private readonly logger = new Logger('AnalyticsCollector');
+  private readonly aiService = new OpenAIService();
 
-  async collectMetrics(platform: SocialPlatform, accountId: string): Promise<AccountMetrics> {
+  async collectPlatformMetrics(platform: SocialPlatform): Promise<AccountMetrics | null> {
     try {
-      this.logger.info(`Collecting analytics for ${platform} account: ${accountId}`);
-      
-      // Mock metrics - in real implementation would call platform APIs
-      const metrics: AccountMetrics = {
-        id: crypto.randomUUID(),
-        platform,
-        followersCount: Math.floor(Math.random() * 10000),
-        followingCount: Math.floor(Math.random() * 1000),
-        postsCount: Math.floor(Math.random() * 500),
-        engagementRate: Math.random() * 5,
-        growthRate: Math.random() * 0.1,
-        averageLikes: Math.floor(Math.random() * 5000),
-        averageComments: Math.floor(Math.random() * 1000),
-        averageShares: Math.floor(Math.random() * 500),
-        topPerformingContent: [],
-        recordedAt: new Date()
-      };
+      const service = SocialMediaFactory.create(platform);
+      await service.authenticate();
 
+      const metrics = await service.getMetrics();
+      this.logger.info(`Collected metrics for ${platform}.`);
       return metrics;
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to collect metrics for ${platform}: ${errorMessage}`);
-      throw error;
+      this.logger.error(`Failed to collect metrics for ${platform}:`, error);
+      return null;
     }
   }
 
-  async collectContentMetrics(content: Content, platform: SocialPlatform): Promise<any> {
+  async analyzeCompetitor(
+    competitorName: string,
+    platform: SocialPlatform,
+    handle: string
+  ): Promise<CompetitorAnalysis> {
     try {
-      this.logger.info(`Collecting content metrics for ${platform}`);
-      
-      // Mock content performance data
-      return {
-        contentId: content.id,
+      const analysis: CompetitorAnalysis = {
+        id: randomUUID(),
+        competitorName,
         platform,
-        likes: Math.floor(Math.random() * 100),
-        comments: Math.floor(Math.random() * 20),
-        shares: Math.floor(Math.random() * 10),
-        reach: Math.floor(Math.random() * 1000),
-        impressions: Math.floor(Math.random() * 2000),
-        engagementRate: Math.random() * 5,
-        clickThroughRate: Math.random() * 2,
-        collectedAt: new Date()
-      };
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to collect content metrics: ${errorMessage}`);
-      throw error;
-    }
-  }
-
-  async getEngagementTrends(platform: SocialPlatform, days: number = 30): Promise<any[]> {
-    try {
-      const trends = [];
-      const now = new Date();
-
-      for (let i = 0; i < days; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-
-        trends.push({
-          date: date.toISOString().split('T')[0],
-          engagement: Math.random() * 5,
-          reach: Math.floor(Math.random() * 1000),
-          impressions: Math.floor(Math.random() * 2000)
-        });
-      }
-
-      return trends.reverse();
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to get engagement trends: ${errorMessage}`);
-      return [];
-    }
-  }
-
-  async analyzeCompetitor(competitorId: string, platform: SocialPlatform): Promise<any> {
-    try {
-      this.logger.info(`Analyzing competitor: ${competitorId} on ${platform}`);
-      
-      // Mock competitor analysis data
-      return {
-        competitorId,
-        platform,
-        followers: Math.floor(Math.random() * 100000),
-        avgEngagement: Math.random() * 5,
-        postFrequency: Math.floor(Math.random() * 10) + 1,
-        topContent: [
-          { id: '1', likes: 1200, comments: 89, shares: 45 },
-          { id: '2', likes: 890, comments: 67, shares: 23 }
-        ],
-        hashtags: ['#marketing', '#business', '#growth'],
-        contentTypes: ['image', 'video', 'text'],
-        postingTimes: ['9:00', '13:00', '17:00'],
+        handle,
+        content: `Recent ${platform} content analysis`,
+        engagementRate: Math.random() * 10,
+        postTime: new Date(),
+        hashtags: ['#business', '#innovation', '#growth'],
+        contentType: 'text',
+        metrics: {
+          likes: Math.floor(Math.random() * 1_000),
+          comments: Math.floor(Math.random() * 100),
+          shares: Math.floor(Math.random() * 50),
+          views: Math.floor(Math.random() * 5_000)
+        },
+        insights: await this.generateCompetitorInsights(competitorName, platform),
         analyzedAt: new Date()
       };
 
+      return analysis;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to analyze competitor: ${errorMessage}`);
+      this.logger.error(`Failed to analyze competitor ${competitorName} on ${platform}:`, error);
       throw error;
     }
   }
 
-  async generateReport(platform: SocialPlatform, period: string = '7d'): Promise<any> {
+  async calculateGrowthRate(currentMetrics: AccountMetrics, previousMetrics: AccountMetrics): Promise<number> {
+    if (previousMetrics.followersCount === 0) {
+      return 0;
+    }
+
+    const growthRate =
+      ((currentMetrics.followersCount - previousMetrics.followersCount) / previousMetrics.followersCount) * 100;
+
+    return Math.round(growthRate * 100) / 100;
+  }
+
+  async generateAnalyticsReport(metrics: AccountMetrics[]): Promise<string> {
     try {
-      const metrics = await this.collectMetrics(platform, 'mock-account');
-      const trends = await this.getEngagementTrends(platform, 7);
+      const reportData = metrics.map((metric) => ({
+        platform: metric.platform,
+        followers: metric.followersCount,
+        engagement: metric.engagementRate,
+        growth: metric.growthRate
+      }));
 
-      return {
-        platform,
-        period,
-        summary: metrics,
-        trends,
-        insights: [
-          'Engagement is 15% higher on weekends',
-          'Video content performs 3x better than images',
-          'Optimal posting time is 3-5 PM'
-        ],
-        recommendations: [
-          'Increase video content creation',
-          'Focus on weekend posting',
-          'Use more trending hashtags'
-        ],
-        generatedAt: new Date()
-      };
+      const prompt = `Generate a comprehensive social media analytics report based on this data:
 
+${JSON.stringify(reportData, null, 2)}
+
+The report should include:
+1. Executive summary of performance
+2. Platform-by-platform analysis
+3. Key insights and trends
+4. Actionable recommendations
+5. Areas for improvement
+
+Write in a professional tone suitable for business stakeholders.`;
+
+      return this.aiService.generateContent(prompt);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to generate report: ${errorMessage}`);
-      throw error;
+      this.logger.error('Failed to generate analytics report:', error);
+      return 'Analytics report generation failed';
+    }
+  }
+
+  private async generateCompetitorInsights(competitorName: string, platform: SocialPlatform): Promise<string> {
+    try {
+      const prompt = `Generate competitive intelligence insights for ${competitorName} on ${platform}.
+
+Provide actionable insights about:
+1. Content strategy patterns
+2. Engagement tactics
+3. Posting frequency and timing
+4. Audience interaction approach
+5. Opportunities for differentiation
+
+Keep insights professional and strategic, focusing on learnings that can improve our own social media approach.
+
+Insights:`;
+
+      return this.aiService.generateContent(prompt);
+    } catch (error) {
+      this.logger.error('Failed to generate competitor insights:', error);
+      return 'Competitive analysis insights unavailable';
     }
   }
 }

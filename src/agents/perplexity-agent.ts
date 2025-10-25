@@ -2,6 +2,9 @@
  * Perplexity Agent - Specialized for Research & Real-time Data
  */
 
+const formatError = (error: unknown): string =>
+  error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
+
 interface PerplexityConfig {
   apiKey: string;
   model: string;
@@ -65,7 +68,7 @@ export class PerplexityAgent {
       return this.formatResearchResults(data);
     } catch (error) {
       console.error('Perplexity research error:', error);
-      throw new Error(`Research failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Research failed: ${formatError(error)}`);
     }
   }
 
@@ -168,12 +171,10 @@ export class PerplexityAgent {
 
   private extractSummary(content: string): string {
     // Extract first paragraph or up to 280 characters
-    const firstParagraph = content.split('\n\n')[0];
-    if (!firstParagraph) return '';
-    
-    return firstParagraph.length > 280
-      ? firstParagraph.substring(0, 277) + '...'
-      : firstParagraph;
+    const firstParagraph = content.split('\n\n')[0] ?? '';
+    const trimmed = firstParagraph.trim();
+
+    return trimmed.length > 280 ? `${trimmed.substring(0, 277)}...` : trimmed;
   }
 
   private calculateConfidence(result: any): number {

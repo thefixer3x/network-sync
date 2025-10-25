@@ -20,14 +20,16 @@ export declare class AgentOrchestrator {
     private agents;
     private taskQueue;
     private capabilities;
-    private vectorStore;
+    private readonly driveStorage;
+    private readonly vectorStore;
     constructor();
     private initializeAgents;
     private defineCapabilities;
+    private getAgent;
     /**
      * Route task to most appropriate agent based on task type and content
      */
-    delegateTask(task: AgentTask): Promise<any>;
+    delegateTask(task: AgentTask): Promise<unknown>;
     /**
      * Smart agent selection based on task requirements
      */

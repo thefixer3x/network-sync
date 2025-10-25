@@ -1,9 +1,13 @@
-import { SocialPlatform, TrendData } from '../types/typescript-types';
+import { Trend } from '@/types';
 export declare class TrendAnalyzer {
-    private logger;
-    analyzeTrends(platform: SocialPlatform, timeframe?: string): Promise<TrendData[]>;
-    getTopTrends(platform: SocialPlatform, limit?: number): Promise<TrendData[]>;
-    getTrendingSentiment(keyword: string, platform: SocialPlatform): Promise<number>;
-    getTrendingTopics(keywords: string[], limit?: number): Promise<TrendData[]>;
+    private readonly logger;
+    private readonly aiService;
+    getTrendingTopics(keywords: string[], industries?: string[]): Promise<Trend[]>;
+    analyzeTrendRelevance(trends: Trend[], context: string): Promise<Trend[]>;
+    getRelatedKeywords(topic: string): Promise<string[]>;
+    private getGoogleTrends;
+    private getTwitterTrends;
+    private getIndustryTrends;
+    private volumeToNumber;
 }
 //# sourceMappingURL=TrendAnalyzer.d.ts.map

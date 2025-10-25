@@ -1,9 +1,15 @@
 import { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
+type TwitterCredentials = Partial<{
+    apiKey: string;
+    apiSecret: string;
+    accessToken: string;
+    accessSecret: string;
+}>;
 export declare class TwitterService implements SocialMediaService {
     platform: "twitter";
     private client;
     private logger;
-    constructor(apiKey: string, apiSecret: string, accessToken: string, accessSecret: string);
+    constructor(credentials?: TwitterCredentials);
     authenticate(): Promise<boolean>;
     post(content: Content): Promise<string>;
     getMetrics(): Promise<AccountMetrics>;
@@ -12,10 +18,12 @@ export declare class TwitterService implements SocialMediaService {
     private validateContent;
     private uploadMedia;
     private calculateEngagementRate;
+    private calculateGrowthRate;
     private calculateAverageLikes;
-    private calculateAverageComments;
-    private calculateAverageShares;
-    private getTopPerformingPosts;
+    private calculateAverageReplies;
+    private calculateAverageRetweets;
+    private getTopPerformingTweets;
     private handleTwitterError;
 }
+export {};
 //# sourceMappingURL=TwitterService.d.ts.map

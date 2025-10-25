@@ -38,6 +38,7 @@ export declare const ContentSchema: z.ZodObject<{
     }>>;
     aiGenerated: z.ZodDefault<z.ZodBoolean>;
     originalTopic: z.ZodOptional<z.ZodString>;
+    externalId: z.ZodOptional<z.ZodString>;
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
@@ -62,6 +63,7 @@ export declare const ContentSchema: z.ZodObject<{
         engagementRate: number;
     } | undefined;
     originalTopic?: string | undefined;
+    externalId?: string | undefined;
 }, {
     id: string;
     content: string;
@@ -84,6 +86,7 @@ export declare const ContentSchema: z.ZodObject<{
     } | undefined;
     aiGenerated?: boolean | undefined;
     originalTopic?: string | undefined;
+    externalId?: string | undefined;
 }>;
 export type Content = z.infer<typeof ContentSchema>;
 export declare const TrendSchema: z.ZodObject<{
@@ -121,7 +124,6 @@ export declare const TrendSchema: z.ZodObject<{
     sourceUrls?: string[] | undefined;
 }>;
 export type Trend = z.infer<typeof TrendSchema>;
-export type TrendData = Trend;
 export declare const AccountMetricsSchema: z.ZodObject<{
     id: z.ZodString;
     platform: z.ZodEnum<["twitter", "linkedin", "facebook", "instagram", "tiktok"]>;
@@ -426,16 +428,16 @@ export declare const WebhookEventSchema: z.ZodObject<{
     data: z.ZodRecord<z.ZodString, z.ZodAny>;
     timestamp: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    id: string;
     data: Record<string, any>;
-    timestamp: Date;
+    id: string;
     type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
+    timestamp: Date;
     platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
 }, {
-    id: string;
     data: Record<string, any>;
-    timestamp: Date;
+    id: string;
     type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
+    timestamp: Date;
     platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
 }>;
 export type WebhookEvent = z.infer<typeof WebhookEventSchema>;
@@ -545,6 +547,7 @@ export declare const schemas: {
         }>>;
         aiGenerated: z.ZodDefault<z.ZodBoolean>;
         originalTopic: z.ZodOptional<z.ZodString>;
+        externalId: z.ZodOptional<z.ZodString>;
         createdAt: z.ZodDate;
         updatedAt: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
@@ -569,6 +572,7 @@ export declare const schemas: {
             engagementRate: number;
         } | undefined;
         originalTopic?: string | undefined;
+        externalId?: string | undefined;
     }, {
         id: string;
         content: string;
@@ -591,6 +595,7 @@ export declare const schemas: {
         } | undefined;
         aiGenerated?: boolean | undefined;
         originalTopic?: string | undefined;
+        externalId?: string | undefined;
     }>;
     Trend: z.ZodObject<{
         id: z.ZodString;
@@ -893,16 +898,16 @@ export declare const schemas: {
         data: z.ZodRecord<z.ZodString, z.ZodAny>;
         timestamp: z.ZodDate;
     }, "strip", z.ZodTypeAny, {
-        id: string;
         data: Record<string, any>;
-        timestamp: Date;
+        id: string;
         type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
+        timestamp: Date;
         platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
     }, {
-        id: string;
         data: Record<string, any>;
-        timestamp: Date;
+        id: string;
         type: "post_published" | "post_failed" | "metric_updated" | "trend_detected";
+        timestamp: Date;
         platform?: "twitter" | "linkedin" | "instagram" | "tiktok" | "facebook" | undefined;
     }>;
 };

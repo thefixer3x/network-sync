@@ -1,6 +1,7 @@
 /**
  * Claude Agent - Specialized for High-Quality Writing & Analysis
  */
+const formatError = (error) => error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
 export class ClaudeAgent {
     constructor() {
         this.apiEndpoint = 'https://api.anthropic.com/v1/messages';
@@ -38,7 +39,7 @@ export class ClaudeAgent {
      * Generate high-quality content with brand voice
      */
     async generateContent(params) {
-        const voice = this.brandVoices.get(params.brandVoice || 'professional');
+        const voice = this.brandVoices.get(params.brandVoice || 'professional') ?? this.brandVoices.get('professional');
         const systemPrompt = this.buildSystemPrompt(voice, params.format);
         const userPrompt = this.buildUserPrompt(params);
         try {
@@ -64,7 +65,7 @@ export class ClaudeAgent {
         }
         catch (error) {
             console.error('Claude generation error:', error);
-            throw new Error(`Content generation failed: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error(`Content generation failed: ${formatError(error)}`);
         }
     }
     /**
@@ -106,7 +107,6 @@ Provide:
             blog: { maxLength: null, style: 'comprehensive', structure: 'full' },
             email: { maxLength: null, style: 'personalized', cta: true }
         };
-        const fromSpec = platformSpecs[params.fromPlatform];
         const toSpec = platformSpecs[params.toPlatform];
         const prompt = `Adapt this ${params.fromPlatform} content for ${params.toPlatform}:
 
@@ -117,10 +117,11 @@ Requirements:
 - Max length: ${toSpec.maxLength || 'no limit'}
 - ${params.maintainMessage ? 'Maintain core message' : 'Optimize for platform'}
 - Platform best practices for ${params.toPlatform}`;
-        return await this.generateContent({
+        const result = await this.generateContent({
             prompt,
             format: params.toPlatform
         });
+        return result.content;
     }
     /**
      * Generate content variations for A/B testing
@@ -142,7 +143,7 @@ Make this variation distinctly different while maintaining the core message.`;
             });
             variations.push({
                 id: `var_${i + 1}`,
-                content: variation,
+                content: variation.content,
                 hypothesis: `Variation focusing on ${this.generateHypothesis(i)}`
             });
         }
@@ -174,7 +175,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
             prompt = `Context:\n${params.context}\n\nTask:\n${prompt}`;
         }
         if (params.sections) {
-            prompt += `\n\nInclude these sections:\n${params.sections.map((s) => `- ${s}`).join('\n')}`;
+            prompt += `\n\nInclude these sections:\n${params.sections.map((section) => `- ${section}`).join('\n')}`;
         }
         return prompt;
     }
@@ -182,16 +183,18 @@ Maintain consistency throughout the content while ensuring high quality and enga
      * Format content based on type
      */
     formatContent(data, format) {
-        const content = data.content?.[0]?.text || '';
+        const content = data.content?.[0]?.text ?? '';
         const formatted = {
             content,
-            format,
             metadata: {
                 model: data.model,
                 tokenUsage: data.usage,
                 generatedAt: new Date()
             }
         };
+        if (format) {
+            formatted.format = format;
+        }
         if (format === 'report') {
             formatted.sections = this.extractSections(content);
         }
@@ -205,11 +208,9 @@ Maintain consistency throughout the content while ensuring high quality and enga
         const sectionRegex = /##\s+(.+?)\n([\s\S]*?)(?=##\s+|$)/g;
         let match;
         while ((match = sectionRegex.exec(content)) !== null) {
-            const title = match[1]?.trim();
-            const body = match[2]?.trim();
-            if (title && body !== undefined) {
-                sections[title] = body;
-            }
+            const title = (match[1] ?? '').trim();
+            const body = (match[2] ?? '').trim();
+            sections[title] = body;
         }
         return sections;
     }
@@ -220,7 +221,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
         const content = response.content;
         // Extract score if present
         const scoreMatch = content.match(/Score:\s*(\d+)/i);
-        const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+        const score = scoreMatch?.[1] ? Number.parseInt(scoreMatch[1], 10) : null;
         return {
             fullAnalysis: content,
             score,
@@ -238,7 +239,8 @@ Maintain consistency throughout the content while ensuring high quality and enga
             'urgency creation',
             'benefit-focused messaging'
         ];
-        return hypotheses[index % hypotheses.length] || 'general optimization';
+        const normalizedIndex = Math.abs(index) % hypotheses.length;
+        return hypotheses[normalizedIndex] ?? hypotheses[0];
     }
 }
 //# sourceMappingURL=claude-agent.js.map

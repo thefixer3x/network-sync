@@ -1,10 +1,11 @@
-import { SocialPlatform, AccountMetrics, Content } from '../types/typescript-types';
+import { AccountMetrics, CompetitorAnalysis, SocialPlatform } from '@/types';
 export declare class AnalyticsCollector {
-    private logger;
-    collectMetrics(platform: SocialPlatform, accountId: string): Promise<AccountMetrics>;
-    collectContentMetrics(content: Content, platform: SocialPlatform): Promise<any>;
-    getEngagementTrends(platform: SocialPlatform, days?: number): Promise<any[]>;
-    analyzeCompetitor(competitorId: string, platform: SocialPlatform): Promise<any>;
-    generateReport(platform: SocialPlatform, period?: string): Promise<any>;
+    private readonly logger;
+    private readonly aiService;
+    collectPlatformMetrics(platform: SocialPlatform): Promise<AccountMetrics | null>;
+    analyzeCompetitor(competitorName: string, platform: SocialPlatform, handle: string): Promise<CompetitorAnalysis>;
+    calculateGrowthRate(currentMetrics: AccountMetrics, previousMetrics: AccountMetrics): Promise<number>;
+    generateAnalyticsReport(metrics: AccountMetrics[]): Promise<string>;
+    private generateCompetitorInsights;
 }
 //# sourceMappingURL=AnalyticsCollector.d.ts.map

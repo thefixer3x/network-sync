@@ -31,6 +31,7 @@ export const ContentSchema = z.object({
   }).optional(),
   aiGenerated: z.boolean().default(false),
   originalTopic: z.string().optional(),
+  externalId: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -52,7 +53,6 @@ export const TrendSchema = z.object({
 });
 
 export type Trend = z.infer<typeof TrendSchema>;
-export type TrendData = Trend; // Alias for backwards compatibility
 
 // Account Metrics Schema
 export const AccountMetricsSchema = z.object({

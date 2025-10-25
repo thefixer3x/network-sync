@@ -1,103 +1,217 @@
-// services/OpenAIService.ts
+import { randomUUID } from 'node:crypto';
 import OpenAI from 'openai';
-import { Logger } from '../utils/Logger';
+import { AIService, SocialPlatform, Trend } from '@/types';
+import { Logger } from '@/utils/Logger';
 
-export class OpenAIService {
-  private client: OpenAI;
-  private logger: Logger;
+type PlatformSpec = {
+  charLimit: number;
+  tone: string;
+  bestPractices: string[];
+};
 
-  constructor(apiKey?: string) {
-    this.client = new OpenAI({
-      apiKey: apiKey || process.env['OPENAI_API_KEY']!,
-    });
-    this.logger = new Logger('OpenAIService');
+const PLATFORM_SPECS: Record<SocialPlatform, PlatformSpec> = {
+  twitter: {
+    charLimit: 280,
+    tone: 'Concise and engaging',
+    bestPractices: [
+      'Use relevant hashtags (1-3)',
+      'Include a clear call-to-action',
+      'Keep it conversational',
+      'Thread longer ideas'
+    ]
+  },
+  linkedin: {
+    charLimit: 3000,
+    tone: 'Professional and insightful',
+    bestPractices: [
+      'Start with a compelling hook',
+      'Provide actionable insights',
+      'Use industry terminology',
+      'End with an engagement question'
+    ]
+  },
+  facebook: {
+    charLimit: 63206,
+    tone: 'Conversational and community-focused',
+    bestPractices: [
+      'Tell relatable stories',
+      'Encourage discussion',
+      'Use approachable language',
+      'Include a call-to-action'
+    ]
+  },
+  instagram: {
+    charLimit: 2200,
+    tone: 'Visual-first and inspiring',
+    bestPractices: [
+      'Complement visuals with narrative',
+      'Use relevant hashtags (5-10)',
+      'Add emojis intentionally',
+      'Create shareable moments'
+    ]
+  },
+  tiktok: {
+    charLimit: 2200,
+    tone: 'Trendy and engaging',
+    bestPractices: [
+      'Hook the viewer immediately',
+      'Reference trending sounds/hashtags',
+      'Keep language energetic',
+      'Highlight clear value quickly'
+    ]
+  }
+};
+
+function formatError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return typeof error === 'string' ? error : JSON.stringify(error);
+}
+
+export class OpenAIService implements AIService {
+  private readonly client: OpenAI;
+  private readonly logger = new Logger('OpenAIService');
+
+  constructor() {
+    const apiKey = process.env['OPENAI_API_KEY'];
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY must be set to use OpenAIService.');
+    }
+
+    this.client = new OpenAI({ apiKey });
   }
 
-  async generateContent(prompt: string, maxTokens: number = 1000): Promise<string> {
+  async generateContent(prompt: string, _context?: unknown): Promise<string> {
     try {
-      const response = await this.client.chat.completions.create({
-        model: 'gpt-4',
+      const systemPrompt = `You are a professional business development specialist and content creator who helps organizations "change the world one solution at a time." Your writing style is:
+
+- Professional yet approachable
+- Solution-focused and optimistic
+- Action-oriented with concrete insights
+- Engaging and conversational
+- Focused on problem-solving and innovation
+
+Always provide actionable insights and maintain a tone that resonates with business leaders and entrepreneurs.`;
+
+      const completion = await this.client.chat.completions.create({
+        model: process.env['OPENAI_MODEL'] || 'gpt-4',
         messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
         ],
-        max_tokens: maxTokens,
-        temperature: 0.7,
+        max_tokens: Number.parseInt(process.env['OPENAI_MAX_TOKENS'] ?? '500', 10),
+        temperature: Number.parseFloat(process.env['OPENAI_TEMPERATURE'] ?? '0.7')
       });
 
-      const content = response.choices[0]?.message?.content || '';
-      this.logger.info('Generated content successfully');
-      return content;
-    } catch (error: any) {
-      this.logger.error('Failed to generate content:', error.message);
-      throw new Error(`OpenAI content generation failed: ${error.message}`);
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No content returned by OpenAI.');
+      }
+
+      this.logger.info('Content generated successfully.');
+      return content.trim();
+    } catch (error) {
+      this.logger.error('OpenAI content generation failed:', error);
+      throw new Error(`Content generation failed: ${formatError(error)}`);
     }
   }
 
-  async enhanceContent(content: string, platform: string): Promise<string> {
-    const prompt = `Enhance this social media content for ${platform}:
-    
-"${content}"
+  async enhanceContent(content: string, platform: SocialPlatform): Promise<string> {
+    const platformSpecs = this.getPlatformSpecifications(platform);
 
-Make it more engaging, add relevant hashtags, and optimize for ${platform} best practices. Keep it authentic and within platform limits.`;
+    const prompt = `Enhance this social media content for ${platform}:
+
+Original content: "${content}"
+
+Platform requirements:
+- Character limit: ${platformSpecs.charLimit}
+- Tone: ${platformSpecs.tone}
+- Best practices: ${platformSpecs.bestPractices.join(', ')}
+
+Please:
+1. Optimize the content for ${platform} while preserving the core message
+2. Ensure it is within the character limit
+3. Make it more engaging and platform-appropriate
+4. Add relevant hashtags if appropriate
+5. Maintain a professional but approachable tone
+
+Return only the enhanced content without additional commentary.`;
 
     return this.generateContent(prompt);
   }
 
-  async analyzeSentiment(text: string): Promise<{ score: number; sentiment: string }> {
-    try {
-      const response = await this.client.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a sentiment analysis expert. Analyze the sentiment of the given text and respond with only a JSON object containing "score" (number between -1 and 1) and "sentiment" (positive, negative, or neutral).'
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
-        max_tokens: 100,
-        temperature: 0.1,
-      });
+  async analyzeTrends(trends: string[]): Promise<Trend[]> {
+    const prompt = `Analyze these trending topics for business development and social media potential:
 
-      const result = response.choices[0]?.message?.content;
-      if (result) {
-        try {
-          return JSON.parse(result);
-        } catch {
-          // Fallback if JSON parsing fails
-          return { score: 0, sentiment: 'neutral' };
-        }
-      }
-      
-      return { score: 0, sentiment: 'neutral' };
-    } catch (error: any) {
-      this.logger.error('Failed to analyze sentiment:', error.message);
-      return { score: 0, sentiment: 'neutral' };
+Trends: ${trends.join(', ')}
+
+For each trend, provide:
+1. Relevance score (0-1) for business professionals
+2. Content opportunity assessment
+3. Suggested content angles
+4. Potential hashtags
+5. Target audience fit
+
+Focus on trends that deliver value to entrepreneurs, business leaders, and innovation-focused professionals.
+
+Return as JSON array with this structure:
+[
+  {
+    "topic": "trend name",
+    "relevanceScore": 0.8,
+    "contentOpportunity": "description",
+    "suggestedAngles": ["angle1", "angle2"],
+    "hashtags": ["#tag1", "#tag2"],
+    "audienceFit": "description"
+  }
+]`;
+
+    try {
+      const analysis = await this.generateContent(prompt);
+      const parsed = JSON.parse(analysis) as Array<{
+        topic?: string;
+        relevanceScore?: number;
+        contentOpportunity?: string;
+        suggestedAngles?: string[];
+        hashtags?: string[];
+        audienceFit?: string;
+      }>;
+
+      return parsed.map((item) => ({
+        id: randomUUID(),
+        topic: item.topic ?? 'Unknown trend',
+        platform: 'twitter',
+        volume: Math.floor(Math.random() * 10_000) + 1_000,
+        sentimentScore: 0,
+        relevanceScore: typeof item.relevanceScore === 'number' ? item.relevanceScore : 0.5,
+        keywords: Array.isArray(item.hashtags)
+          ? item.hashtags.map((tag) => tag.replace('#', '')).filter(Boolean)
+          : [],
+        discoveredAt: new Date(),
+        sourceUrls: []
+      }));
+    } catch (error) {
+      this.logger.error('Trend analysis failed, returning fallback results.', error);
+      return trends.map((trend) => ({
+        id: randomUUID(),
+        topic: trend,
+        platform: 'twitter',
+        volume: Math.floor(Math.random() * 5_000) + 500,
+        sentimentScore: 0,
+        relevanceScore: 0.5,
+        keywords: [trend.replace(/\s+/g, '')],
+        discoveredAt: new Date(),
+        sourceUrls: []
+      }));
     }
   }
 
-  async generateHashtags(content: string, platform: string, count: number = 5): Promise<string[]> {
-    const prompt = `Generate ${count} relevant hashtags for this ${platform} post:
-    
-"${content}"
+  async optimizeForPlatform(content: string, platform: SocialPlatform): Promise<string> {
+    return this.enhanceContent(content, platform);
+  }
 
-Return only the hashtags, one per line, including the # symbol.`;
-
-    try {
-      const response = await this.generateContent(prompt, 200);
-      return response
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('#'))
-        .slice(0, count);
-    } catch (error: any) {
-      this.logger.error('Failed to generate hashtags:', error.message);
-      return [];
-    }
+  private getPlatformSpecifications(platform: SocialPlatform): PlatformSpec {
+    return PLATFORM_SPECS[platform];
   }
 }

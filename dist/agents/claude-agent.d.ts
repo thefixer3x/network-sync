@@ -1,6 +1,17 @@
 /**
  * Claude Agent - Specialized for High-Quality Writing & Analysis
  */
+type ClaudePlatform = 'twitter' | 'linkedin' | 'instagram' | 'blog' | 'email';
+type FormattedContent = {
+    content: string;
+    format?: string;
+    metadata: {
+        model: unknown;
+        tokenUsage: unknown;
+        generatedAt: Date;
+    };
+    sections?: Record<string, string>;
+};
 export declare class ClaudeAgent {
     private config;
     private apiEndpoint;
@@ -17,7 +28,7 @@ export declare class ClaudeAgent {
         format?: string;
         maxTokens?: number;
         sections?: string[];
-    }): Promise<any>;
+    }): Promise<FormattedContent>;
     /**
      * Analyze content for insights and improvements
      */
@@ -31,10 +42,10 @@ export declare class ClaudeAgent {
      */
     adaptContent(params: {
         content: string;
-        fromPlatform: string;
-        toPlatform: string;
+        fromPlatform: ClaudePlatform;
+        toPlatform: ClaudePlatform;
         maintainMessage: boolean;
-    }): Promise<any>;
+    }): Promise<string>;
     /**
      * Generate content variations for A/B testing
      */
@@ -45,7 +56,7 @@ export declare class ClaudeAgent {
         testingGoal: string;
     }): Promise<{
         id: string;
-        content: any;
+        content: string;
         hypothesis: string;
     }[]>;
     /**
@@ -73,4 +84,5 @@ export declare class ClaudeAgent {
      */
     private generateHypothesis;
 }
+export {};
 //# sourceMappingURL=claude-agent.d.ts.map
