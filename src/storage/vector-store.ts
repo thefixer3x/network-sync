@@ -17,10 +17,17 @@ export class VectorStore {
   private embeddingDimension = 1536; // OpenAI embedding size
 
   constructor() {
-    this.supabase = createClient(
-      process.env["SUPABASE_URL"] || '',
-      process.env["SUPABASE_ANON_KEY"] || ''
-    );
+    const supabaseUrl = process.env["SUPABASE_URL"];
+    const supabaseKey = process.env["SUPABASE_ANON_KEY"];
+
+    if (!supabaseUrl) {
+      throw new Error('SUPABASE_URL is required.');
+    }
+    if (!supabaseKey) {
+      throw new Error('SUPABASE_ANON_KEY is required.');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey);
     this.initializeDatabase();
   }
 
