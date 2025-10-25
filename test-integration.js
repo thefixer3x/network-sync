@@ -14,13 +14,13 @@ try {
   
   // Test client creation
   const memory = new MemoryClient({
-    apiUrl: 'https://api.lanonasis.com',
-    apiKey: 'test-key'
+    apiUrl: process.env.LANONASIS_API_URL || 'https://api.lanonasis.com',
+    apiKey: process.env.LANONASIS_API_KEY || 'test-key' // test placeholder, not a real secret
   });
   
   const multiModal = new MultiModalMemoryClient({
-    apiUrl: 'https://api.lanonasis.com', 
-    apiKey: 'test-key'
+    apiUrl: process.env.LANONASIS_API_URL || 'https://api.lanonasis.com', 
+    apiKey: process.env.LANONASIS_API_KEY || 'test-key' // test placeholder
   });
   
   console.log('✅ Clients created successfully');
