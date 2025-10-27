@@ -1,7 +1,7 @@
 {
   "name": "@lanonasis/memory-sdk-standalone",
   "version": "1.0.0",
-  "description": "Standalone Memory SDK - drop into any project",
+  "description": "Standalone Memory SDK - drop into any project for multi-agent orchestration with persistent memory",
   "type": "module",
   "main": "lanonasis-memory-sdk.cjs",
   "module": "lanonasis-memory-sdk.js",
@@ -14,15 +14,45 @@
     }
   },
   "files": [
-    "*"
+    "lanonasis-memory-sdk.cjs",
+    "lanonasis-memory-sdk.cjs.map",
+    "lanonasis-memory-sdk.js",
+    "lanonasis-memory-sdk.js.map",
+    "types.d.ts",
+    "README.md",
+    "example.js"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thefixer3x/network-sync.git",
+    "directory": "lib/memory-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/thefixer3x/network-sync/issues"
+  },
+  "homepage": "https://github.com/thefixer3x/network-sync/tree/main/lib/memory-sdk#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "@lanonasis:registry": "https://npm.pkg.github.com"
+  },
   "keywords": [
     "memory",
     "ai",
     "sdk",
     "multimodal",
-    "search"
+    "search",
+    "agent",
+    "orchestration",
+    "mcp",
+    "lanonasis",
+    "multi-agent",
+    "workflow",
+    "automation"
   ],
   "author": "Lanonasis",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
