@@ -96,9 +96,7 @@ describe('ClaudeAgent', () => {
     it('should handle API errors', async () => {
       mockFetch.mockRejectedValueOnce(new Error('API rate limit exceeded'));
 
-      await expect(
-        agent.generateContent({ prompt: 'test' })
-      ).rejects.toThrow();
+      await expect(agent.generateContent({ prompt: 'test' })).rejects.toThrow();
     });
   });
 
@@ -162,9 +160,7 @@ describe('ClaudeAgent', () => {
     it('should format errors properly', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
 
-      await expect(
-        agent.generateContent({ prompt: 'test' })
-      ).rejects.toThrow();
+      await expect(agent.generateContent({ prompt: 'test' })).rejects.toThrow();
     });
   });
 
@@ -172,11 +168,16 @@ describe('ClaudeAgent', () => {
     it('should analyze sentiment successfully', async () => {
       const mockResponse = {
         id: 'msg_123',
-        content: [{ type: 'text', text: JSON.stringify({
-          sentiment: 'positive',
-          confidence: 0.85,
-          details: 'The content has an optimistic and encouraging tone'
-        })}],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              sentiment: 'positive',
+              confidence: 0.85,
+              details: 'The content has an optimistic and encouraging tone',
+            }),
+          },
+        ],
         model: 'claude-3-5-sonnet-20241022',
         usage: { input_tokens: 10, output_tokens: 20 },
       };
@@ -198,11 +199,16 @@ describe('ClaudeAgent', () => {
     it('should analyze readability', async () => {
       const mockResponse = {
         id: 'msg_123',
-        content: [{ type: 'text', text: JSON.stringify({
-          readability: 'high',
-          score: 82,
-          suggestions: []
-        })}],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              readability: 'high',
+              score: 82,
+              suggestions: [],
+            }),
+          },
+        ],
         model: 'claude-3-5-sonnet-20241022',
         usage: { input_tokens: 10, output_tokens: 20 },
       };

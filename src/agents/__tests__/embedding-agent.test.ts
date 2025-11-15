@@ -179,7 +179,7 @@ describe('EmbeddingAgent', () => {
       });
       expect(result[0]?.id).toBeDefined();
       expect(result[0]?.embedding).toHaveLength(10);
-      expect(result[0]?.embedding.every(v => v >= 0 && v <= 1)).toBe(true);
+      expect(result[0]?.embedding.every((v) => v >= 0 && v <= 1)).toBe(true);
     });
 
     it('should generate deterministic mock embeddings', async () => {
@@ -217,15 +217,13 @@ describe('EmbeddingAgent', () => {
     it('should handle OpenAI API errors gracefully', async () => {
       process.env['OPENAI_API_KEY'] = 'test-api-key';
 
-      (mockCreate as any).mockRejectedValue(
-        new Error('API rate limit exceeded')
-      );
+      (mockCreate as any).mockRejectedValue(new Error('API rate limit exceeded'));
 
       agent = new EmbeddingAgent();
 
-      await expect(
-        agent.createEmbeddings({ texts: ['test'] })
-      ).rejects.toThrow('API rate limit exceeded');
+      await expect(agent.createEmbeddings({ texts: ['test'] })).rejects.toThrow(
+        'API rate limit exceeded'
+      );
     });
 
     it('should handle empty text array', async () => {

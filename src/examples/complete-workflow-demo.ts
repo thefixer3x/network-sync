@@ -16,21 +16,21 @@ async function demonstrateCompleteWorkflow() {
   try {
     // Step 1: Configure the complete growth engine
     logger.task('Setup', 'Configuring Social Media Growth Engine');
-    
+
     const config: SocialGrowthConfig = {
       platforms: ['twitter', 'linkedin'],
       goals: {
         follower_growth_rate: 5, // 5% monthly growth
         engagement_rate_target: 3.5, // 3.5% target
         content_frequency: 5, // 5 posts per week
-        automation_level: 'moderate'
+        automation_level: 'moderate',
       },
       automation: {
         auto_engagement: true,
         auto_posting: true,
         competitor_monitoring: true,
         hashtag_optimization: true,
-        analytics_reporting: true
+        analytics_reporting: true,
       },
       engagement_rules: [
         {
@@ -39,18 +39,18 @@ async function demonstrateCompleteWorkflow() {
             keywords: ['automation', 'AI', 'business development'],
             followerCountMin: 50,
             followerCountMax: 50000,
-            minEngagement: 5
+            minEngagement: 5,
           },
           actions: {
             reply: true,
-            like: true
+            like: true,
           },
           limits: {
             maxActionsPerHour: 8,
             maxActionsPerDay: 40,
-            cooldownMinutes: 90
-          }
-        }
+            cooldownMinutes: 90,
+          },
+        },
       ],
       competitors: [
         {
@@ -60,9 +60,9 @@ async function demonstrateCompleteWorkflow() {
             linkedin: 'company/techstartup-co',
             facebook: '',
             instagram: '',
-            tiktok: ''
+            tiktok: '',
           },
-          industry: 'Technology'
+          industry: 'Technology',
         },
         {
           name: 'InnovateNow',
@@ -71,22 +71,27 @@ async function demonstrateCompleteWorkflow() {
             linkedin: 'company/innovatenow',
             facebook: '',
             instagram: '',
-            tiktok: ''
+            tiktok: '',
           },
-          industry: 'Business Innovation'
-        }
+          industry: 'Business Innovation',
+        },
       ],
       content_strategy: {
-        topics: ['business automation', 'AI innovation', 'digital transformation', 'growth strategies'],
+        topics: [
+          'business automation',
+          'AI innovation',
+          'digital transformation',
+          'growth strategies',
+        ],
         brand_voice: 'professional but approachable, solution-focused, optimistic',
         target_audience: 'business leaders, entrepreneurs, innovation-focused professionals',
         content_pillars: [
           'Business Automation Solutions',
-          'AI and Innovation Insights', 
+          'AI and Innovation Insights',
           'Digital Transformation Strategies',
-          'Growth and Scaling Tips'
-        ]
-      }
+          'Growth and Scaling Tips',
+        ],
+      },
     };
 
     // Step 2: Initialize the growth engine
@@ -98,14 +103,14 @@ async function demonstrateCompleteWorkflow() {
     // Pattern 1: Research & Content Generation Workflow
     logger.task('Research', 'Executing content research and generation workflow');
     const contentCampaign = await growthEngine.createContentCampaign(
-      'AI automation trends in business development', 
-      ['twitter', 'linkedin'], 
+      'AI automation trends in business development',
+      ['twitter', 'linkedin'],
       8
     );
     logger.success(`Content campaign generated: ${contentCampaign.workflow_id}`);
     logger.info(`Phases completed: ${contentCampaign.completed_phases.join(' → ')}`);
 
-    // Pattern 2: Competitor Analysis Workflow  
+    // Pattern 2: Competitor Analysis Workflow
     logger.task('Competition', 'Analyzing competitor strategies');
     const competitorAnalysis = await growthEngine.analyzeCompetitors();
     logger.success(`Analyzed ${competitorAnalysis.competitors_analyzed} competitors`);
@@ -128,7 +133,7 @@ async function demonstrateCompleteWorkflow() {
     // Pattern 5: Complete System Status
     logger.task('Status', 'Checking complete system status');
     const systemStatus = await growthEngine.getStatus();
-    
+
     logger.info('\n📊 System Status Dashboard:');
     logger.info(`🎯 Automation Level: ${systemStatus.config.automation_level}`);
     logger.info(`📱 Active Platforms: ${systemStatus.config.platforms.join(', ')}`);
@@ -146,9 +151,9 @@ async function demonstrateCompleteWorkflow() {
       parameters: {
         data_sources: ['web', 'academic', 'industry_reports'],
         analysis_depth: 'comprehensive',
-        report_format: 'executive_summary'
+        report_format: 'executive_summary',
       },
-      target_audience: 'C-suite executives and marketing leaders'
+      target_audience: 'C-suite executives and marketing leaders',
     });
 
     if (researchWorkflow.success) {
@@ -159,7 +164,7 @@ async function demonstrateCompleteWorkflow() {
     // Step 4: Demonstrate real-time monitoring capabilities
     logger.info('\n🔄 Real-time Monitoring Active:');
     logger.info('  ✅ Content scheduling and posting');
-    logger.info('  ✅ Engagement opportunities discovery');  
+    logger.info('  ✅ Engagement opportunities discovery');
     logger.info('  ✅ Competitor activity monitoring');
     logger.info('  ✅ Hashtag trend analysis');
     logger.info('  ✅ Analytics data collection');
@@ -168,7 +173,7 @@ async function demonstrateCompleteWorkflow() {
     // Step 5: Show automation capabilities
     logger.info('\n🤖 Automated Processes Running:');
     logger.info('  📅 Daily content generation (6:00 AM)');
-    logger.info('  📝 Scheduled posting (9 AM, 1 PM, 5 PM)'); 
+    logger.info('  📝 Scheduled posting (9 AM, 1 PM, 5 PM)');
     logger.info('  🤝 Engagement automation (every 30 minutes)');
     logger.info('  🕵️  Competitor monitoring (every 2 hours)');
     logger.info('  📊 Analytics refresh (daily at 8 AM)');
@@ -177,7 +182,7 @@ async function demonstrateCompleteWorkflow() {
 
     logger.info('\n✨ Workflow Patterns Successfully Implemented:');
     logger.info('  1. ✅ Social Media Account Connection & Authentication');
-    logger.info('  2. ✅ Content Topic Research & Trend Analysis'); 
+    logger.info('  2. ✅ Content Topic Research & Trend Analysis');
     logger.info('  3. ✅ Competitor Analysis & Monitoring');
     logger.info('  4. ✅ AI Content Generation & Enhancement');
     logger.info('  5. ✅ Content Calendar & Scheduling');
@@ -195,7 +200,7 @@ async function demonstrateCompleteWorkflow() {
     logger.success('\n🎉 Complete Social Media Growth Engine Demo Successful!');
     logger.info('\n🔮 The system is now running autonomously and will:');
     logger.info('   • Generate and post optimized content automatically');
-    logger.info('   • Monitor competitors and alert on opportunities'); 
+    logger.info('   • Monitor competitors and alert on opportunities');
     logger.info('   • Engage with relevant conversations intelligently');
     logger.info('   • Track performance and optimize strategies');
     logger.info('   • Provide weekly and monthly growth reports');
@@ -203,14 +208,13 @@ async function demonstrateCompleteWorkflow() {
 
     // Keep system running for demo (in production, this would run indefinitely)
     logger.info('\n⏱️  System will continue running. Press Ctrl+C to stop.\n');
-    
+
     // Run for 2 minutes to show real-time activity, then pause
     setTimeout(async () => {
       logger.info('📋 Demo timeout reached. Pausing system...');
       await growthEngine.pause();
       logger.success('🎬 Demo completed! System paused for cleanup.');
     }, 120000); // 2 minutes
-
   } catch (error) {
     logger.error('Demo failed:', error);
     await growthEngine.stop();
@@ -226,12 +230,12 @@ async function demonstrateSpecificWorkflows(growthEngine: SocialGrowthEngine) {
   logger.task('Hashtags', 'Testing hashtag research workflow');
   // This would be called by the growth engine automatically
 
-  // Content Enhancement Workflow  
+  // Content Enhancement Workflow
   logger.task('Enhancement', 'Testing content enhancement workflow');
   // This would be integrated into the content generation pipeline
 
   // Competitor Intelligence Workflow
-  logger.task('Intelligence', 'Testing competitor intelligence workflow'); 
+  logger.task('Intelligence', 'Testing competitor intelligence workflow');
   // This runs automatically via competitor monitoring
 
   // Analytics Dashboard Workflow
@@ -241,7 +245,7 @@ async function demonstrateSpecificWorkflows(growthEngine: SocialGrowthEngine) {
 
 // Start the demo
 if (require.main === module) {
-  demonstrateCompleteWorkflow().catch(error => {
+  demonstrateCompleteWorkflow().catch((error) => {
     logger.error('Demo startup failed:', error);
     process.exit(1);
   });

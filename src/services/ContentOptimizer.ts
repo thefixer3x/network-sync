@@ -1,4 +1,4 @@
-import { SocialPlatform } from '@/types';
+import type { SocialPlatform } from '@/types';
 import { Logger } from '@/utils/Logger';
 import { OpenAIService } from './OpenAIService';
 
@@ -21,7 +21,7 @@ const PLATFORM_CONSTRAINTS: Record<SocialPlatform, PlatformConstraint> = {
   linkedin: { maxChars: 3000, maxHashtags: 10 },
   facebook: { maxChars: 63206, maxHashtags: 15 },
   instagram: { maxChars: 2200, maxHashtags: 30 },
-  tiktok: { maxChars: 2200, maxHashtags: 10 }
+  tiktok: { maxChars: 2200, maxHashtags: 10 },
 };
 
 const OPTIMAL_POSTING_TIMES: Record<SocialPlatform, number[]> = {
@@ -29,7 +29,7 @@ const OPTIMAL_POSTING_TIMES: Record<SocialPlatform, number[]> = {
   linkedin: [8, 10, 12, 14, 17],
   facebook: [9, 13, 15],
   instagram: [11, 13, 17, 19],
-  tiktok: [15, 18, 21]
+  tiktok: [15, 18, 21],
 };
 
 function formatError(error: unknown): string {
@@ -61,10 +61,12 @@ export class ContentOptimizer {
         mentions,
         characterCount,
         readabilityScore,
-        sentimentScore
+        sentimentScore,
       };
 
-      this.logger.info(`Content optimized for ${platform}: ${characterCount} characters, ${hashtags.length} hashtags.`);
+      this.logger.info(
+        `Content optimized for ${platform}: ${characterCount} characters, ${hashtags.length} hashtags.`
+      );
       return result;
     } catch (error) {
       this.logger.error(`Content optimization failed for ${platform}:`, error);
@@ -74,12 +76,16 @@ export class ContentOptimizer {
         mentions: this.extractMentions(content),
         characterCount: content.length,
         readabilityScore: 0,
-        sentimentScore: 0
+        sentimentScore: 0,
       };
     }
   }
 
-  async generateHashtagSuggestions(content: string, platform: SocialPlatform, count = 5): Promise<string[]> {
+  async generateHashtagSuggestions(
+    content: string,
+    platform: SocialPlatform,
+    count = 5
+  ): Promise<string[]> {
     try {
       const prompt = `Generate ${count} relevant hashtags for this ${platform} post:
 
@@ -105,7 +111,11 @@ Return only the hashtags, one per line, including the # symbol.`;
     }
   }
 
-  async optimizePostingTime(_content: string, platform: SocialPlatform, timezone = 'America/New_York'): Promise<Date[]> {
+  async optimizePostingTime(
+    _content: string,
+    platform: SocialPlatform,
+    timezone = 'America/New_York'
+  ): Promise<Date[]> {
     const times = OPTIMAL_POSTING_TIMES[platform] ?? OPTIMAL_POSTING_TIMES.twitter;
     const now = new Date();
     const suggestions: Date[] = [];
@@ -193,12 +203,16 @@ Return only a number between -1 and 1 representing the sentiment score.`;
     }
 
     if (text.length > constraint.maxChars) {
-      throw new Error(`Content exceeds ${platform} character limit (${text.length}/${constraint.maxChars}).`);
+      throw new Error(
+        `Content exceeds ${platform} character limit (${text.length}/${constraint.maxChars}).`
+      );
     }
 
     const hashtagCount = this.extractHashtags(text).length;
     if (hashtagCount > constraint.maxHashtags) {
-      throw new Error(`Too many hashtags for ${platform} (${hashtagCount}/${constraint.maxHashtags}).`);
+      throw new Error(
+        `Too many hashtags for ${platform} (${hashtagCount}/${constraint.maxHashtags}).`
+      );
     }
   }
 }

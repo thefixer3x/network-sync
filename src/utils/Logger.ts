@@ -25,10 +25,9 @@ export class Logger {
     const timestamp = new Date().toISOString();
     const formattedArgs =
       args.length > 0
-        ? ' ' +
-          args
+        ? ` ${args
             .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)))
-            .join(' ')
+            .join(' ')}`
         : '';
 
     return `[${timestamp}] [${level.toUpperCase()}] [${this.context}] ${message}${formattedArgs}`;
@@ -75,7 +74,9 @@ export class Logger {
       const percentage = total === 0 ? 0 : Math.round((step / total) * 100);
       const filledBars = Math.floor(percentage / 5);
       const progressBar = '█'.repeat(filledBars) + '░'.repeat(20 - filledBars);
-      console.log(chalk.magenta(this.formatMessage('info', `📊 [${progressBar}] ${percentage}% ${message}`)));
+      console.log(
+        chalk.magenta(this.formatMessage('info', `📊 [${progressBar}] ${percentage}% ${message}`))
+      );
     }
   }
 }

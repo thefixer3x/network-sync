@@ -59,7 +59,7 @@ describe('PerplexityAgent', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': 'Bearer test-api-key',
+            Authorization: 'Bearer test-api-key',
             'Content-Type': 'application/json',
           }),
         })
@@ -70,9 +70,7 @@ describe('PerplexityAgent', () => {
     it('should handle API errors gracefully', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(
-        agent.research({ query: 'test query' })
-      ).rejects.toThrow('Research failed');
+      await expect(agent.research({ query: 'test query' })).rejects.toThrow('Research failed');
     });
 
     it('should include optional parameters in request', async () => {
@@ -112,10 +110,7 @@ describe('PerplexityAgent', () => {
         json: async () => mockResponse,
       } as Response);
 
-      const result = await agent.factCheck('Content to check', [
-        'Claim 1',
-        'Claim 2',
-      ]);
+      const result = await agent.factCheck('Content to check', ['Claim 1', 'Claim 2']);
 
       expect(result.claims).toHaveLength(2);
       expect(result.overallAccuracy).toBeDefined();
@@ -133,9 +128,9 @@ describe('PerplexityAgent', () => {
     it('should throw descriptive error on API failure', async () => {
       mockFetch.mockRejectedValueOnce(new Error('API Error: Rate limit exceeded'));
 
-      await expect(
-        agent.research({ query: 'test' })
-      ).rejects.toThrow('Research failed: API Error: Rate limit exceeded');
+      await expect(agent.research({ query: 'test' })).rejects.toThrow(
+        'Research failed: API Error: Rate limit exceeded'
+      );
     });
   });
 });

@@ -19,7 +19,9 @@ export class DatabaseManager {
     const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
     if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to manage the database.');
+      throw new Error(
+        'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to manage the database.'
+      );
     }
 
     this.supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -38,11 +40,17 @@ export class DatabaseManager {
   }
 
   async runMigrations(): Promise<void> {
-    console.log(chalk.yellow('Database migrations are not automated yet. Please run them manually via Supabase.'));
+    console.log(
+      chalk.yellow(
+        'Database migrations are not automated yet. Please run them manually via Supabase.'
+      )
+    );
   }
 
   async backup(): Promise<void> {
-    console.log(chalk.yellow('Database backup is not implemented. Use Supabase backups or export scripts.'));
+    console.log(
+      chalk.yellow('Database backup is not implemented. Use Supabase backups or export scripts.')
+    );
   }
 
   async cleanupOldData(): Promise<void> {
@@ -93,7 +101,7 @@ CREATE TABLE IF NOT EXISTS automation_configs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-`.trim()
+`.trim(),
       },
       {
         name: 'content',
@@ -115,7 +123,7 @@ CREATE TABLE IF NOT EXISTS content (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-`.trim()
+`.trim(),
       },
       {
         name: 'trends',
@@ -132,7 +140,7 @@ CREATE TABLE IF NOT EXISTS trends (
   expires_at TIMESTAMP WITH TIME ZONE,
   source_urls TEXT[] DEFAULT '{}'
 );
-`.trim()
+`.trim(),
       },
       {
         name: 'account_metrics',
@@ -151,14 +159,16 @@ CREATE TABLE IF NOT EXISTS account_metrics (
   top_performing_content TEXT[] DEFAULT '{}',
   recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-`.trim()
-      }
+`.trim(),
+      },
     ];
 
     this.logger.info('Displaying SQL required to set up Supabase tables:');
     for (const table of tables) {
       this.logger.info(`\n--- ${table.name} ---\n${table.sql}\n`);
     }
-    this.logger.warn('Run the above SQL statements manually in Supabase (JS SDK cannot execute DDL directly).');
+    this.logger.warn(
+      'Run the above SQL statements manually in Supabase (JS SDK cannot execute DDL directly).'
+    );
   }
 }

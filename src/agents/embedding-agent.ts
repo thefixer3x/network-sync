@@ -35,7 +35,7 @@ export class EmbeddingAgent {
     if (this.client) {
       const response = await this.client.embeddings.create({
         model: params.model ?? 'text-embedding-3-small',
-        input: params.texts
+        input: params.texts,
       });
 
       return response.data.map((item, index) => {
@@ -45,7 +45,7 @@ export class EmbeddingAgent {
           content: params.texts[index] ?? '',
           embedding: item.embedding,
           dimensions: item.embedding.length,
-          ...(metadata ? { metadata } : {})
+          ...(metadata ? { metadata } : {}),
         } satisfies EmbeddingResult;
       });
     }
@@ -53,14 +53,17 @@ export class EmbeddingAgent {
     // Fallback: generate deterministic mock embeddings for demo purposes
     this.logger.warn('Generating mock embeddings (OpenAI client unavailable).');
     return params.texts.map((text, index) => {
-      const mockEmbedding = Array.from({ length: 10 }, (_, idx) => (text.charCodeAt(idx % text.length) % 100) / 100);
+      const mockEmbedding = Array.from(
+        { length: 10 },
+        (_, idx) => (text.charCodeAt(idx % text.length) % 100) / 100
+      );
       const metadata = params.metadata?.[index];
       return {
         id: randomUUID(),
         content: text,
         embedding: mockEmbedding,
         dimensions: mockEmbedding.length,
-        ...(metadata ? { metadata } : {})
+        ...(metadata ? { metadata } : {}),
       } satisfies EmbeddingResult;
     });
   }

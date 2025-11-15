@@ -1,13 +1,11 @@
 // services/platforms/TwitterService.ts
 import { TwitterApi } from 'twitter-api-v2';
 import { randomUUID } from 'crypto';
+import type { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
 import {
-  SocialMediaService,
-  Content,
-  AccountMetrics,
   SocialMediaError,
   RateLimitError,
-  AuthenticationError
+  AuthenticationError,
 } from '../../types/typescript-types';
 import { Logger } from '../../utils/Logger';
 
@@ -28,7 +26,9 @@ export class TwitterService implements SocialMediaService {
     const appSecret = credentials.apiSecret ?? process.env['TWITTER_API_SECRET'];
     const accessToken = credentials.accessToken ?? process.env['TWITTER_ACCESS_TOKEN'];
     const accessSecret =
-      credentials.accessSecret ?? process.env['TWITTER_ACCESS_SECRET'] ?? process.env['TWITTER_ACCESS_TOKEN_SECRET'];
+      credentials.accessSecret ??
+      process.env['TWITTER_ACCESS_SECRET'] ??
+      process.env['TWITTER_ACCESS_TOKEN_SECRET'];
 
     if (!appKey || !appSecret || !accessToken || !accessSecret) {
       throw new AuthenticationError('twitter', 'Missing Twitter API credentials');
@@ -38,7 +38,7 @@ export class TwitterService implements SocialMediaService {
       appKey,
       appSecret,
       accessToken,
-      accessSecret
+      accessSecret,
     });
   }
 
@@ -72,7 +72,6 @@ export class TwitterService implements SocialMediaService {
 
       this.logger.info(`Tweet posted successfully: ${tweet.data.id}`);
       return tweet.data.id;
-
     } catch (error: any) {
       this.handleTwitterError(error);
       throw error;
@@ -82,13 +81,13 @@ export class TwitterService implements SocialMediaService {
   async getMetrics(): Promise<AccountMetrics> {
     try {
       const user = await this.client.v2.me({
-        'user.fields': ['public_metrics', 'created_at']
+        'user.fields': ['public_metrics', 'created_at'],
       });
 
       const metrics = user.data.public_metrics || {
         followers_count: 0,
         following_count: 0,
-        tweet_count: 0
+        tweet_count: 0,
       };
 
       return {
@@ -155,10 +154,9 @@ export class TwitterService implements SocialMediaService {
         const response = await fetch(url);
         const buffer = await response.arrayBuffer();
 
-        const mediaId = await this.client.v1.uploadMedia(
-          Buffer.from(buffer),
-          { mimeType: response.headers.get('content-type') || 'image/jpeg' }
-        );
+        const mediaId = await this.client.v1.uploadMedia(Buffer.from(buffer), {
+          mimeType: response.headers.get('content-type') || 'image/jpeg',
+        });
 
         mediaIds.push(mediaId);
       } catch (error: any) {
@@ -175,14 +173,21 @@ export class TwitterService implements SocialMediaService {
       const user = await this.client.v2.me();
       const tweets = await this.client.v2.userTimeline(user.data.id, {
         max_results: 10,
-        'tweet.fields': ['public_metrics']
+        'tweet.fields': ['public_metrics'],
       });
 
-      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) return 0;
+      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) {
+        return 0;
+      }
 
       const totalEngagement = tweets.data.reduce((sum: number, tweet: any) => {
         const metrics = tweet.public_metrics || {};
-        return sum + (metrics.like_count || 0) + (metrics.reply_count || 0) + (metrics.retweet_count || 0);
+        return (
+          sum +
+          (metrics.like_count || 0) +
+          (metrics.reply_count || 0) +
+          (metrics.retweet_count || 0)
+        );
       }, 0);
 
       const totalImpressions = tweets.data.reduce((sum: number, tweet: any) => {
@@ -206,10 +211,12 @@ export class TwitterService implements SocialMediaService {
       const user = await this.client.v2.me();
       const tweets = await this.client.v2.userTimeline(user.data.id, {
         max_results: 10,
-        'tweet.fields': ['public_metrics']
+        'tweet.fields': ['public_metrics'],
       });
 
-      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) return 0;
+      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) {
+        return 0;
+      }
 
       const totalLikes = tweets.data.reduce((sum: number, tweet: any) => {
         return sum + (tweet.public_metrics?.like_count || 0);
@@ -226,10 +233,12 @@ export class TwitterService implements SocialMediaService {
       const user = await this.client.v2.me();
       const tweets = await this.client.v2.userTimeline(user.data.id, {
         max_results: 10,
-        'tweet.fields': ['public_metrics']
+        'tweet.fields': ['public_metrics'],
       });
 
-      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) return 0;
+      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) {
+        return 0;
+      }
 
       const totalReplies = tweets.data.reduce((sum: number, tweet: any) => {
         return sum + (tweet.public_metrics?.reply_count || 0);
@@ -246,10 +255,12 @@ export class TwitterService implements SocialMediaService {
       const user = await this.client.v2.me();
       const tweets = await this.client.v2.userTimeline(user.data.id, {
         max_results: 10,
-        'tweet.fields': ['public_metrics']
+        'tweet.fields': ['public_metrics'],
       });
 
-      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) return 0;
+      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) {
+        return 0;
+      }
 
       const totalRetweets = tweets.data.reduce((sum: number, tweet: any) => {
         return sum + (tweet.public_metrics?.retweet_count || 0);
@@ -266,17 +277,20 @@ export class TwitterService implements SocialMediaService {
       const user = await this.client.v2.me();
       const tweets = await this.client.v2.userTimeline(user.data.id, {
         max_results: 20,
-        'tweet.fields': ['public_metrics']
+        'tweet.fields': ['public_metrics'],
       });
 
-      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) return [];
+      if (!tweets.data || !Array.isArray(tweets.data) || tweets.data.length === 0) {
+        return [];
+      }
 
       return tweets.data
         .map((tweet: any) => ({
           id: tweet.id,
-          engagement: (tweet.public_metrics?.like_count || 0) +
+          engagement:
+            (tweet.public_metrics?.like_count || 0) +
             (tweet.public_metrics?.reply_count || 0) +
-            (tweet.public_metrics?.retweet_count || 0)
+            (tweet.public_metrics?.retweet_count || 0),
         }))
         .sort((a: any, b: any) => b.engagement - a.engagement)
         .slice(0, 5)

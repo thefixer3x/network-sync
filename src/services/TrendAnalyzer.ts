@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Trend } from '@/types';
+import type { Trend } from '@/types';
 import { Logger } from '@/utils/Logger';
 import { OpenAIService } from './OpenAIService';
 
@@ -77,7 +77,9 @@ Return JSON array with relevance scores:
         const analysis = parseJson<TrendAnalysis[]>(analysisJson) ?? [];
 
         batch.forEach((trend) => {
-          const scores = analysis.find((item) => item.topic.toLowerCase() === trend.topic.toLowerCase());
+          const scores = analysis.find(
+            (item) => item.topic.toLowerCase() === trend.topic.toLowerCase()
+          );
           if (scores && typeof scores.relevanceScore === 'number') {
             trend.relevanceScore = scores.relevanceScore;
             const trendMetadata = trend as Record<string, unknown>;
@@ -132,7 +134,7 @@ Return as a simple list, one per line.`;
         relevanceScore: Math.random(),
         keywords: [keyword],
         discoveredAt: new Date(),
-        sourceUrls: [`https://trends.google.com/trends/explore?q=${encodeURIComponent(keyword)}`]
+        sourceUrls: [`https://trends.google.com/trends/explore?q=${encodeURIComponent(keyword)}`],
       }));
 
       this.logger.info(`Generated ${trends.length} simulated Google trends.`);
@@ -172,7 +174,8 @@ Return as JSON array:
 ]`;
 
       const rawResult = await this.aiService.generateContent(prompt);
-      const industryData = parseJson<Array<{ topic: string; keywords: string[]; volume: string }>>(rawResult);
+      const industryData =
+        parseJson<Array<{ topic: string; keywords: string[]; volume: string }>>(rawResult);
 
       if (!industryData) {
         throw new Error('Unable to parse industry trend data.');
@@ -187,7 +190,7 @@ Return as JSON array:
         relevanceScore: 0.8,
         keywords: item.keywords,
         discoveredAt: new Date(),
-        sourceUrls: []
+        sourceUrls: [],
       }));
     } catch (error) {
       this.logger.error(`Failed to get ${industry} trends:`, error);

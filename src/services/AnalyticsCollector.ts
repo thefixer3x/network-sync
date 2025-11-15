@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { AccountMetrics, CompetitorAnalysis, SocialPlatform } from '@/types';
+import type { AccountMetrics, CompetitorAnalysis, SocialPlatform } from '@/types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from './SocialMediaFactory';
 import { OpenAIService } from './OpenAIService';
@@ -42,10 +42,10 @@ export class AnalyticsCollector {
           likes: Math.floor(Math.random() * 1_000),
           comments: Math.floor(Math.random() * 100),
           shares: Math.floor(Math.random() * 50),
-          views: Math.floor(Math.random() * 5_000)
+          views: Math.floor(Math.random() * 5_000),
         },
         insights: await this.generateCompetitorInsights(competitorName, platform),
-        analyzedAt: new Date()
+        analyzedAt: new Date(),
       };
 
       return analysis;
@@ -55,13 +55,18 @@ export class AnalyticsCollector {
     }
   }
 
-  async calculateGrowthRate(currentMetrics: AccountMetrics, previousMetrics: AccountMetrics): Promise<number> {
+  async calculateGrowthRate(
+    currentMetrics: AccountMetrics,
+    previousMetrics: AccountMetrics
+  ): Promise<number> {
     if (previousMetrics.followersCount === 0) {
       return 0;
     }
 
     const growthRate =
-      ((currentMetrics.followersCount - previousMetrics.followersCount) / previousMetrics.followersCount) * 100;
+      ((currentMetrics.followersCount - previousMetrics.followersCount) /
+        previousMetrics.followersCount) *
+      100;
 
     return Math.round(growthRate * 100) / 100;
   }
@@ -72,7 +77,7 @@ export class AnalyticsCollector {
         platform: metric.platform,
         followers: metric.followersCount,
         engagement: metric.engagementRate,
-        growth: metric.growthRate
+        growth: metric.growthRate,
       }));
 
       const prompt = `Generate a comprehensive social media analytics report based on this data:
@@ -95,7 +100,10 @@ Write in a professional tone suitable for business stakeholders.`;
     }
   }
 
-  private async generateCompetitorInsights(competitorName: string, platform: SocialPlatform): Promise<string> {
+  private async generateCompetitorInsights(
+    competitorName: string,
+    platform: SocialPlatform
+  ): Promise<string> {
     try {
       const prompt = `Generate competitive intelligence insights for ${competitorName} on ${platform}.
 

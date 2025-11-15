@@ -1,5 +1,5 @@
 // services/SocialMediaFactory.ts
-import { SocialPlatform, SocialMediaService } from '@/types';
+import type { SocialPlatform, SocialMediaService } from '@/types';
 import { TwitterService } from './platforms/TwitterService';
 import { LinkedInService } from './platforms/LinkedInService';
 import { FacebookService } from './platforms/FacebookService';
@@ -16,29 +16,34 @@ export type PlatformCredentials = {
 };
 
 export class SocialMediaFactory {
-  static create(platform: SocialPlatform, credentials: PlatformCredentials = {}): SocialMediaService {
+  static create(
+    platform: SocialPlatform,
+    credentials: PlatformCredentials = {}
+  ): SocialMediaService {
     switch (platform) {
       case 'twitter':
         return new TwitterService({
           ...(credentials.apiKey ? { apiKey: credentials.apiKey } : {}),
           ...(credentials.apiSecret ? { apiSecret: credentials.apiSecret } : {}),
           ...(credentials.accessToken ? { accessToken: credentials.accessToken } : {}),
-          ...(credentials.accessSecret ? { accessSecret: credentials.accessSecret } : {})
+          ...(credentials.accessSecret ? { accessSecret: credentials.accessSecret } : {}),
         });
       case 'linkedin':
         return new LinkedInService({
           ...(credentials.accessToken ? { accessToken: credentials.accessToken } : {}),
-          ...(credentials.personId ? { personId: credentials.personId } : {})
+          ...(credentials.personId ? { personId: credentials.personId } : {}),
         });
       case 'facebook':
         return new FacebookService({
           ...(credentials.accessToken ? { accessToken: credentials.accessToken } : {}),
-          ...(credentials.pageId ? { pageId: credentials.pageId } : {})
+          ...(credentials.pageId ? { pageId: credentials.pageId } : {}),
         });
       case 'instagram':
         return new InstagramService({
           ...(credentials.accessToken ? { accessToken: credentials.accessToken } : {}),
-          ...(credentials.instagramAccountId ? { instagramAccountId: credentials.instagramAccountId } : {})
+          ...(credentials.instagramAccountId
+            ? { instagramAccountId: credentials.instagramAccountId }
+            : {}),
         });
       default:
         throw new Error(`Unsupported platform: ${platform}`);
@@ -52,7 +57,9 @@ export class SocialMediaFactory {
           (credentials.apiKey || process.env['TWITTER_API_KEY']) &&
             (credentials.apiSecret || process.env['TWITTER_API_SECRET']) &&
             (credentials.accessToken || process.env['TWITTER_ACCESS_TOKEN']) &&
-            (credentials.accessSecret || process.env['TWITTER_ACCESS_SECRET'] || process.env['TWITTER_ACCESS_TOKEN_SECRET'])
+            (credentials.accessSecret ||
+              process.env['TWITTER_ACCESS_SECRET'] ||
+              process.env['TWITTER_ACCESS_TOKEN_SECRET'])
         );
       case 'linkedin':
         return Boolean(credentials.accessToken || process.env['LINKEDIN_ACCESS_TOKEN']);

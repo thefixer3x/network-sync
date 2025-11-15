@@ -39,8 +39,8 @@ async function demonstrateOrchestration() {
       sources: ['web', 'news', 'academic'],
       maxResults: 15,
       topic: 'Social_Media_Trends',
-      storeInDrive: true
-    }
+      storeInDrive: true,
+    },
   });
 
   // 2. Content Generation - Delegated to Claude
@@ -59,12 +59,12 @@ async function demonstrateOrchestration() {
         'Top 5 Trends',
         'Implementation Strategies',
         'Case Studies',
-        'Conclusion'
+        'Conclusion',
       ],
       maxTokens: 3000,
       storeInDrive: true,
-      driveFolder: 'Blog_Posts/2025'
-    }
+      driveFolder: 'Blog_Posts/2025',
+    },
   });
 
   // 3. Create Social Media Variations
@@ -72,7 +72,7 @@ async function demonstrateOrchestration() {
   const socialVariations = [
     { platform: 'twitter', maxLength: 280 },
     { platform: 'linkedin', maxLength: 1500 },
-    { platform: 'instagram', maxLength: 2200 }
+    { platform: 'instagram', maxLength: 2200 },
   ];
 
   for (const variant of socialVariations) {
@@ -85,8 +85,8 @@ async function demonstrateOrchestration() {
         topic: 'Social_Media_Trends',
         format: variant.platform,
         maxTokens: variant.maxLength,
-        brandVoice: variant.platform === 'linkedin' ? 'professional' : 'casual'
-      }
+        brandVoice: variant.platform === 'linkedin' ? 'professional' : 'casual',
+      },
     });
   }
 
@@ -96,12 +96,8 @@ async function demonstrateOrchestration() {
     type: 'embedding',
     priority: 5,
     payload: {
-      texts: [
-        'Social media trends 2025',
-        'Engagement strategies',
-        'Content marketing automation'
-      ]
-    }
+      texts: ['Social media trends 2025', 'Engagement strategies', 'Content marketing automation'],
+    },
   });
 
   // 5. Competitive Analysis
@@ -113,8 +109,8 @@ async function demonstrateOrchestration() {
       query: 'Analyze top social media management platforms: Hootsuite, Buffer, Sprout Social',
       topic: 'Competitive_Analysis',
       storeInDrive: true,
-      driveFolder: 'Market_Research/Competitors'
-    }
+      driveFolder: 'Market_Research/Competitors',
+    },
   });
 
   // Process all queued tasks
@@ -137,8 +133,8 @@ async function contentProductionPipeline(topic: string) {
     payload: {
       query: `Comprehensive research on ${topic}: trends, statistics, best practices`,
       maxResults: 20,
-      includeImages: true
-      }
+      includeImages: true,
+    },
   })) as ResearchSummary;
 
   console.log('✅ Research completed:', research.summary);
@@ -154,8 +150,8 @@ async function contentProductionPipeline(topic: string) {
       context: research.summary,
       brandVoice: 'engaging',
       format: 'social_media_series',
-      sections: ['Hook', 'Value Proposition', 'Call to Action']
-      }
+      sections: ['Hook', 'Value Proposition', 'Call to Action'],
+    },
   })) as GeneratedContent;
 
   console.log('✅ Content created');
@@ -171,8 +167,8 @@ async function contentProductionPipeline(topic: string) {
       context: content.content,
       numberOfVariations: 3,
       variationType: 'headline',
-      testingGoal: 'maximize engagement'
-      }
+      testingGoal: 'maximize engagement',
+    },
   })) as GeneratedVariations;
 
   console.log('✅ A/B variations generated:', variations.length);
@@ -184,11 +180,8 @@ async function contentProductionPipeline(topic: string) {
     priority: 7,
     timestamp: new Date(),
     payload: {
-      texts: [
-        content.content,
-        ...variations.map((variation) => variation.content)
-      ]
-    }
+      texts: [content.content, ...variations.map((variation) => variation.content)],
+    },
   })) as EmbeddingSummary;
 
   console.log('✅ Embeddings stored for semantic search');
@@ -197,7 +190,7 @@ async function contentProductionPipeline(topic: string) {
     research,
     content,
     variations,
-    embeddings
+    embeddings,
   };
 }
 
@@ -215,8 +208,8 @@ async function monitorTrends() {
       payload: {
         query: 'Current viral topics on social media in the last 6 hours',
         sources: ['twitter', 'reddit', 'tiktok'],
-        maxResults: 10
-      }
+        maxResults: 10,
+      },
     })) as ResearchSummary;
 
     console.log('📊 Trending Now:', trends.summary);
@@ -225,7 +218,7 @@ async function monitorTrends() {
     const citations = trends.citations ?? [];
     if (citations.length > 5) {
       console.log('🔥 Hot topic detected! Generating content...');
-      
+
       await orchestrator.delegateTask({
         id: `trend_content_${Date.now()}`,
         type: 'writing',
@@ -236,8 +229,8 @@ async function monitorTrends() {
           context: trends.summary,
           brandVoice: 'casual',
           format: 'twitter',
-          maxTokens: 280
-        }
+          maxTokens: 280,
+        },
       });
     }
   }, 3600000); // Every hour
@@ -255,14 +248,10 @@ if (require.main === module) {
       console.log('\n🎉 Multi-Agent Orchestration System Demo Complete!');
       process.exit(0);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('❌ Error:', error);
       process.exit(1);
     });
 }
 
-export {
-  demonstrateOrchestration,
-  contentProductionPipeline,
-  monitorTrends
-};
+export { demonstrateOrchestration, contentProductionPipeline, monitorTrends };

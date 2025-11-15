@@ -3,7 +3,8 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { AutomationConfig, schemas } from '@/types';
+import type { AutomationConfig } from '@/types';
+import { schemas } from '@/types';
 import { Logger } from '@/utils/Logger';
 
 interface ConfigurationAnswers {
@@ -32,7 +33,9 @@ export class ConfigManager {
     const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
     if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to manage configurations.');
+      throw new Error(
+        'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to manage configurations.'
+      );
     }
 
     this.supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -48,7 +51,7 @@ export class ConfigManager {
           type: 'input',
           name: 'name',
           message: 'Configuration name:',
-          validate: (input: string) => input.trim().length > 0 || 'Name is required'
+          validate: (input: string) => input.trim().length > 0 || 'Name is required',
         },
         {
           type: 'checkbox',
@@ -58,15 +61,15 @@ export class ConfigManager {
             { name: 'Twitter', value: 'twitter' },
             { name: 'LinkedIn', value: 'linkedin' },
             { name: 'Facebook', value: 'facebook' },
-            { name: 'Instagram', value: 'instagram' }
+            { name: 'Instagram', value: 'instagram' },
           ],
-          validate: (choices: string[]) => choices.length > 0 || 'Select at least one platform'
+          validate: (choices: string[]) => choices.length > 0 || 'Select at least one platform',
         },
         {
           type: 'input',
           name: 'timezone',
           message: 'Timezone:',
-          default: 'America/New_York'
+          default: 'America/New_York',
         },
         {
           type: 'checkbox',
@@ -79,9 +82,9 @@ export class ConfigManager {
             { name: 'Thursday', value: 4 },
             { name: 'Friday', value: 5 },
             { name: 'Saturday', value: 6 },
-            { name: 'Sunday', value: 0 }
+            { name: 'Sunday', value: 0 },
           ],
-          default: [1, 2, 3, 4, 5]
+          default: [1, 2, 3, 4, 5],
         },
         {
           type: 'input',
@@ -91,20 +94,20 @@ export class ConfigManager {
           validate: (input: string) => {
             const times = input.split(',').map((t) => t.trim());
             return times.every((time) => /^\d{2}:\d{2}$/.test(time)) || 'Use HH:MM format';
-          }
+          },
         },
         {
           type: 'input',
           name: 'keywords',
           message: 'Monitoring keywords (comma-separated):',
-          default: 'business development,innovation,technology'
+          default: 'business development,innovation,technology',
         },
         {
           type: 'input',
           name: 'industries',
           message: 'Industries to monitor (comma-separated):',
-          default: 'technology,business,startups'
-        }
+          default: 'technology,business,startups',
+        },
       ]);
 
       const draftConfig: AutomationConfig = schemas.AutomationConfig.parse({
@@ -115,7 +118,7 @@ export class ConfigManager {
         postingSchedule: {
           timezone: answers.timezone,
           daysOfWeek: answers.daysOfWeek,
-          timesOfDay: answers.timesOfDay.split(',').map((time: string) => time.trim())
+          timesOfDay: answers.timesOfDay.split(',').map((time: string) => time.trim()),
         },
         contentRules: {
           minCharacters: 10,
@@ -123,26 +126,24 @@ export class ConfigManager {
           requiredHashtags: 1,
           maxHashtags: 5,
           aiEnhancementEnabled: true,
-          duplicateContentCheck: true
+          duplicateContentCheck: true,
         },
         trendMonitoring: {
           enabled: true,
           keywords: answers.keywords.split(',').map((keyword: string) => keyword.trim()),
           industries: answers.industries.split(',').map((industry: string) => industry.trim()),
           locations: [],
-          minimumVolume: 100
+          minimumVolume: 100,
         },
         competitorTracking: {
           enabled: true,
-          competitors: []
+          competitors: [],
         },
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
 
-      const { error } = await this.supabase
-        .from('automation_configs')
-        .insert([draftConfig]);
+      const { error } = await this.supabase.from('automation_configs').insert([draftConfig]);
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
@@ -177,7 +178,9 @@ export class ConfigManager {
       data.forEach((config, index) => {
         const status = config.enabled ? chalk.green('Enabled') : chalk.red('Disabled');
         const platforms = Array.isArray(config.platforms) ? config.platforms.join(', ') : 'N/A';
-        const createdAt = config.created_at ? new Date(config.created_at).toLocaleString() : 'Unknown';
+        const createdAt = config.created_at
+          ? new Date(config.created_at).toLocaleString()
+          : 'Unknown';
 
         console.log(`${index + 1}. ${chalk.cyan(config.name ?? 'Untitled config')}`);
         console.log(`   ID: ${chalk.gray(config.id)}`);

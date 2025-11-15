@@ -21,6 +21,7 @@ npm run test:ci
 ## Test Coverage
 
 Current test coverage:
+
 - PerplexityAgent: 8 tests
 - ClaudeAgent: 12 tests
 
@@ -65,6 +66,8 @@ All tests mock `global.fetch` to avoid real API calls. Example:
 ```typescript
 mockFetch.mockResolvedValueOnce({
   ok: true,
-  json: async () => ({ /* mock response */ }),
+  json: async () => ({
+    /* mock response */
+  }),
 } as Response);
 ```

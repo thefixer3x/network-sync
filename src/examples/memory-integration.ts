@@ -10,7 +10,7 @@ import { VectorStore } from '../storage/vector-store.js';
 // Initialize both systems
 const memory = new MultiModalMemoryClient({
   apiUrl: 'https://api.lanonasis.com',
-  apiKey: process.env['LANONASIS_API_KEY'] || 'your-api-key'
+  apiKey: process.env['LANONASIS_API_KEY'] || 'your-api-key',
 });
 
 const vectorStore = new VectorStore();
@@ -20,7 +20,6 @@ const vectorStore = new VectorStore();
  * Combines local vector storage with persistent memory service
  */
 export class EnhancedContentStorage {
-  
   /**
    * Store social media content in both systems
    */
@@ -31,18 +30,18 @@ export class EnhancedContentStorage {
     metadata?: Record<string, any>;
   }) {
     const { content, platform, contentType, metadata } = params;
-    
+
     // 1. Store in local vector store for fast similarity search
     const localId = await vectorStore.store({
       content,
       metadata: {
         platform,
         contentType,
-        ...metadata
+        ...metadata,
       },
-      generateEmbedding: true
+      generateEmbedding: true,
     });
-    
+
     // 2. Store in persistent memory service with categorization
     const memoryResult = await memory.createMemory({
       title: `${platform} ${contentType}: ${content.substring(0, 50)}...`,
@@ -53,34 +52,37 @@ export class EnhancedContentStorage {
         platform,
         contentType,
         localVectorId: localId,
-        ...metadata
-      }
+        ...metadata,
+      },
     });
-    
+
     console.log(`✅ Content stored: Local ID ${localId}, Memory ID ${memoryResult.data?.id}`);
-    
+
     return {
       localId,
       memoryId: memoryResult.data?.id,
-      success: true
+      success: true,
     };
   }
-  
+
   /**
    * Enhanced content search across both systems
    */
-  async searchContent(query: string, options?: {
-    platform?: string;
-    contentType?: string;
-    useMemoryService?: boolean;
-    useBothSystems?: boolean;
-  }) {
+  async searchContent(
+    query: string,
+    options?: {
+      platform?: string;
+      contentType?: string;
+      useMemoryService?: boolean;
+      useBothSystems?: boolean;
+    }
+  ) {
     const results: any = {
       local: [],
       memory: [],
-      combined: []
+      combined: [],
     };
-    
+
     // Search local vector store (fast)
     try {
       results.local = await vectorStore.searchSimilar({
@@ -88,14 +90,14 @@ export class EnhancedContentStorage {
         limit: 10,
         filters: {
           ...(options?.platform && { platform: options.platform }),
-          ...(options?.contentType && { contentType: options.contentType })
-        }
+          ...(options?.contentType && { contentType: options.contentType }),
+        },
       });
       console.log(`🔍 Local search found ${results.local.length} results`);
     } catch (error) {
       console.error('Local search error:', error);
     }
-    
+
     // Search memory service (comprehensive, persistent)
     if (options?.useMemoryService || options?.useBothSystems) {
       try {
@@ -104,24 +106,24 @@ export class EnhancedContentStorage {
           limit: 10,
           status: 'active',
           threshold: 0.7,
-          ...(options?.platform && { tags: [options.platform] })
+          ...(options?.platform && { tags: [options.platform] }),
         });
-        
+
         results.memory = memorySearch.data?.results || [];
         console.log(`🧠 Memory search found ${results.memory.length} results`);
       } catch (error) {
         console.error('Memory search error:', error);
       }
     }
-    
+
     // Combine results if both systems used
     if (options?.useBothSystems) {
       results.combined = this.combineSearchResults(results.local, results.memory);
     }
-    
+
     return results;
   }
-  
+
   /**
    * Store multi-modal content (images, videos, audio)
    */
@@ -134,25 +136,19 @@ export class EnhancedContentStorage {
   }) {
     const { file, filename, platform, caption, metadata } = params;
     const fileExtension = filename.split('.').pop()?.toLowerCase();
-    
+
     let memoryResult;
-    
+
     // Handle different file types
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '')) {
       // Store image with OCR and description
-      memoryResult = await memory.createImageMemory(
-        `${platform} Image: ${filename}`,
-        file,
-        { extractText: true, generateDescription: true }
-      );
-      
+      memoryResult = await memory.createImageMemory(`${platform} Image: ${filename}`, file, {
+        extractText: true,
+        generateDescription: true,
+      });
     } else if (['mp3', 'wav', 'm4a', 'ogg'].includes(fileExtension || '')) {
       // Store audio with transcription
-      memoryResult = await memory.createAudioMemory(
-        `${platform} Audio: ${filename}`,
-        file
-      );
-      
+      memoryResult = await memory.createAudioMemory(`${platform} Audio: ${filename}`, file);
     } else if (['pdf', 'docx', 'txt'].includes(fileExtension || '')) {
       // Store document with text extraction
       memoryResult = await memory.createDocumentMemory(
@@ -161,16 +157,18 @@ export class EnhancedContentStorage {
         fileExtension as 'pdf' | 'docx' | 'txt'
       );
     }
-    
+
     // Also store metadata and caption in local vector store
     if (caption || metadata) {
       const contentText = [
         caption,
         `File: ${filename}`,
         `Platform: ${platform}`,
-        ...(metadata?.['hashtags'] || []).map((tag: string) => `#${tag}`)
-      ].filter(Boolean).join(' ');
-      
+        ...(metadata?.['hashtags'] || []).map((tag: string) => `#${tag}`),
+      ]
+        .filter(Boolean)
+        .join(' ');
+
       await vectorStore.store({
         content: contentText,
         metadata: {
@@ -178,46 +176,42 @@ export class EnhancedContentStorage {
           platform,
           fileType: fileExtension,
           memoryId: memoryResult?.data?.id,
-          ...metadata
-        }
+          ...metadata,
+        },
       });
     }
-    
+
     return memoryResult;
   }
-  
+
   /**
    * Get comprehensive context for content creation
    */
   async getContentContext(topic: string, platform: string) {
     console.log(`🎯 Getting context for "${topic}" on ${platform}`);
-    
+
     // Get multi-modal context from memory service
     const memoryContext = await memory.getMultiModalContext(topic, {
       includeImages: true,
       includeAudio: true,
       includeDocuments: true,
-      includeCode: false // Not relevant for social content
+      includeCode: false, // Not relevant for social content
     });
-    
+
     // Get recent relevant content from vector store
-    const recentContent = await vectorStore.retrieveRelevant(
-      `${topic} ${platform}`,
-      5,
-      0.6
-    );
-    
+    const recentContent = await vectorStore.retrieveRelevant(`${topic} ${platform}`, 5, 0.6);
+
     // Get trending topics from analytics
     const trendingTopics = await vectorStore.findTrendingTopics('7d');
-    
+
     return {
       memoryContext: memoryContext.slice(0, 5), // Top 5 most relevant memories
       recentContent,
       trendingTopics: trendingTopics.slice(0, 3), // Top 3 trending
-      recommendations: this.generateContentRecommendations(memoryContext, trendingTopics)
+      recommendations: this.generateContentRecommendations(memoryContext, trendingTopics),
     };
   }
-  
+
   /**
    * Sync important content to long-term memory
    */
@@ -227,21 +221,21 @@ export class EnhancedContentStorage {
     daysBack?: number;
   }) {
     const { minEngagement = 10, platforms = [], daysBack = 7 } = params;
-    
+
     // Get high-performing content from vector store
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysBack);
-    
+
     // This would need to be implemented based on your engagement tracking
     console.log(`🔄 Syncing high-performing content to long-term memory...`);
-    
+
     // Example: find content with high engagement and store in memory service
     const highPerformingContent = await this.getHighPerformingContent({
       minEngagement,
       platforms,
-      since: cutoffDate
+      since: cutoffDate,
     });
-    
+
     for (const content of highPerformingContent) {
       await memory.createMemory({
         title: `High-Performing ${content.platform} Content`,
@@ -252,35 +246,35 @@ export class EnhancedContentStorage {
           engagement: content.engagement,
           platform: content.platform,
           originalId: content.id,
-          performance_tier: 'top'
-        }
+          performance_tier: 'top',
+        },
       });
     }
-    
+
     return {
       synced: highPerformingContent.length,
-      success: true
+      success: true,
     };
   }
-  
+
   // Helper methods
   private combineSearchResults(localResults: any[], memoryResults: any[]) {
     // Combine and deduplicate results based on content similarity
     const combined = [...localResults];
-    
+
     for (const memoryResult of memoryResults) {
-      const isDuplicate = combined.some(local => 
-        this.calculateSimilarity(local.content, memoryResult.content) > 0.8
+      const isDuplicate = combined.some(
+        (local) => this.calculateSimilarity(local.content, memoryResult.content) > 0.8
       );
-      
+
       if (!isDuplicate) {
         combined.push({
           ...memoryResult,
-          source: 'memory'
+          source: 'memory',
         });
       }
     }
-    
+
     // Sort by relevance/similarity score
     return combined.sort((a, b) => {
       const scoreA = a.similarity_score || a.similarity || 0;
@@ -288,24 +282,24 @@ export class EnhancedContentStorage {
       return scoreB - scoreA;
     });
   }
-  
+
   private calculateSimilarity(text1: string, text2: string): number {
     // Simple similarity calculation (in production, use proper semantic similarity)
     const words1 = text1.toLowerCase().split(' ');
     const words2 = text2.toLowerCase().split(' ');
-    const intersection = words1.filter(word => words2.includes(word));
+    const intersection = words1.filter((word) => words2.includes(word));
     return intersection.length / Math.max(words1.length, words2.length);
   }
-  
+
   private generateContentRecommendations(memoryContext: any[], trendingTopics: any[]) {
     return {
-      topics: trendingTopics.map(t => t.topic),
+      topics: trendingTopics.map((t) => t.topic),
       contentTypes: ['video', 'carousel', 'story'],
-      hashtags: memoryContext.flatMap(m => m.tags || []).slice(0, 10),
-      timing: 'Based on engagement patterns, post between 2-4 PM'
+      hashtags: memoryContext.flatMap((m) => m.tags || []).slice(0, 10),
+      timing: 'Based on engagement patterns, post between 2-4 PM',
     };
   }
-  
+
   private async getHighPerformingContent(params: any): Promise<any[]> {
     // Placeholder - implement based on your engagement tracking system
     return [];
@@ -315,9 +309,9 @@ export class EnhancedContentStorage {
 // Example usage
 export async function demonstrateIntegration() {
   const storage = new EnhancedContentStorage();
-  
+
   console.log('🚀 Demonstrating Memory SDK + VectorStore Integration\n');
-  
+
   // 1. Store social content
   await storage.storeContent({
     content: 'Just launched our new AI-powered social media tool! 🚀 #AI #SocialMedia #Innovation',
@@ -325,29 +319,29 @@ export async function demonstrateIntegration() {
     contentType: 'post',
     metadata: {
       hashtags: ['AI', 'SocialMedia', 'Innovation'],
-      engagement: 150
-    }
+      engagement: 150,
+    },
   });
-  
+
   // 2. Search across both systems
   const searchResults = await storage.searchContent('AI social media', {
     useBothSystems: true,
-    platform: 'twitter'
+    platform: 'twitter',
   });
-  
+
   console.log('Search Results:', {
     local: searchResults.local.length,
     memory: searchResults.memory.length,
-    combined: searchResults.combined.length
+    combined: searchResults.combined.length,
   });
-  
+
   // 3. Get comprehensive context
   const context = await storage.getContentContext('AI automation', 'linkedin');
   console.log('Context gathered:', {
     memories: context.memoryContext.length,
     recentContent: context.recentContent.length > 0,
-    trending: context.trendingTopics.length
+    trending: context.trendingTopics.length,
   });
-  
+
   console.log('\n✅ Integration demonstration complete!');
 }

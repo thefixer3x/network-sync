@@ -1,13 +1,11 @@
 // services/platforms/FacebookService.ts
 import axios from 'axios';
 import { randomUUID } from 'crypto';
+import type { SocialMediaService, Content, AccountMetrics } from '../../types/typescript-types';
 import {
-  SocialMediaService,
-  Content,
-  AccountMetrics,
   SocialMediaError,
   RateLimitError,
-  AuthenticationError
+  AuthenticationError,
 } from '../../types/typescript-types';
 import { Logger } from '../../utils/Logger';
 
@@ -35,14 +33,17 @@ export class FacebookService implements SocialMediaService {
   async authenticate(): Promise<boolean> {
     try {
       const response = await axios.get(`${this.baseURL}/me`, {
-        params: { access_token: this.accessToken }
+        params: { access_token: this.accessToken },
       });
 
       this.logger.info(`Authenticated as ${response.data.name}`);
       return true;
     } catch (error: any) {
       this.logger.error('Facebook authentication failed:', error);
-      throw new AuthenticationError('facebook', error.response?.data?.error?.message || error.message);
+      throw new AuthenticationError(
+        'facebook',
+        error.response?.data?.error?.message || error.message
+      );
     }
   }
 
@@ -52,7 +53,7 @@ export class FacebookService implements SocialMediaService {
 
       const postData: any = {
         message: content.content,
-        access_token: this.accessToken
+        access_token: this.accessToken,
       };
 
       // Add media if present
@@ -74,7 +75,6 @@ export class FacebookService implements SocialMediaService {
 
       this.logger.info(`Facebook post created successfully: ${response.data.id}`);
       return response.data.id;
-
     } catch (error: any) {
       this.handleFacebookError(error);
       throw error;
@@ -90,7 +90,7 @@ export class FacebookService implements SocialMediaService {
         const response = await axios.post(`${this.baseURL}/${this.pageId}/photos`, {
           url: mediaUrl,
           published: false, // Don't publish individual photos
-          access_token: this.accessToken
+          access_token: this.accessToken,
         });
         mediaIds.push({ media_fbid: response.data.id });
       } catch (error: any) {
@@ -102,7 +102,7 @@ export class FacebookService implements SocialMediaService {
     const response = await axios.post(`${this.baseURL}/${this.pageId}/feed`, {
       message: content.content,
       attached_media: mediaIds,
-      access_token: this.accessToken
+      access_token: this.accessToken,
     });
 
     return response.data.id;
@@ -110,15 +110,13 @@ export class FacebookService implements SocialMediaService {
 
   async getMetrics(): Promise<AccountMetrics> {
     try {
-      const endpoint = this.pageId
-        ? `${this.baseURL}/${this.pageId}`
-        : `${this.baseURL}/me`;
+      const endpoint = this.pageId ? `${this.baseURL}/${this.pageId}` : `${this.baseURL}/me`;
 
       const response = await axios.get(endpoint, {
         params: {
           fields: 'fan_count,posts.limit(10){likes.summary(true),comments.summary(true),shares}',
-          access_token: this.accessToken
-        }
+          access_token: this.accessToken,
+        },
       });
 
       const data = response.data;
@@ -141,7 +139,8 @@ export class FacebookService implements SocialMediaService {
         followersCount: data.fan_count || 0,
         followingCount: 0, // Not available for pages
         postsCount: posts.length,
-        engagementRate: posts.length > 0 ? ((totalLikes + totalComments + totalShares) / posts.length) : 0,
+        engagementRate:
+          posts.length > 0 ? (totalLikes + totalComments + totalShares) / posts.length : 0,
         growthRate: 0, // Requires historical data
         averageLikes: posts.length > 0 ? totalLikes / posts.length : 0,
         averageComments: posts.length > 0 ? totalComments / posts.length : 0,
@@ -158,7 +157,7 @@ export class FacebookService implements SocialMediaService {
   async deletePost(postId: string): Promise<boolean> {
     try {
       await axios.delete(`${this.baseURL}/${postId}`, {
-        params: { access_token: this.accessToken }
+        params: { access_token: this.accessToken },
       });
 
       this.logger.info(`Facebook post ${postId} deleted successfully`);
@@ -179,7 +178,7 @@ export class FacebookService implements SocialMediaService {
         message: content.content,
         scheduled_publish_time: Math.floor(content.scheduledTime.getTime() / 1000),
         published: false,
-        access_token: this.accessToken
+        access_token: this.accessToken,
       };
 
       if (content.mediaUrls.length > 0) {
@@ -194,7 +193,6 @@ export class FacebookService implements SocialMediaService {
 
       this.logger.info(`Facebook post scheduled successfully: ${response.data.id}`);
       return response.data.id;
-
     } catch (error: any) {
       this.handleFacebookError(error);
       throw error;
@@ -221,8 +219,8 @@ export class FacebookService implements SocialMediaService {
         params: {
           fields: 'id,likes.summary(true),comments.summary(true),shares',
           limit: 20,
-          access_token: this.accessToken
-        }
+          access_token: this.accessToken,
+        },
       });
 
       const posts = response.data.data || [];
@@ -230,9 +228,10 @@ export class FacebookService implements SocialMediaService {
       return posts
         .map((post: any) => ({
           id: post.id,
-          engagement: (post.likes?.summary?.total_count || 0) +
+          engagement:
+            (post.likes?.summary?.total_count || 0) +
             (post.comments?.summary?.total_count || 0) +
-            (post.shares?.count || 0)
+            (post.shares?.count || 0),
         }))
         .sort((a: any, b: any) => b.engagement - a.engagement)
         .slice(0, 5)
