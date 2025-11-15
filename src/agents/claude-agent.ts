@@ -99,8 +99,12 @@ export class ClaudeAgent {
     sections?: string[];
   }) {
     const voice =
-      this.brandVoices.get(params.brandVoice || 'professional') ?? this.brandVoices.get('professional')!;
-    
+      this.brandVoices.get(params.brandVoice || 'professional') ?? this.brandVoices.get('professional');
+    if (!voice) {
+      throw new Error(
+        `Brand voice '${params.brandVoice || 'professional'}' not found in brandVoices map.`
+      );
+    }
     const systemPrompt = this.buildSystemPrompt(voice, params.format);
     const userPrompt = this.buildUserPrompt(params);
 
