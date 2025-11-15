@@ -23,7 +23,13 @@
     "validate:env": "bun scripts/validate-env.ts",
     "orchestrate": "bun run src/orchestrator/agent-orchestrator.ts",
     "demo": "bun run src/example-usage.ts",
-    "cli": "bun run src/cli/cli-interface.ts"
+    "cli": "bun run src/cli/cli-interface.ts",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:ui": "playwright test --ui",
+    "e2e:debug": "playwright test --debug",
+    "e2e:report": "playwright show-report",
+    "e2e:codegen": "playwright codegen"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.9",
@@ -43,6 +49,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@jest/globals": "^30.2.0",
+    "@playwright/test": "^1.56.1",
     "@types/bun": "latest",
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^30.0.0",
