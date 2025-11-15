@@ -10,14 +10,19 @@ import { Logger } from '@/utils/Logger';
 
 const logger = new Logger('JWTManager');
 
-// JWT Configuration
-const JWT_SECRET = process.env['JWT_SECRET'] || 'development-secret-change-in-production';
-const JWT_EXPIRES_IN: string | number =
-  process.env['JWT_EXPIRES_IN'] || '1h';
-const JWT_REFRESH_SECRET =
-  process.env['JWT_REFRESH_SECRET'] || 'development-refresh-secret-change-in-production';
-const JWT_REFRESH_EXPIRES_IN: string | number =
-  process.env['JWT_REFRESH_EXPIRES_IN'] || '7d';
+// JWT Configuration - MUST be set via environment variables
+// Validated by env-validation.ts at startup
+if (!process.env['JWT_SECRET'] || !process.env['JWT_REFRESH_SECRET']) {
+  throw new Error(
+    'JWT_SECRET and JWT_REFRESH_SECRET must be set in environment variables. ' +
+      'These are required for security. See .env.example for details.'
+  );
+}
+
+const JWT_SECRET = process.env['JWT_SECRET'];
+const JWT_EXPIRES_IN: string | number = process.env['JWT_EXPIRES_IN'] || '1h';
+const JWT_REFRESH_SECRET = process.env['JWT_REFRESH_SECRET'];
+const JWT_REFRESH_EXPIRES_IN: string | number = process.env['JWT_REFRESH_EXPIRES_IN'] || '7d';
 
 // JWT Payload Interface
 export interface JWTPayload {
@@ -221,17 +226,11 @@ export function extractTokenFromHeader(authorizationHeader: string | null): stri
 
 /**
  * Validate JWT configuration
+ * Note: Basic validation (presence of secrets) happens at module load
+ * This function performs additional security checks
  */
 export function validateJWTConfig(): void {
   const warnings: string[] = [];
-
-  if (JWT_SECRET === 'development-secret-change-in-production') {
-    warnings.push('JWT_SECRET is using default development value');
-  }
-
-  if (JWT_REFRESH_SECRET === 'development-refresh-secret-change-in-production') {
-    warnings.push('JWT_REFRESH_SECRET is using default development value');
-  }
 
   if (JWT_SECRET.length < 32) {
     warnings.push('JWT_SECRET should be at least 32 characters long');
@@ -245,8 +244,16 @@ export function validateJWTConfig(): void {
     warnings.push('JWT_SECRET and JWT_REFRESH_SECRET should be different');
   }
 
+  if (JWT_SECRET.includes('development') || JWT_SECRET.includes('test')) {
+    warnings.push('JWT_SECRET appears to contain development/test keywords');
+  }
+
+  if (JWT_REFRESH_SECRET.includes('development') || JWT_REFRESH_SECRET.includes('test')) {
+    warnings.push('JWT_REFRESH_SECRET appears to contain development/test keywords');
+  }
+
   if (warnings.length > 0 && process.env['NODE_ENV'] === 'production') {
-    logger.error('JWT Configuration Warnings:');
+    logger.error('JWT Configuration Warnings (PRODUCTION):');
     warnings.forEach((warning) => logger.error(`  - ${warning}`));
     throw new Error('Invalid JWT configuration for production');
   } else if (warnings.length > 0) {
@@ -255,5 +262,5 @@ export function validateJWTConfig(): void {
   }
 }
 
-// Validate configuration on module load
+// Perform security validation on module load
 validateJWTConfig();

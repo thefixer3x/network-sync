@@ -62,34 +62,13 @@ export class VectorStore {
       // Use shared connection pool instead of creating new client
       this.supabase = getSupabaseClient();
       logger.info('VectorStore initialized with connection pool and caching');
-      this.initializeDatabase();
+
+      // Note: Database schema must be initialized via migrations
+      // See: migrations/001_create_vector_store.sql
     } catch (error) {
       logger.error('Failed to initialize VectorStore', error);
       throw error;
     }
-  }
-
-  /**
-   * Initialize vector database schema
-   */
-  private async initializeDatabase() {
-    // This would be run once to set up the database
-    const schema = `
-      CREATE EXTENSION IF NOT EXISTS vector;
-      
-      CREATE TABLE IF NOT EXISTS vector_documents (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        content TEXT NOT NULL,
-        embedding vector(${this.embeddingDimension}),
-        metadata JSONB,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      CREATE INDEX IF NOT EXISTS vector_documents_embedding_idx 
-      ON vector_documents USING ivfflat (embedding vector_cosine_ops)
-      WITH (lists = 100);
-    `;
   }
 
   /**
