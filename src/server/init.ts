@@ -10,6 +10,7 @@
 
 import { Logger } from '@/utils/Logger';
 import { initializeConnectionPool, getConnectionPool } from '@/database/connection-pool';
+import { initializeCache, getCache } from '@/cache/redis-cache';
 
 const logger = new Logger('ServerInit');
 
@@ -23,9 +24,10 @@ export async function initializeServer(): Promise<void> {
     // 1. Initialize database connection pool
     await initializeDatabasePool();
 
-    // 2. Additional initialization steps will go here
-    // - Redis connection
-    // - Cache layer
+    // 2. Initialize Redis cache
+    await initializeRedisCache();
+
+    // 3. Additional initialization steps will go here
     // - Job queues
 
     logger.info('Server infrastructure initialized successfully');
@@ -63,19 +65,57 @@ async function initializeDatabasePool(): Promise<void> {
 }
 
 /**
+ * Initialize Redis cache
+ */
+async function initializeRedisCache(): Promise<void> {
+  try {
+    logger.info('Initializing Redis cache...');
+    await initializeCache();
+
+    // Perform health check
+    const cache = getCache();
+    const isHealthy = await cache.healthCheck();
+
+    if (!isHealthy) {
+      logger.warn('Redis cache health check failed - cache will run in degraded mode');
+      // Don't throw - allow server to start without cache
+      return;
+    }
+
+    const stats = cache.getStats();
+    logger.info('Redis cache initialized', {
+      connected: cache.connected,
+      stats,
+    });
+  } catch (error) {
+    logger.error('Failed to initialize Redis cache', error);
+    logger.warn('Server will continue without cache - performance may be degraded');
+    // Don't throw - allow server to start without cache
+  }
+}
+
+/**
  * Graceful shutdown handler
  */
 export async function shutdownServer(): Promise<void> {
   logger.info('Shutting down server infrastructure...');
 
   try {
-    // 1. Shutdown database connection pool
+    // 1. Disconnect Redis cache
+    try {
+      const cache = getCache();
+      if (cache.connected) {
+        await cache.disconnect();
+      }
+    } catch (error) {
+      logger.error('Error disconnecting Redis cache', error);
+    }
+
+    // 2. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
 
-    // 2. Additional shutdown steps will go here
-    // - Redis disconnection
-    // - Cache cleanup
+    // 3. Additional shutdown steps will go here
     // - Job queue shutdown
 
     logger.info('Server infrastructure shut down successfully');
@@ -115,19 +155,38 @@ export async function healthCheck(): Promise<{
   status: 'healthy' | 'degraded' | 'unhealthy';
   checks: {
     database: boolean;
+    cache: boolean;
     timestamp: string;
   };
 }> {
   const checks = {
     database: false,
+    cache: false,
     timestamp: new Date().toISOString(),
   };
 
   try {
+    // Check database
     const pool = getConnectionPool();
     checks.database = await pool.healthCheck();
 
-    const status = checks.database ? 'healthy' : 'unhealthy';
+    // Check cache (optional, won't fail health check)
+    try {
+      const cache = getCache();
+      checks.cache = await cache.healthCheck();
+    } catch (error) {
+      logger.warn('Cache health check failed', error);
+    }
+
+    // Determine overall status
+    let status: 'healthy' | 'degraded' | 'unhealthy';
+    if (checks.database && checks.cache) {
+      status = 'healthy';
+    } else if (checks.database) {
+      status = 'degraded'; // Database ok but cache down
+    } else {
+      status = 'unhealthy'; // Database down
+    }
 
     return { status, checks };
   } catch (error) {
@@ -147,10 +206,22 @@ export function getServerMetrics() {
     const pool = getConnectionPool();
     const poolStats = pool.getStats();
 
+    // Get cache stats if available
+    let cacheStats = null;
+    try {
+      const cache = getCache();
+      if (cache.connected) {
+        cacheStats = cache.getStats();
+      }
+    } catch (error) {
+      logger.debug('Cache stats unavailable', error);
+    }
+
     return {
       database: {
         pool: poolStats,
       },
+      cache: cacheStats,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       timestamp: new Date().toISOString(),
