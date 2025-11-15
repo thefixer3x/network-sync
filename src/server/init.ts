@@ -11,6 +11,7 @@
 import { Logger } from '@/utils/Logger';
 import { initializeConnectionPool, getConnectionPool } from '@/database/connection-pool';
 import { initializeCache, getCache } from '@/cache/redis-cache';
+import { initializeQueueManager, getQueueManager } from '@/queue/bull-queue';
 
 const logger = new Logger('ServerInit');
 
@@ -27,8 +28,8 @@ export async function initializeServer(): Promise<void> {
     // 2. Initialize Redis cache
     await initializeRedisCache();
 
-    // 3. Additional initialization steps will go here
-    // - Job queues
+    // 3. Initialize job queue manager
+    await initializeJobQueue();
 
     logger.info('Server infrastructure initialized successfully');
   } catch (error) {
@@ -95,13 +96,50 @@ async function initializeRedisCache(): Promise<void> {
 }
 
 /**
+ * Initialize job queue manager
+ */
+async function initializeJobQueue(): Promise<void> {
+  try {
+    logger.info('Initializing job queue manager...');
+    await initializeQueueManager();
+
+    // Perform health check
+    const queueManager = getQueueManager();
+    const isHealthy = await queueManager.healthCheck();
+
+    if (!isHealthy) {
+      logger.warn('Job queue health check failed - queues may not be available');
+      return;
+    }
+
+    const stats = await queueManager.getAllQueueStats();
+    logger.info('Job queue manager initialized', {
+      queues: Object.keys(stats).length,
+      stats,
+    });
+  } catch (error) {
+    logger.error('Failed to initialize job queue manager', error);
+    logger.warn('Server will continue without job queues - background tasks will be disabled');
+    // Don't throw - allow server to start without queues
+  }
+}
+
+/**
  * Graceful shutdown handler
  */
 export async function shutdownServer(): Promise<void> {
   logger.info('Shutting down server infrastructure...');
 
   try {
-    // 1. Disconnect Redis cache
+    // 1. Shutdown job queue manager (first to complete pending jobs)
+    try {
+      const queueManager = getQueueManager();
+      await queueManager.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down job queue manager', error);
+    }
+
+    // 2. Disconnect Redis cache
     try {
       const cache = getCache();
       if (cache.connected) {
@@ -111,12 +149,9 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error disconnecting Redis cache', error);
     }
 
-    // 2. Shutdown database connection pool
+    // 3. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
-
-    // 3. Additional shutdown steps will go here
-    // - Job queue shutdown
 
     logger.info('Server infrastructure shut down successfully');
   } catch (error) {
@@ -156,12 +191,14 @@ export async function healthCheck(): Promise<{
   checks: {
     database: boolean;
     cache: boolean;
+    queue: boolean;
     timestamp: string;
   };
 }> {
   const checks = {
     database: false,
     cache: false,
+    queue: false,
     timestamp: new Date().toISOString(),
   };
 
@@ -178,12 +215,20 @@ export async function healthCheck(): Promise<{
       logger.warn('Cache health check failed', error);
     }
 
+    // Check queue manager (optional, won't fail health check)
+    try {
+      const queueManager = getQueueManager();
+      checks.queue = await queueManager.healthCheck();
+    } catch (error) {
+      logger.warn('Queue health check failed', error);
+    }
+
     // Determine overall status
     let status: 'healthy' | 'degraded' | 'unhealthy';
-    if (checks.database && checks.cache) {
+    if (checks.database && checks.cache && checks.queue) {
       status = 'healthy';
     } else if (checks.database) {
-      status = 'degraded'; // Database ok but cache down
+      status = 'degraded'; // Database ok but optional services down
     } else {
       status = 'unhealthy'; // Database down
     }
@@ -201,7 +246,7 @@ export async function healthCheck(): Promise<{
 /**
  * Get server metrics
  */
-export function getServerMetrics() {
+export async function getServerMetrics() {
   try {
     const pool = getConnectionPool();
     const poolStats = pool.getStats();
@@ -217,11 +262,21 @@ export function getServerMetrics() {
       logger.debug('Cache stats unavailable', error);
     }
 
+    // Get queue stats if available
+    let queueStats = null;
+    try {
+      const queueManager = getQueueManager();
+      queueStats = await queueManager.getAllQueueStats();
+    } catch (error) {
+      logger.debug('Queue stats unavailable', error);
+    }
+
     return {
       database: {
         pool: poolStats,
       },
       cache: cacheStats,
+      queues: queueStats,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       timestamp: new Date().toISOString(),
