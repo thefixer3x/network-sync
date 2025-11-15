@@ -1,9 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { SocialPlatform } from '@/types';
 import { AccountMetrics, CompetitorAnalysis, Content } from '@/types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from './SocialMediaFactory';
 import { OpenAIService } from './OpenAIService';
+import { getSupabaseAdminClient } from '@/database/connection-pool';
 import {
   addDays,
   subDays,
@@ -67,15 +68,15 @@ export interface AnalyticsFilter {
 
 export class AnalyticsDashboard {
   private logger = new Logger('AnalyticsDashboard');
-  private supabase = createClient(
-    process.env['SUPABASE_URL']!,
-    process.env['SUPABASE_SERVICE_ROLE_KEY']!
-  );
+  private supabase: SupabaseClient;
   private aiService = new OpenAIService();
   private widgets: Map<string, DashboardWidget> = new Map();
   private refreshIntervals: Map<string, NodeJS.Timeout> = new Map();
 
   constructor() {
+    // Use shared connection pool for database access
+    this.supabase = getSupabaseAdminClient();
+    this.logger.info('AnalyticsDashboard initialized with connection pool');
     this.initializeDefaultWidgets();
   }
 

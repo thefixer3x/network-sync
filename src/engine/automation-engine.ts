@@ -1,7 +1,6 @@
 // src/engine/automation-engine.ts
 import { randomUUID } from 'node:crypto';
 import cron from 'node-cron';
-import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Content,
@@ -20,6 +19,7 @@ import { OpenAIService } from '@/services/OpenAIService';
 import { TrendAnalyzer } from '@/services/TrendAnalyzer';
 import { ContentOptimizer } from '@/services/ContentOptimizer';
 import { AnalyticsCollector } from '@/services/AnalyticsCollector';
+import { getSupabaseAdminClient } from '@/database/connection-pool';
 import { addMinutes, addHours } from 'date-fns';
 
 const getErrorMessage = (error: unknown): string =>
@@ -44,14 +44,9 @@ export class AutomationEngine {
   private config: AutomationConfig | null = null;
 
   constructor() {
-    const supabaseUrl = process.env['SUPABASE_URL'];
-    const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.');
-    }
-
-    this.supabase = createClient(supabaseUrl, serviceRoleKey);
+    // Use shared connection pool for database access
+    this.supabase = getSupabaseAdminClient();
+    this.logger.info('AutomationEngine initialized with connection pool');
 
     void this.initializeServices();
     this.setupErrorHandling();

@@ -2,7 +2,11 @@
  * Vector Store for Semantic Search and Analytics
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseClient, releaseConnection } from '@/database/connection-pool';
+import { Logger } from '@/utils/Logger';
+
+const logger = new Logger('VectorStore');
 
 interface VectorDocument {
   id: string;
@@ -13,22 +17,19 @@ interface VectorDocument {
 }
 
 export class VectorStore {
-  private supabase: any;
+  private supabase: SupabaseClient;
   private embeddingDimension = 1536; // OpenAI embedding size
 
   constructor() {
-    const supabaseUrl = process.env['SUPABASE_URL'];
-    const supabaseKey = process.env['SUPABASE_ANON_KEY'];
-
-    if (!supabaseUrl) {
-      throw new Error('SUPABASE_URL is required.');
+    try {
+      // Use shared connection pool instead of creating new client
+      this.supabase = getSupabaseClient();
+      logger.info('VectorStore initialized with connection pool');
+      this.initializeDatabase();
+    } catch (error) {
+      logger.error('Failed to initialize VectorStore', error);
+      throw error;
     }
-    if (!supabaseKey) {
-      throw new Error('SUPABASE_ANON_KEY is required.');
-    }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
-    this.initializeDatabase();
   }
 
   /**

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Logger } from '@/utils/Logger';
+import { getSupabaseAdminClient } from '@/database/connection-pool';
 
 function formatError(error: unknown): string {
   if (error instanceof Error) {
@@ -15,16 +15,9 @@ export class DatabaseManager {
   private readonly logger = new Logger('DatabaseManager');
 
   constructor() {
-    const supabaseUrl = process.env['SUPABASE_URL'];
-    const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error(
-        'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to manage the database.'
-      );
-    }
-
-    this.supabase = createClient(supabaseUrl, serviceRoleKey);
+    // Use shared connection pool for database access
+    this.supabase = getSupabaseAdminClient();
+    this.logger.info('DatabaseManager initialized with connection pool');
   }
 
   async initialize(): Promise<void> {
