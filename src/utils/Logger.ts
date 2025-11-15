@@ -73,7 +73,7 @@ export class Logger {
   progress(step: number, total: number, message: string): void {
     if (this.shouldLog('info')) {
       const percentage = total === 0 ? 0 : Math.round((step / total) * 100);
-      const filledBars = Math.min(20, Math.floor(percentage / 5));
+      const filledBars = Math.floor(percentage / 5);
       const progressBar = '█'.repeat(filledBars) + '░'.repeat(20 - filledBars);
       console.log(chalk.magenta(this.formatMessage('info', `📊 [${progressBar}] ${percentage}% ${message}`)));
     }
