@@ -109,7 +109,8 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   PORT: z.string().transform(Number).pipe(z.number().positive()).default('3000'),
 
-  // ===== Other Services (Optional) =====
+  // ===== Lanonasis Memory Service (Optional) =====
+  LANONASIS_MEMORY_URL: z.string().url().optional(),
   LANONASIS_API_KEY: z.string().optional(),
 });
 
