@@ -33,14 +33,21 @@ export interface SupabaseConfig {
 }
 
 /**
- * Default pool configuration
+ * Default pool configuration - optimized for production performance
+ *
+ * Performance tuning:
+ * - minConnections: 5 (keep warm connections ready)
+ * - maxConnections: 25 (handle burst traffic, Supabase default is 100)
+ * - connectionTimeout: 15s (faster failure detection)
+ * - idleTimeout: 300s (keep connections warm longer)
+ * - acquireTimeout: 5s (fail fast on connection acquisition)
  */
 const DEFAULT_POOL_CONFIG: Required<PoolConfig> = {
-  minConnections: 2,
-  maxConnections: 10,
-  connectionTimeout: 30000, // 30 seconds
-  idleTimeout: 60000, // 1 minute
-  acquireTimeout: 10000, // 10 seconds
+  minConnections: parseInt(process.env['DB_POOL_MIN'] || '5'),
+  maxConnections: parseInt(process.env['DB_POOL_MAX'] || '25'),
+  connectionTimeout: parseInt(process.env['DB_CONN_TIMEOUT'] || '15000'), // 15 seconds
+  idleTimeout: parseInt(process.env['DB_IDLE_TIMEOUT'] || '300000'), // 5 minutes
+  acquireTimeout: parseInt(process.env['DB_ACQUIRE_TIMEOUT'] || '5000'), // 5 seconds
 };
 
 /**

@@ -9,6 +9,7 @@ import cors from 'cors';
 import { Logger } from '../utils/Logger.js';
 import { healthRouter } from '../routes/health.routes.js';
 import { metricsRouter } from '../routes/metrics.routes.js';
+import { aiCostRouter } from '../routes/ai-cost.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -63,6 +64,9 @@ export function createApp(): Express {
   // Prometheus metrics endpoint (no authentication required)
   app.use('/metrics', metricsRouter);
 
+  // AI cost monitoring endpoints
+  app.use('/ai-cost', aiCostRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -76,6 +80,10 @@ export function createApp(): Express {
         dependencies: '/health/dependencies',
         metrics: '/metrics',
         metricsJson: '/metrics/json',
+        aiCost: '/ai-cost',
+        aiCostCurrent: '/ai-cost/current',
+        aiCostAnalytics: '/ai-cost/analytics',
+        aiCostPricing: '/ai-cost/pricing',
       },
     });
   });
