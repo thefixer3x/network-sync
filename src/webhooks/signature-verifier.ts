@@ -61,7 +61,7 @@ export function verifyTwitterSignature(
     const isValid = verifyHMACSignature(payload, signatureHash, secret, 'sha256');
 
     logger.debug(`Twitter webhook signature verification: ${isValid ? 'valid' : 'invalid'}`);
-    return { isValid, reason: isValid ? undefined : 'Signature mismatch' };
+    return isValid ? { isValid: true } : { isValid: false, reason: 'Signature mismatch' };
   } catch (error) {
     logger.error('Twitter signature verification error:', error);
     return { isValid: false, reason: 'Verification failed' };
@@ -81,7 +81,7 @@ export function verifyLinkedInSignature(
     const isValid = verifyHMACSignature(payload, signature, secret, 'sha256');
 
     logger.debug(`LinkedIn webhook signature verification: ${isValid ? 'valid' : 'invalid'}`);
-    return { isValid, reason: isValid ? undefined : 'Signature mismatch' };
+    return isValid ? { isValid: true } : { isValid: false, reason: 'Signature mismatch' };
   } catch (error) {
     logger.error('LinkedIn signature verification error:', error);
     return { isValid: false, reason: 'Verification failed' };
@@ -103,7 +103,7 @@ export function verifyFacebookSignature(
       if (signature.startsWith('sha1=')) {
         const signatureHash = signature.replace('sha1=', '');
         const isValid = verifyHMACSignature(payload, signatureHash, appSecret, 'sha1');
-        return { isValid, reason: isValid ? undefined : 'Signature mismatch' };
+        return isValid ? { isValid: true } : { isValid: false, reason: 'Signature mismatch' };
       }
       return { isValid: false, reason: 'Invalid signature format' };
     }
@@ -112,7 +112,7 @@ export function verifyFacebookSignature(
     const isValid = verifyHMACSignature(payload, signatureHash, appSecret, 'sha256');
 
     logger.debug(`Facebook webhook signature verification: ${isValid ? 'valid' : 'invalid'}`);
-    return { isValid, reason: isValid ? undefined : 'Signature mismatch' };
+    return isValid ? { isValid: true } : { isValid: false, reason: 'Signature mismatch' };
   } catch (error) {
     logger.error('Facebook signature verification error:', error);
     return { isValid: false, reason: 'Verification failed' };

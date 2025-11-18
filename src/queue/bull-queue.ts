@@ -85,10 +85,11 @@ class BullQueueManager {
   private isInitialized = false;
 
   private constructor() {
+    const password = process.env['REDIS_PASSWORD'];
     const redisConfig = {
       host: process.env['REDIS_HOST'] || 'localhost',
       port: parseInt(process.env['REDIS_PORT'] || '6379'),
-      password: process.env['REDIS_PASSWORD'],
+      ...(password ? { password } : {}),
       db: parseInt(process.env['REDIS_QUEUE_DB'] || '1'), // Separate DB for queues
     };
 
@@ -313,7 +314,7 @@ class BullQueueManager {
       progress: typeof progress === 'number' ? progress : 0,
       data: job.data,
       result: job.returnvalue,
-      error: job.failedReason,
+      ...(job.failedReason ? { error: job.failedReason } : {}),
       attempts: job.attemptsMade,
       timestamp: new Date(job.timestamp),
     };
@@ -450,6 +451,10 @@ class BullQueueManager {
 
       // Try to get stats from first queue as health check
       const firstQueue = Array.from(this.queues.values())[0];
+      if (!firstQueue) {
+        return false;
+      }
+
       await firstQueue.getJobCounts();
 
       return true;

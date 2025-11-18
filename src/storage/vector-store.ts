@@ -33,7 +33,7 @@ interface SearchResult {
   created_at: string;
 }
 
-interface QueryMetrics {
+export interface QueryMetrics {
   totalQueries: number;
   cacheHits: number;
   avgQueryTime: number;
@@ -272,7 +272,7 @@ export class VectorStore {
         await this.cache.set(cacheKey, data, this.CACHE_TTL);
       }
 
-      return data as SearchResult[];
+      return (data || []) as unknown as SearchResult[];
     } catch (error) {
       logger.error('Search failed:', error);
       throw error;
@@ -487,7 +487,7 @@ export class VectorStore {
           throw error;
         }
 
-        const batchSize = Array.isArray(data) ? data.length : 0;
+        const batchSize = Array.isArray(data) ? (data as any[]).length : 0;
         deletedCount += batchSize;
 
         logger.debug(`Deleted ${deletedCount}/${count} documents`);

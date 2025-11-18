@@ -8,14 +8,14 @@ export class GoogleDriveStorage {
         this.logger.info(`Uploading report ${params.filename} to folder ${params.folder}`);
         return {
             id: randomUUID(),
-            webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${encodeURIComponent(params.filename)}`
+            webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${encodeURIComponent(params.filename)}`,
         };
     }
     async uploadContent(params) {
         this.logger.info(`Uploading content to folder ${params.folder}`);
         return {
             id: randomUUID(),
-            webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${Date.now()}`
+            webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${Date.now()}`,
         };
     }
 }

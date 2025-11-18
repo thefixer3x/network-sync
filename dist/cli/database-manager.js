@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { createClient } from '@supabase/supabase-js';
 import { Logger } from '@/utils/Logger';
+import { getSupabaseAdminClient } from '@/database/connection-pool';
 function formatError(error) {
     if (error instanceof Error) {
         return error.message;
@@ -10,12 +10,9 @@ function formatError(error) {
 export class DatabaseManager {
     constructor() {
         this.logger = new Logger('DatabaseManager');
-        const supabaseUrl = process.env['SUPABASE_URL'];
-        const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-        if (!supabaseUrl || !serviceRoleKey) {
-            throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to manage the database.');
-        }
-        this.supabase = createClient(supabaseUrl, serviceRoleKey);
+        // Use shared connection pool for database access
+        this.supabase = getSupabaseAdminClient();
+        this.logger.info('DatabaseManager initialized with connection pool');
     }
     async initialize() {
         console.log(chalk.blue.bold('\n🗄️  Initializing Database'));
@@ -77,7 +74,7 @@ CREATE TABLE IF NOT EXISTS automation_configs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-`.trim()
+`.trim(),
             },
             {
                 name: 'content',
@@ -99,7 +96,7 @@ CREATE TABLE IF NOT EXISTS content (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-`.trim()
+`.trim(),
             },
             {
                 name: 'trends',
@@ -116,7 +113,7 @@ CREATE TABLE IF NOT EXISTS trends (
   expires_at TIMESTAMP WITH TIME ZONE,
   source_urls TEXT[] DEFAULT '{}'
 );
-`.trim()
+`.trim(),
             },
             {
                 name: 'account_metrics',
@@ -135,8 +132,8 @@ CREATE TABLE IF NOT EXISTS account_metrics (
   top_performing_content TEXT[] DEFAULT '{}',
   recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-`.trim()
-            }
+`.trim(),
+            },
         ];
         this.logger.info('Displaying SQL required to set up Supabase tables:');
         for (const table of tables) {

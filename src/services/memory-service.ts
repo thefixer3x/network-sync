@@ -89,7 +89,7 @@ export class UnifiedMemoryService {
         this.memoryClient = new MemoryClient({
           baseUrl: this.config.memoryServiceUrl,
           apiKey: this.config.memoryServiceApiKey,
-        });
+        } as any); // Type mismatch with @lanonasis/memory-client package
         this.memoryServiceAvailable = true;
         logger.info('Lanonasis Memory Service initialized (primary backend)');
       } catch (error) {
@@ -117,7 +117,7 @@ export class UnifiedMemoryService {
       // Try primary backend first (Lanonasis)
       if (this.memoryServiceAvailable && this.config.usePrimary) {
         try {
-          const result = await this.memoryClient!.store({
+          const result = await (this.memoryClient as any)!.store({
             content: document.content,
             metadata: document.metadata,
           });
@@ -141,7 +141,7 @@ export class UnifiedMemoryService {
       // Fallback to VectorStore
       const id = await this.vectorStore.store({
         content: document.content,
-        metadata: document.metadata,
+        ...(document.metadata ? { metadata: document.metadata } : {}),
         generateEmbedding: !document.embedding,
       });
 
@@ -165,7 +165,7 @@ export class UnifiedMemoryService {
         try {
           const results = await Promise.all(
             documents.map((doc) =>
-              this.memoryClient!.store({
+              (this.memoryClient as any)!.store({
                 content: doc.content,
                 metadata: doc.metadata,
               })
@@ -181,7 +181,7 @@ export class UnifiedMemoryService {
             await this.invalidateSearchCache();
           }
 
-          return results.map((r) => r.id || r.memoryId || 'unknown');
+          return results.map((r: any) => r.id || r.memoryId || 'unknown');
         } catch (error) {
           logger.error('Lanonasis Memory Service batch store failed, trying fallback', error);
           if (!this.config.fallbackEnabled) {
@@ -236,7 +236,7 @@ export class UnifiedMemoryService {
       // Try primary backend (Lanonasis)
       if (this.memoryServiceAvailable && this.config.usePrimary) {
         try {
-          const results = await this.memoryClient!.search({
+          const results = await (this.memoryClient as any)!.search({
             query: options.query,
             limit: options.limit || 5,
             filters: options.filters,
@@ -271,8 +271,8 @@ export class UnifiedMemoryService {
       const results = await this.vectorStore.searchSimilar({
         text: options.query,
         limit: options.limit || 5,
-        filters: options.filters,
-        minSimilarity: options.minSimilarity,
+        ...(options.filters ? { filters: options.filters } : {}),
+        ...(options.minSimilarity !== undefined ? { minSimilarity: options.minSimilarity } : {}),
       });
 
       const searchResults: SearchResult[] = results.map((r) => ({
@@ -329,7 +329,7 @@ export class UnifiedMemoryService {
     if (this.memoryServiceAvailable && this.memoryClient) {
       try {
         // Attempt a lightweight health check
-        await this.memoryClient.search({ query: 'health', limit: 1 });
+        await (this.memoryClient as any).search({ query: 'health', limit: 1 });
         primaryHealthy = true;
       } catch (error) {
         logger.debug('Primary backend (Lanonasis) health check failed', error);

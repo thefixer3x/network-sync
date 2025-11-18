@@ -17,7 +17,7 @@ export class EmbeddingAgent {
         if (this.client) {
             const response = await this.client.embeddings.create({
                 model: params.model ?? 'text-embedding-3-small',
-                input: params.texts
+                input: params.texts,
             });
             return response.data.map((item, index) => {
                 const metadata = params.metadata?.[index];
@@ -26,7 +26,7 @@ export class EmbeddingAgent {
                     content: params.texts[index] ?? '',
                     embedding: item.embedding,
                     dimensions: item.embedding.length,
-                    ...(metadata ? { metadata } : {})
+                    ...(metadata ? { metadata } : {}),
                 };
             });
         }
@@ -40,7 +40,7 @@ export class EmbeddingAgent {
                 content: text,
                 embedding: mockEmbedding,
                 dimensions: mockEmbedding.length,
-                ...(metadata ? { metadata } : {})
+                ...(metadata ? { metadata } : {}),
             };
         });
     }
