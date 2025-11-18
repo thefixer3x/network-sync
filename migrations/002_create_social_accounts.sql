@@ -1,8 +1,11 @@
--- Migration: Create Social Accounts Table
--- Description: Sets up the social_accounts table for storing connected social media accounts
+-- Migration: Create Social Accounts Table (network_sync schema)
+-- Description: Sets up the social_accounts table inside the dedicated schema with RLS
 -- Date: 2025-11-15
 
-CREATE TABLE IF NOT EXISTS social_accounts (
+BEGIN;
+
+-- Table definition
+CREATE TABLE IF NOT EXISTS network_sync.social_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   platform VARCHAR(50) NOT NULL,
   username VARCHAR(255) NOT NULL,
@@ -12,26 +15,52 @@ CREATE TABLE IF NOT EXISTS social_accounts (
   followers INTEGER DEFAULT 0,
   last_sync TIMESTAMPTZ,
   is_active BOOLEAN DEFAULT true,
-  credentials JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  credentials JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
   UNIQUE(platform, username)
 );
 
--- Create indexes for better query performance
-CREATE INDEX IF NOT EXISTS social_accounts_platform_idx ON social_accounts(platform);
-CREATE INDEX IF NOT EXISTS social_accounts_is_active_idx ON social_accounts(is_active);
-CREATE INDEX IF NOT EXISTS social_accounts_created_at_idx ON social_accounts(created_at DESC);
+-- Indexes
+CREATE INDEX IF NOT EXISTS social_accounts_platform_idx ON network_sync.social_accounts(platform);
+CREATE INDEX IF NOT EXISTS social_accounts_is_active_idx ON network_sync.social_accounts(is_active);
+CREATE INDEX IF NOT EXISTS social_accounts_created_at_idx ON network_sync.social_accounts(created_at DESC);
+-- RLS predicate support
+CREATE INDEX IF NOT EXISTS social_accounts_credentials_user_idx
+  ON network_sync.social_accounts ((credentials->>'user_id'));
 
--- Create trigger to auto-update updated_at
+-- Trigger
+DROP TRIGGER IF EXISTS update_social_accounts_updated_at ON network_sync.social_accounts;
 CREATE TRIGGER update_social_accounts_updated_at
-  BEFORE UPDATE ON social_accounts
+  BEFORE UPDATE ON network_sync.social_accounts
   FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+  EXECUTE FUNCTION network_sync.update_updated_at_column();
 
--- Grant permissions
-GRANT SELECT, INSERT, UPDATE, DELETE ON social_accounts TO authenticated;
-GRANT SELECT ON social_accounts TO anon;
+-- RLS policies (ownership via credentials->>'user_id')
+ALTER TABLE network_sync.social_accounts ENABLE ROW LEVEL SECURITY;
 
-COMMENT ON TABLE social_accounts IS 'Stores connected social media accounts and their metadata';
-COMMENT ON COLUMN social_accounts.credentials IS 'Encrypted credentials for social media platform (stored securely)';
+DROP POLICY IF EXISTS social_accounts_select ON network_sync.social_accounts;
+CREATE POLICY social_accounts_select ON network_sync.social_accounts
+  FOR SELECT TO authenticated
+  USING (credentials->>'user_id' = auth.uid()::text);
+
+DROP POLICY IF EXISTS social_accounts_insert ON network_sync.social_accounts;
+CREATE POLICY social_accounts_insert ON network_sync.social_accounts
+  FOR INSERT TO authenticated
+  WITH CHECK (credentials->>'user_id' = auth.uid()::text);
+
+DROP POLICY IF EXISTS social_accounts_update ON network_sync.social_accounts;
+CREATE POLICY social_accounts_update ON network_sync.social_accounts
+  FOR UPDATE TO authenticated
+  USING (credentials->>'user_id' = auth.uid()::text)
+  WITH CHECK (credentials->>'user_id' = auth.uid()::text);
+
+DROP POLICY IF EXISTS social_accounts_delete ON network_sync.social_accounts;
+CREATE POLICY social_accounts_delete ON network_sync.social_accounts
+  FOR DELETE TO authenticated
+  USING (credentials->>'user_id' = auth.uid()::text);
+
+COMMENT ON TABLE network_sync.social_accounts IS 'Stores connected social media accounts and their metadata (namespaced)';
+COMMENT ON COLUMN network_sync.social_accounts.credentials IS 'Encrypted credentials and user ownership metadata';
+
+COMMIT;

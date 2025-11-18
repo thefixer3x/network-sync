@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceSupabaseClient, extractUserId } from '../../_lib/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+const supabase = createServiceSupabaseClient();
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = await extractUserId(request, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const workflowId = params.id;
 
     // Get current workflow
     const { data: workflow, error: fetchError } = await supabase
       .from('workflows')
       .select('*')
+      .eq('config->>user_id', userId)
       .eq('id', workflowId)
       .single();
 
@@ -37,6 +40,7 @@ export async function POST(
         status: newStatus,
         updated_at: new Date().toISOString(),
       })
+      .eq('config->>user_id', userId)
       .eq('id', workflowId)
       .select()
       .single();

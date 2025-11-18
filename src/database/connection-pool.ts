@@ -102,7 +102,7 @@ class ConnectionPoolManager {
       // Create main client with pooling configuration
       this.supabaseClient = createClient(config.url, config.anonKey, {
         db: {
-          schema: (config.schema || 'public') as any,
+          schema: (config.schema || 'network_sync') as any,
         },
         auth: {
           persistSession: false,
@@ -125,7 +125,7 @@ class ConnectionPoolManager {
       if (config.serviceRoleKey) {
         this.supabaseAdminClient = createClient(config.url, config.serviceRoleKey, {
           db: {
-            schema: (config.schema || 'public') as any,
+            schema: (config.schema || 'network_sync') as any,
           },
           auth: {
             persistSession: false,
@@ -313,7 +313,7 @@ export async function initializeConnectionPool(): Promise<void> {
     ...(process.env['SUPABASE_SERVICE_ROLE_KEY']
       ? { serviceRoleKey: process.env['SUPABASE_SERVICE_ROLE_KEY'] }
       : {}),
-    schema: process.env['SUPABASE_SCHEMA'] || 'public',
+    schema: process.env['SUPABASE_SCHEMA'] || 'network_sync',
     pool: {
       minConnections: parseInt(process.env['DB_POOL_MIN'] || '2'),
       maxConnections: parseInt(process.env['DB_POOL_MAX'] || '10'),
