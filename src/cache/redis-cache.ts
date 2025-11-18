@@ -423,7 +423,7 @@ class RedisCacheManager {
         return 0;
       }
 
-      const result = await this.client.del(keys);
+      const result = await this.client.del(keys as any);
       this.stats.deletes += result;
 
       logger.info(`Cache cleared: ${result} keys deleted with pattern ${pattern}`);
@@ -465,7 +465,7 @@ class RedisCacheManager {
       const result = await this.client.expire(fullKey, ttl);
 
       logger.debug(`Cache expire: ${key} (TTL: ${ttl}s, success: ${result})`);
-      return result;
+      return result === 1;
     } catch (error) {
       logger.error(`Cache expire error for key ${key}:`, error);
       this.stats.errors++;
@@ -589,7 +589,7 @@ export async function initializeCache(): Promise<void> {
   const config: CacheConfig = {
     host: process.env['REDIS_HOST'] || 'localhost',
     port: parseInt(process.env['REDIS_PORT'] || '6379'),
-    password: process.env['REDIS_PASSWORD'],
+    ...(process.env['REDIS_PASSWORD'] ? { password: process.env['REDIS_PASSWORD'] } : {}),
     db: parseInt(process.env['REDIS_DB'] || '0'),
     keyPrefix: process.env['REDIS_KEY_PREFIX'] || 'network-sync:',
     defaultTTL: parseInt(process.env['CACHE_DEFAULT_TTL'] || '3600'),

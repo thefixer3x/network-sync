@@ -2,6 +2,8 @@
  * Perplexity Agent - Specialized for Research & Real-time Data
  */
 
+import { httpClient } from '../utils/http-client.js';
+
 const formatError = (error: unknown): string =>
   error instanceof Error
     ? error.message
@@ -49,13 +51,9 @@ export class PerplexityAgent {
     ];
 
     try {
-      const response = await fetch(this.apiEndpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await httpClient.post(
+        this.apiEndpoint,
+        {
           model: this.config.model,
           messages,
           temperature: this.config.temperature,
@@ -64,8 +62,20 @@ export class PerplexityAgent {
           return_images: params.includeImages || false,
           search_domain_filter: params.sources || [],
           search_recency_filter: 'week', // Focus on recent data
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+          },
+          timeout: 30000, // 30 second timeout for research queries
+          maxRetries: 3, // Retry up to 3 times on transient failures
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
       const data = await response.json();
 
