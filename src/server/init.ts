@@ -19,6 +19,7 @@ import { agentSupervisor } from '@/services/agent-supervisor';
 import { workflowManager } from '@/services/workflow-manager';
 import { contextManager } from '@/services/context-manager';
 import { contentManagementService } from '@/services/content-management';
+import { analyticsService } from '@/services/analytics';
 
 const logger = new Logger('ServerInit');
 
@@ -183,7 +184,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down content management service', error);
     }
 
-    // 7. Shutdown job queue manager
+    // 7. Shutdown analytics service
+    try {
+      analyticsService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down analytics service', error);
+    }
+
+    // 8. Shutdown job queue manager
     try {
       const queueManager = getQueueManager();
       await queueManager.shutdown();

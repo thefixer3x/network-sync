@@ -16,6 +16,7 @@ import { agentSupervisionRouter } from '../routes/agent-supervision.routes.js';
 import { workflowManagementRouter } from '../routes/workflow-management.routes.js';
 import { contextRouter } from '../routes/context.routes.js';
 import { contentManagementRouter } from '../routes/content-management.routes.js';
+import { analyticsRouter } from '../routes/analytics.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -91,6 +92,9 @@ export function createApp(): Express {
   // Content management endpoints
   app.use('/content-management', contentManagementRouter);
 
+  // Analytics endpoints
+  app.use('/analytics', analyticsRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -142,6 +146,15 @@ export function createApp(): Express {
         contentApproval: '/content-management/content/:contentId/approval',
         contentAnalytics: '/content-management/content/:contentId/analytics',
         contentStatistics: '/content-management/statistics',
+        analytics: '/analytics',
+        analyticsEvents: '/analytics/events',
+        analyticsMetrics: '/analytics/metrics',
+        analyticsTimeSeries: '/analytics/timeseries',
+        analyticsAggregation: '/analytics/aggregation',
+        analyticsDashboard: '/analytics/dashboard',
+        analyticsFunnel: '/analytics/funnel',
+        analyticsUsers: '/analytics/users/:userId',
+        analyticsStatistics: '/analytics/statistics',
       },
     });
   });
