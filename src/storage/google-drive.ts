@@ -27,7 +27,7 @@ export class GoogleDriveStorage {
 
     return {
       id: randomUUID(),
-      webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${encodeURIComponent(params.filename)}`
+      webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${encodeURIComponent(params.filename)}`,
     };
   }
 
@@ -36,7 +36,7 @@ export class GoogleDriveStorage {
 
     return {
       id: randomUUID(),
-      webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${Date.now()}`
+      webViewLink: `https://drive.google.com/mock/${encodeURIComponent(params.folder)}/${Date.now()}`,
     };
   }
 }

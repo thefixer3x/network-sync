@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import OpenAI from 'openai';
-import { AIService, SocialPlatform, Trend } from '@/types';
+import type { AIService, SocialPlatform, Trend } from '@/types';
 import { Logger } from '@/utils/Logger';
 
 type PlatformSpec = {
@@ -17,8 +17,8 @@ const PLATFORM_SPECS: Record<SocialPlatform, PlatformSpec> = {
       'Use relevant hashtags (1-3)',
       'Include a clear call-to-action',
       'Keep it conversational',
-      'Thread longer ideas'
-    ]
+      'Thread longer ideas',
+    ],
   },
   linkedin: {
     charLimit: 3000,
@@ -27,8 +27,8 @@ const PLATFORM_SPECS: Record<SocialPlatform, PlatformSpec> = {
       'Start with a compelling hook',
       'Provide actionable insights',
       'Use industry terminology',
-      'End with an engagement question'
-    ]
+      'End with an engagement question',
+    ],
   },
   facebook: {
     charLimit: 63206,
@@ -37,8 +37,8 @@ const PLATFORM_SPECS: Record<SocialPlatform, PlatformSpec> = {
       'Tell relatable stories',
       'Encourage discussion',
       'Use approachable language',
-      'Include a call-to-action'
-    ]
+      'Include a call-to-action',
+    ],
   },
   instagram: {
     charLimit: 2200,
@@ -47,8 +47,8 @@ const PLATFORM_SPECS: Record<SocialPlatform, PlatformSpec> = {
       'Complement visuals with narrative',
       'Use relevant hashtags (5-10)',
       'Add emojis intentionally',
-      'Create shareable moments'
-    ]
+      'Create shareable moments',
+    ],
   },
   tiktok: {
     charLimit: 2200,
@@ -57,9 +57,9 @@ const PLATFORM_SPECS: Record<SocialPlatform, PlatformSpec> = {
       'Hook the viewer immediately',
       'Reference trending sounds/hashtags',
       'Keep language energetic',
-      'Highlight clear value quickly'
-    ]
-  }
+      'Highlight clear value quickly',
+    ],
+  },
 };
 
 function formatError(error: unknown): string {
@@ -98,10 +98,10 @@ Always provide actionable insights and maintain a tone that resonates with busin
         model: process.env['OPENAI_MODEL'] || 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
+          { role: 'user', content: prompt },
         ],
         max_tokens: Number.parseInt(process.env['OPENAI_MAX_TOKENS'] ?? '500', 10),
-        temperature: Number.parseFloat(process.env['OPENAI_TEMPERATURE'] ?? '0.7')
+        temperature: Number.parseFloat(process.env['OPENAI_TEMPERATURE'] ?? '0.7'),
       });
 
       const content = completion.choices[0]?.message?.content;
@@ -189,7 +189,7 @@ Return as JSON array with this structure:
           ? item.hashtags.map((tag) => tag.replace('#', '')).filter(Boolean)
           : [],
         discoveredAt: new Date(),
-        sourceUrls: []
+        sourceUrls: [],
       }));
     } catch (error) {
       this.logger.error('Trend analysis failed, returning fallback results.', error);
@@ -202,7 +202,7 @@ Return as JSON array with this structure:
         relevanceScore: 0.5,
         keywords: [trend.replace(/\s+/g, '')],
         discoveredAt: new Date(),
-        sourceUrls: []
+        sourceUrls: [],
       }));
     }
   }

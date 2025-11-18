@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SocialPlatform } from '../types/typescript-types';
+import type { SocialPlatform } from '../types/typescript-types';
 import { Logger } from '@/utils/Logger';
 import { OpenAIService } from './OpenAIService';
 import { TwitterApi } from 'twitter-api-v2';
@@ -65,12 +65,12 @@ export class HashtagResearcher {
 
       // Get trending hashtags
       const trending = await this.getTrendingHashtags(request.platform, request.industry);
-      
+
       // Generate AI-powered hashtag suggestions
       const aiSuggestions = await this.generateAIHashtags(request);
-      
+
       // Analyze competitor hashtags if provided
-      const competitorAnalysis = request.competitorHashtags 
+      const competitorAnalysis = request.competitorHashtags
         ? await this.analyzeCompetitorHashtags(request.competitorHashtags, request.platform)
         : [];
 
@@ -82,28 +82,32 @@ export class HashtagResearcher {
         ...trending,
         ...aiSuggestions,
         ...competitorAnalysis,
-        ...relatedHashtags
+        ...relatedHashtags,
       ];
 
       // Remove duplicates and analyze each hashtag
       const uniqueHashtags = [...new Set(allHashtags)];
       const analyzedHashtags = await Promise.all(
-        uniqueHashtags.map(hashtag => this.analyzeHashtag(hashtag, request.platform))
+        uniqueHashtags.map((hashtag) => this.analyzeHashtag(hashtag, request.platform))
       );
 
       // Categorize hashtags into strategy
       const strategy = this.categorizeHashtags(analyzedHashtags, request);
 
-      this.logger.success(`Generated hashtag strategy with ${strategy.primary.length} primary hashtags`);
+      this.logger.success(
+        `Generated hashtag strategy with ${strategy.primary.length} primary hashtags`
+      );
       return strategy;
-
     } catch (error) {
       this.logger.error('Failed to research hashtags:', error);
       throw error;
     }
   }
 
-  private async getTrendingHashtags(platform: SocialPlatform, industry?: string): Promise<string[]> {
+  private async getTrendingHashtags(
+    platform: SocialPlatform,
+    industry?: string
+  ): Promise<string[]> {
     try {
       switch (platform) {
         case 'twitter':
@@ -137,8 +141,16 @@ export class HashtagResearcher {
         if (globalTrends) {
           // For now, return common trending hashtags as Twitter API access is limited
           return [
-            '#trending', '#news', '#technology', '#social', '#business',
-            '#entertainment', '#sports', '#health', '#education', '#travel'
+            '#trending',
+            '#news',
+            '#technology',
+            '#social',
+            '#business',
+            '#entertainment',
+            '#sports',
+            '#health',
+            '#education',
+            '#travel',
           ];
         }
       } catch (apiError) {
@@ -157,12 +169,23 @@ export class HashtagResearcher {
     // This would typically require third-party services or web scraping
     // For now, return common Instagram hashtags
     return [
-      '#instagood', '#photooftheday', '#beautiful', '#love', '#happy',
-      '#follow', '#like4like', '#instadaily', '#picoftheday', '#followme'
+      '#instagood',
+      '#photooftheday',
+      '#beautiful',
+      '#love',
+      '#happy',
+      '#follow',
+      '#like4like',
+      '#instadaily',
+      '#picoftheday',
+      '#followme',
     ];
   }
 
-  private async getGenericTrendingHashtags(platform: SocialPlatform, industry?: string): Promise<string[]> {
+  private async getGenericTrendingHashtags(
+    platform: SocialPlatform,
+    industry?: string
+  ): Promise<string[]> {
     // Use AI to generate trending hashtags based on current events
     const prompt = `Generate 10 currently trending hashtags for ${platform} in ${industry || 'general'} industry.
     
@@ -179,8 +202,8 @@ export class HashtagResearcher {
       const result = await this.aiService.generateContent(prompt);
       return result
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('#'))
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('#'))
         .slice(0, 10);
     } catch (error) {
       this.logger.error('Failed to generate AI trending hashtags:', error);
@@ -216,8 +239,8 @@ Return only hashtags with # symbol, one per line:`;
       const result = await this.aiService.generateContent(prompt);
       return result
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('#') && line.length > 1)
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('#') && line.length > 1)
         .slice(0, 20);
     } catch (error) {
       this.logger.error('Failed to generate AI hashtags:', error);
@@ -225,11 +248,15 @@ Return only hashtags with # symbol, one per line:`;
     }
   }
 
-  private async analyzeCompetitorHashtags(hashtags: string[], platform: SocialPlatform): Promise<string[]> {
+  private async analyzeCompetitorHashtags(
+    hashtags: string[],
+    platform: SocialPlatform
+  ): Promise<string[]> {
     // Analyze competitor hashtags and find related ones
     const relatedHashtags: string[] = [];
 
-    for (const hashtag of hashtags.slice(0, 5)) { // Limit to avoid API limits
+    for (const hashtag of hashtags.slice(0, 5)) {
+      // Limit to avoid API limits
       try {
         const related = await this.getRelatedHashtags(hashtag.replace('#', ''), platform);
         relatedHashtags.push(...related);
@@ -257,8 +284,8 @@ Return only hashtags with # symbol, one per line:`;
       const result = await this.aiService.generateContent(prompt);
       return result
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('#'))
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('#'))
         .slice(0, 10);
     } catch (error) {
       this.logger.error('Failed to get related hashtags:', error);
@@ -269,7 +296,7 @@ Return only hashtags with # symbol, one per line:`;
   async analyzeHashtag(hashtag: string, platform: SocialPlatform): Promise<HashtagAnalysis> {
     const cacheKey = `${hashtag}:${platform}`;
     const cached = this.cache.get(cacheKey);
-    
+
     if (cached && Date.now() - cached.analyzedAt.getTime() < this.cacheExpiry) {
       return cached;
     }
@@ -279,10 +306,10 @@ Return only hashtags with # symbol, one per line:`;
 
       // Get basic metrics from platform API
       const metrics = await this.getHashtagMetrics(hashtag, platform);
-      
+
       // Get top posts using this hashtag
       const topPosts = await this.getTopPostsForHashtag(hashtag, platform);
-      
+
       // Calculate derived metrics
       const analysis: HashtagAnalysis = {
         hashtag,
@@ -298,19 +325,18 @@ Return only hashtags with # symbol, one per line:`;
         sentiment: metrics.sentiment || 'neutral',
         seasonality: {
           trend: this.determineTrend(metrics),
-          peakTimes: this.getPeakTimes(platform)
+          peakTimes: this.getPeakTimes(platform),
         },
-        analyzedAt: new Date()
+        analyzedAt: new Date(),
       };
 
       // Cache the analysis
       this.cache.set(cacheKey, analysis);
-      
-      return analysis;
 
+      return analysis;
     } catch (error) {
       this.logger.error(`Failed to analyze hashtag ${hashtag}:`, error);
-      
+
       // Return basic analysis if detailed analysis fails
       return {
         hashtag,
@@ -324,7 +350,7 @@ Return only hashtags with # symbol, one per line:`;
         demographics: {},
         bestPostingTimes: this.getBestPostingTimes(platform),
         sentiment: 'neutral',
-        analyzedAt: new Date()
+        analyzedAt: new Date(),
       };
     }
   }
@@ -332,9 +358,9 @@ Return only hashtags with # symbol, one per line:`;
   private async getHashtagMetrics(hashtag: string, platform: SocialPlatform): Promise<any> {
     switch (platform) {
       case 'twitter':
-        return await this.getTwitterHashtagMetrics(hashtag);
+        return this.getTwitterHashtagMetrics(hashtag);
       case 'instagram':
-        return await this.getInstagramHashtagMetrics(hashtag);
+        return this.getInstagramHashtagMetrics(hashtag);
       default:
         return this.getEstimatedMetrics(hashtag, platform);
     }
@@ -353,7 +379,7 @@ Return only hashtags with # symbol, one per line:`;
       const searchResults = await twitterClient.v2.search(hashtag, {
         max_results: 100,
         'tweet.fields': ['public_metrics', 'created_at'],
-        'user.fields': ['public_metrics']
+        'user.fields': ['public_metrics'],
       });
 
       if (!searchResults.data || !Array.isArray(searchResults.data)) {
@@ -364,9 +390,12 @@ Return only hashtags with # symbol, one per line:`;
       const tweets = searchResults.data;
       const totalEngagement = tweets.reduce((sum: number, tweet: any) => {
         if (tweet.public_metrics) {
-          return sum + tweet.public_metrics.like_count + 
-                 tweet.public_metrics.reply_count + 
-                 tweet.public_metrics.retweet_count;
+          return (
+            sum +
+            tweet.public_metrics.like_count +
+            tweet.public_metrics.reply_count +
+            tweet.public_metrics.retweet_count
+          );
         }
         return sum;
       }, 0);
@@ -378,9 +407,8 @@ Return only hashtags with # symbol, one per line:`;
       return {
         volume: tweets.length,
         engagementRate: totalImpressions > 0 ? (totalEngagement / totalImpressions) * 100 : 0,
-        sentiment: 'neutral' // Would need sentiment analysis
+        sentiment: 'neutral', // Would need sentiment analysis
       };
-
     } catch (error) {
       this.logger.error(`Failed to get Twitter metrics for ${hashtag}:`, error);
       return { volume: 0, engagementRate: 0 };
@@ -397,11 +425,11 @@ Return only hashtags with # symbol, one per line:`;
     // Provide estimated metrics based on hashtag characteristics
     const hashtagLength = hashtag.length;
     const isPopular = hashtagLength < 15;
-    
+
     return {
       volume: isPopular ? Math.random() * 10000 + 1000 : Math.random() * 1000 + 100,
       engagementRate: Math.random() * 5 + 1, // 1-6%
-      sentiment: 'neutral'
+      sentiment: 'neutral',
     };
   }
 
@@ -415,12 +443,12 @@ Return only hashtags with # symbol, one per line:`;
     // Calculate trending score based on volume, recency, and engagement
     const volume = metrics.volume || 0;
     const engagementRate = metrics.engagementRate || 0;
-    
+
     // Simple scoring algorithm
     const volumeScore = Math.min(volume / 1000, 1);
     const engagementScore = Math.min(engagementRate / 10, 1);
-    
-    return (volumeScore * 0.6 + engagementScore * 0.4);
+
+    return volumeScore * 0.6 + engagementScore * 0.4;
   }
 
   private calculateDifficultyScore(metrics: any): number {
@@ -434,9 +462,9 @@ Return only hashtags with # symbol, one per line:`;
       twitter: ['9:00 AM', '12:00 PM', '3:00 PM', '6:00 PM'],
       instagram: ['11:00 AM', '2:00 PM', '5:00 PM', '7:00 PM'],
       linkedin: ['8:00 AM', '12:00 PM', '5:00 PM'],
-      facebook: ['9:00 AM', '1:00 PM', '7:00 PM']
+      facebook: ['9:00 AM', '1:00 PM', '7:00 PM'],
     };
-    
+
     return times[platform as string] ?? times['twitter'] ?? [];
   }
 
@@ -451,7 +479,10 @@ Return only hashtags with # symbol, one per line:`;
     return this.getBestPostingTimes(platform);
   }
 
-  private categorizeHashtags(analyses: HashtagAnalysis[], request: HashtagResearchRequest): HashtagStrategy {
+  private categorizeHashtags(
+    analyses: HashtagAnalysis[],
+    request: HashtagResearchRequest
+  ): HashtagStrategy {
     // Sort hashtags by different criteria
     const byTrending = [...analyses].sort((a, b) => b.trendingScore - a.trendingScore);
     const byVolume = [...analyses].sort((a, b) => b.volume - a.volume);
@@ -464,18 +495,18 @@ Return only hashtags with # symbol, one per line:`;
       instagram: 10,
       linkedin: 5,
       facebook: 3,
-      tiktok: 5
+      tiktok: 5,
     };
 
     const strategy: HashtagStrategy = {
-      primary: byEngagement.slice(0, 3).map(a => a.hashtag),
-      secondary: byVolume.slice(3, 8).map(a => a.hashtag),
-      long_tail: byDifficulty.slice(0, 5).map(a => a.hashtag),
+      primary: byEngagement.slice(0, 3).map((a) => a.hashtag),
+      secondary: byVolume.slice(3, 8).map((a) => a.hashtag),
+      long_tail: byDifficulty.slice(0, 5).map((a) => a.hashtag),
       branded: this.generateBrandedHashtags(request.topic),
-      trending: byTrending.slice(0, 5).map(a => a.hashtag),
+      trending: byTrending.slice(0, 5).map((a) => a.hashtag),
       community: this.getCommunityHashtags(request.platform, request.industry),
       optimal_count: optimalCounts[request.platform] || 5,
-      platform_specific_tips: this.getPlatformTips(request.platform)
+      platform_specific_tips: this.getPlatformTips(request.platform),
     };
 
     return strategy;
@@ -487,7 +518,7 @@ Return only hashtags with # symbol, one per line:`;
       `#${cleanTopic}`,
       `#${cleanTopic}tips`,
       `#${cleanTopic}strategy`,
-      `#${cleanTopic}insights`
+      `#${cleanTopic}insights`,
     ];
   }
 
@@ -496,7 +527,7 @@ Return only hashtags with # symbol, one per line:`;
       twitter: ['#TwitterChat', '#TweetUp', '#TwitterTips'],
       instagram: ['#InstaGood', '#Community', '#InstaDaily'],
       linkedin: ['#LinkedInTips', '#ProfessionalDevelopment', '#Networking'],
-      facebook: ['#FacebookCommunity', '#SocialMedia', '#Community']
+      facebook: ['#FacebookCommunity', '#SocialMedia', '#Community'],
     };
 
     return communityHashtags[platform as string] || [];
@@ -508,27 +539,27 @@ Return only hashtags with # symbol, one per line:`;
         'Use 1-3 hashtags maximum for Twitter',
         'Mix trending and niche hashtags',
         'Place hashtags at the end of tweets',
-        'Use hashtags in Twitter chats'
+        'Use hashtags in Twitter chats',
       ],
       instagram: [
         'Use up to 30 hashtags on Instagram',
         'Mix popular and niche hashtags',
         'Put hashtags in comments to keep caption clean',
         'Create hashtag sets for different content types',
-        'Use location-based hashtags'
+        'Use location-based hashtags',
       ],
       linkedin: [
         'Use 3-5 professional hashtags',
         'Focus on industry-specific hashtags',
         'Use hashtags that your network follows',
-        'Include hashtags in LinkedIn articles'
+        'Include hashtags in LinkedIn articles',
       ],
       facebook: [
         'Use 1-2 hashtags on Facebook',
         'Focus on branded hashtags',
         'Use hashtags sparingly in Facebook posts',
-        'Consider hashtags for Facebook groups'
-      ]
+        'Consider hashtags for Facebook groups',
+      ],
     };
 
     return tips[platform as string] || [];
@@ -536,7 +567,7 @@ Return only hashtags with # symbol, one per line:`;
 
   async getHashtagPerformanceReport(hashtags: string[], platform: SocialPlatform): Promise<any> {
     const analyses = await Promise.all(
-      hashtags.map(hashtag => this.analyzeHashtag(hashtag, platform))
+      hashtags.map((hashtag) => this.analyzeHashtag(hashtag, platform))
     );
 
     const report = {
@@ -544,36 +575,43 @@ Return only hashtags with # symbol, one per line:`;
         total_hashtags: hashtags.length,
         avg_volume: analyses.reduce((sum, a) => sum + a.volume, 0) / analyses.length,
         avg_engagement: analyses.reduce((sum, a) => sum + a.engagementRate, 0) / analyses.length,
-        avg_difficulty: analyses.reduce((sum, a) => sum + a.difficultyScore, 0) / analyses.length
+        avg_difficulty: analyses.reduce((sum, a) => sum + a.difficultyScore, 0) / analyses.length,
       },
       top_performers: analyses
         .sort((a, b) => b.engagementRate - a.engagementRate)
         .slice(0, 5)
-        .map(a => ({
+        .map((a) => ({
           hashtag: a.hashtag,
           engagement_rate: a.engagementRate,
           volume: a.volume,
-          difficulty: a.difficultyScore
+          difficulty: a.difficultyScore,
         })),
-      recommendations: this.generateHashtagRecommendations(analyses, platform)
+      recommendations: this.generateHashtagRecommendations(analyses, platform),
     };
 
     return report;
   }
 
-  private generateHashtagRecommendations(analyses: HashtagAnalysis[], platform: SocialPlatform): string[] {
+  private generateHashtagRecommendations(
+    analyses: HashtagAnalysis[],
+    platform: SocialPlatform
+  ): string[] {
     const recommendations = [];
 
     // Check for low engagement hashtags
-    const lowEngagement = analyses.filter(a => a.engagementRate < 1);
+    const lowEngagement = analyses.filter((a) => a.engagementRate < 1);
     if (lowEngagement.length > 0) {
-      recommendations.push(`Consider replacing low-engagement hashtags: ${lowEngagement.map(a => a.hashtag).join(', ')}`);
+      recommendations.push(
+        `Consider replacing low-engagement hashtags: ${lowEngagement.map((a) => a.hashtag).join(', ')}`
+      );
     }
 
     // Check for high difficulty hashtags
-    const highDifficulty = analyses.filter(a => a.difficultyScore > 0.8);
+    const highDifficulty = analyses.filter((a) => a.difficultyScore > 0.8);
     if (highDifficulty.length > 0) {
-      recommendations.push(`These hashtags are highly competitive: ${highDifficulty.map(a => a.hashtag).join(', ')}`);
+      recommendations.push(
+        `These hashtags are highly competitive: ${highDifficulty.map((a) => a.hashtag).join(', ')}`
+      );
     }
 
     // Platform-specific recommendations

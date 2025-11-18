@@ -28,7 +28,7 @@ async function checkEnvironment(): Promise<void> {
     'SUPABASE_SERVICE_ROLE_KEY',
     'OPENAI_API_KEY',
     'TWITTER_API_KEY',
-    'LINKEDIN_CLIENT_ID'
+    'LINKEDIN_CLIENT_ID',
   ];
 
   let allGood = true;
@@ -103,7 +103,9 @@ program
       const isRunning = status.data?.isRunning;
       console.log(`Status: ${isRunning ? chalk.green('Running') : chalk.red('Stopped')}`);
       console.log(`Configuration: ${chalk.cyan(status.data?.configName || 'None')}`);
-      console.log(`Enabled Platforms: ${chalk.yellow((status.data?.enabledPlatforms || []).join(', ') || 'None')}`);
+      console.log(
+        `Enabled Platforms: ${chalk.yellow((status.data?.enabledPlatforms || []).join(', ') || 'None')}`
+      );
       console.log(`Active Jobs: ${chalk.magenta(status.data?.scheduledJobs?.length || 0)}`);
 
       console.log('\nService Status:');
@@ -133,9 +135,9 @@ program
           'List configurations',
           'Edit configuration',
           'Delete configuration',
-          'Test configuration'
-        ]
-      }
+          'Test configuration',
+        ],
+      },
     ]);
 
     switch (action) {
@@ -175,9 +177,9 @@ program
           'Run migrations',
           'Backup data',
           'Clear old data',
-          'Database status'
-        ]
-      }
+          'Database status',
+        ],
+      },
     ]);
 
     switch (action) {
@@ -215,9 +217,9 @@ program
           'Schedule post',
           'List scheduled posts',
           'Cancel scheduled post',
-          'View analytics'
-        ]
-      }
+          'View analytics',
+        ],
+      },
     ]);
 
     console.log(chalk.yellow(`Content management: ${action} - Implementation pending`));
@@ -248,13 +250,8 @@ program
         type: 'list',
         name: 'action',
         message: 'Diagnostic operation:',
-        choices: [
-          'Environment check',
-          'Connectivity check',
-          'List services',
-          'Exit'
-        ]
-      }
+        choices: ['Environment check', 'Connectivity check', 'List services', 'Exit'],
+      },
     ]);
 
     switch (action) {

@@ -7,8 +7,20 @@ export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'ar
 export type PostType = 'text' | 'image' | 'video' | 'carousel' | 'story' | 'reel';
 
 // Zod Schemas for Runtime Validation
-export const SocialPlatformSchema = z.enum(['twitter', 'linkedin', 'facebook', 'instagram', 'tiktok']);
-export const ContentStatusSchema = z.enum(['draft', 'scheduled', 'published', 'failed', 'archived']);
+export const SocialPlatformSchema = z.enum([
+  'twitter',
+  'linkedin',
+  'facebook',
+  'instagram',
+  'tiktok',
+]);
+export const ContentStatusSchema = z.enum([
+  'draft',
+  'scheduled',
+  'published',
+  'failed',
+  'archived',
+]);
 
 // Content Schema
 export const ContentSchema = z.object({
@@ -21,14 +33,16 @@ export const ContentSchema = z.object({
   hashtags: z.array(z.string()).default([]),
   mentions: z.array(z.string()).default([]),
   mediaUrls: z.array(z.string().url()).default([]),
-  metrics: z.object({
-    views: z.number().default(0),
-    likes: z.number().default(0),
-    shares: z.number().default(0),
-    comments: z.number().default(0),
-    clicks: z.number().default(0),
-    engagementRate: z.number().default(0),
-  }).optional(),
+  metrics: z
+    .object({
+      views: z.number().default(0),
+      likes: z.number().default(0),
+      shares: z.number().default(0),
+      comments: z.number().default(0),
+      clicks: z.number().default(0),
+      engagementRate: z.number().default(0),
+    })
+    .optional(),
   aiGenerated: z.boolean().default(false),
   originalTopic: z.string().optional(),
   externalId: z.string().optional(),
@@ -123,10 +137,12 @@ export const AutomationConfigSchema = z.object({
   }),
   competitorTracking: z.object({
     enabled: z.boolean().default(true),
-    competitors: z.array(z.object({
-      name: z.string(),
-      handles: z.record(SocialPlatformSchema, z.string()),
-    })),
+    competitors: z.array(
+      z.object({
+        name: z.string(),
+        handles: z.record(SocialPlatformSchema, z.string()),
+      })
+    ),
   }),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -195,11 +211,14 @@ export interface AnalyticsDashboard {
   topPerformingPlatform: SocialPlatform;
   topPerformingContent: Content[];
   weeklyGrowth: number[];
-  platformBreakdown: Record<SocialPlatform, {
-    posts: number;
-    engagement: number;
-    followers: number;
-  }>;
+  platformBreakdown: Record<
+    SocialPlatform,
+    {
+      posts: number;
+      engagement: number;
+      followers: number;
+    }
+  >;
 }
 
 // Error Types
@@ -280,8 +299,7 @@ export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
-export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = 
-  Pick<T, Exclude<keyof T, Keys>> & 
+export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<T, Exclude<keyof T, Keys>> &
   {
     [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>;
   }[Keys];

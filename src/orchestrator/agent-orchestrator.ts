@@ -62,25 +62,25 @@ export class AgentOrchestrator {
   private defineCapabilities() {
     this.capabilities.clear();
     this.capabilities.set('perplexity', {
-        agent: 'perplexity',
-        strengths: ['real-time research', 'web search', 'fact checking', 'current events'],
-        weaknesses: ['creative writing', 'code generation'],
-        costPerToken: 0.0001,
-        speedRating: 9
+      agent: 'perplexity',
+      strengths: ['real-time research', 'web search', 'fact checking', 'current events'],
+      weaknesses: ['creative writing', 'code generation'],
+      costPerToken: 0.0001,
+      speedRating: 9,
     });
     this.capabilities.set('claude', {
-        agent: 'claude-3.5-sonnet',
-        strengths: ['creative writing', 'analysis', 'code generation', 'complex reasoning'],
-        weaknesses: ['real-time data', 'web search'],
-        costPerToken: 0.003,
-        speedRating: 7
+      agent: 'claude-3.5-sonnet',
+      strengths: ['creative writing', 'analysis', 'code generation', 'complex reasoning'],
+      weaknesses: ['real-time data', 'web search'],
+      costPerToken: 0.003,
+      speedRating: 7,
     });
     this.capabilities.set('embedding', {
-        agent: 'text-embedding-3',
-        strengths: ['vector embeddings', 'semantic search', 'similarity analysis'],
-        weaknesses: ['content generation', 'reasoning'],
-        costPerToken: 0.00002,
-        speedRating: 10
+      agent: 'text-embedding-3',
+      strengths: ['vector embeddings', 'semantic search', 'similarity analysis'],
+      weaknesses: ['content generation', 'reasoning'],
+      costPerToken: 0.00002,
+      speedRating: 10,
     });
   }
 
@@ -98,16 +98,16 @@ export class AgentOrchestrator {
    */
   async delegateTask(task: AgentTask): Promise<unknown> {
     const bestAgent = this.selectBestAgent(task);
-    
+
     console.log(`📋 Delegating ${task.type} task to ${bestAgent}`);
-    
+
     switch (bestAgent) {
       case 'perplexity':
-        return await this.handleResearchTask(task);
+        return this.handleResearchTask(task);
       case 'claude':
-        return await this.handleWritingTask(task);
+        return this.handleWritingTask(task);
       case 'embedding':
-        return await this.handleEmbeddingTask(task);
+        return this.handleEmbeddingTask(task);
       default:
         throw new Error(`No suitable agent for task type: ${task.type}`);
     }
@@ -121,7 +121,7 @@ export class AgentOrchestrator {
       research: 'perplexity',
       writing: 'claude',
       analysis: 'claude',
-      embedding: 'embedding'
+      embedding: 'embedding',
     };
 
     return taskTypeMapping[task.type] ?? 'claude';
@@ -132,12 +132,12 @@ export class AgentOrchestrator {
    */
   private async handleResearchTask(task: AgentTask) {
     const agent = this.getAgent<PerplexityAgent>('perplexity');
-    
+
     // Perform research
     const researchResults = await agent.research({
       query: task.payload.query,
       sources: task.payload.sources || ['web', 'academic', 'news'],
-      maxResults: task.payload.maxResults || 10
+      maxResults: task.payload.maxResults || 10,
     });
 
     // Store raw research in vector database
@@ -146,8 +146,8 @@ export class AgentOrchestrator {
       metadata: {
         taskId: task.id,
         timestamp: new Date(),
-        type: 'research'
-      }
+        type: 'research',
+      },
     });
 
     // Generate report and store in Google Drive
@@ -157,7 +157,7 @@ export class AgentOrchestrator {
     return {
       summary: researchResults.summary,
       reportUrl: report.driveUrl,
-      vectorId
+      vectorId,
     };
   }
 
@@ -166,7 +166,7 @@ export class AgentOrchestrator {
    */
   private async handleWritingTask(task: AgentTask) {
     const agent = this.getAgent<ClaudeAgent>('claude');
-    
+
     // Retrieve context from vector store if needed
     let context = '';
     if (task.payload.useContext) {
@@ -182,7 +182,7 @@ export class AgentOrchestrator {
       context: context,
       brandVoice: task.payload.brandVoice || 'professional',
       format: task.payload.format || 'article',
-      maxTokens: task.payload.maxTokens || 2000
+      maxTokens: task.payload.maxTokens || 2000,
     });
 
     // Store generated content
@@ -199,20 +199,20 @@ export class AgentOrchestrator {
 
     const embeddings = await agent.createEmbeddings({
       texts: task.payload.texts,
-      model: 'text-embedding-3-small'
+      model: 'text-embedding-3-small',
     });
 
     await this.vectorStore.storeEmbeddings(
       embeddings.map(({ content, embedding, metadata }) => ({
         content,
         embedding,
-        metadata
+        metadata,
       }))
     );
 
     return {
       embeddingIds: embeddings.map((embedding) => embedding.id),
-      dimensions: embeddings[0]?.dimensions ?? 0
+      dimensions: embeddings[0]?.dimensions ?? 0,
     };
   }
 
@@ -226,7 +226,7 @@ export class AgentOrchestrator {
       prompt: `Create a comprehensive report from the following research data`,
       context: JSON.stringify(data),
       format: 'report',
-      sections: ['Executive Summary', 'Key Findings', 'Analysis', 'Recommendations']
+      sections: ['Executive Summary', 'Key Findings', 'Analysis', 'Recommendations'],
     });
 
     return {
@@ -234,8 +234,8 @@ export class AgentOrchestrator {
       metadata: {
         generatedAt: new Date(),
         taskId: task.id,
-        type: 'research_report'
-      }
+        type: 'research_report',
+      },
     };
   }
 
@@ -244,12 +244,12 @@ export class AgentOrchestrator {
    */
   private async storeReport(report: GeneratedReport, task: AgentTask) {
     const folderPath = this.determineFolderPath(task);
-    
+
     const driveResult = await this.driveStorage.uploadReport({
       content: report.content,
       filename: `${task.type}_${task.id}_${Date.now()}.md`,
       folder: folderPath,
-      metadata: report.metadata
+      metadata: report.metadata,
     });
 
     report.driveUrl = driveResult.webViewLink;
@@ -260,7 +260,8 @@ export class AgentOrchestrator {
    * Store generated content
    */
   private async storeContent(content: unknown, task: AgentTask) {
-    const textContent = typeof content === 'string' ? content : (content as { content?: string })?.content;
+    const textContent =
+      typeof content === 'string' ? content : (content as { content?: string })?.content;
 
     if (!textContent) {
       return;
@@ -271,15 +272,15 @@ export class AgentOrchestrator {
       metadata: {
         taskId: task.id,
         type: 'generated_content',
-        timestamp: new Date()
-      }
+        timestamp: new Date(),
+      },
     });
 
     // Also store in Drive if specified
     if (task.payload.storeInDrive) {
       await this.driveStorage.uploadContent({
         content: textContent,
-        folder: task.payload.driveFolder || 'generated_content'
+        folder: task.payload.driveFolder || 'generated_content',
       });
     }
   }
@@ -291,7 +292,7 @@ export class AgentOrchestrator {
     const basePath = 'AI_Reports';
     const topicFolder = task.payload.topic?.replace(/\s+/g, '_') || 'General';
     const typeFolder = task.type;
-    
+
     return `${basePath}/${topicFolder}/${typeFolder}`;
   }
 
@@ -318,12 +319,12 @@ export class AgentOrchestrator {
     const fullTask: AgentTask = {
       ...task,
       id: this.generateTaskId(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    
+
     this.taskQueue.push(fullTask);
     this.taskQueue.sort((a, b) => b.priority - a.priority);
-    
+
     return fullTask.id;
   }
 

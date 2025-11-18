@@ -57,7 +57,7 @@ export class WorkflowEngine {
         description: 'Research topic, trends, and competition from internet sources',
         inputs: ['topic', 'target_audience', 'platforms'],
         outputs: ['research_data', 'trends', 'competitor_analysis'],
-        timeout: 30000
+        timeout: 30000,
       },
       {
         id: 'content_alignment',
@@ -67,7 +67,7 @@ export class WorkflowEngine {
         inputs: ['research_data', 'brand_voice', 'goals'],
         outputs: ['content_strategy', 'messaging_framework', 'content_pillars'],
         dependencies: ['research'],
-        timeout: 25000
+        timeout: 25000,
       },
       {
         id: 'platform_optimization',
@@ -77,7 +77,7 @@ export class WorkflowEngine {
         inputs: ['content_strategy', 'platforms'],
         outputs: ['platform_content', 'posting_schedule', 'hashtag_strategy'],
         dependencies: ['content_alignment'],
-        timeout: 20000
+        timeout: 20000,
       },
       {
         id: 'content_generation',
@@ -87,7 +87,7 @@ export class WorkflowEngine {
         inputs: ['platform_content', 'messaging_framework'],
         outputs: ['social_posts', 'captions', 'content_calendar'],
         dependencies: ['platform_optimization'],
-        timeout: 30000
+        timeout: 30000,
       },
       {
         id: 'analytics_setup',
@@ -97,8 +97,8 @@ export class WorkflowEngine {
         inputs: ['goals', 'platforms', 'content_calendar'],
         outputs: ['tracking_setup', 'kpi_definitions', 'monitoring_dashboard'],
         dependencies: ['content_generation'],
-        timeout: 15000
-      }
+        timeout: 15000,
+      },
     ],
 
     content_creation: [
@@ -109,7 +109,7 @@ export class WorkflowEngine {
         description: 'Deep research on the topic from multiple sources',
         inputs: ['topic', 'content_type'],
         outputs: ['research_data', 'key_insights', 'source_references'],
-        timeout: 25000
+        timeout: 25000,
       },
       {
         id: 'content_structuring',
@@ -119,7 +119,7 @@ export class WorkflowEngine {
         inputs: ['research_data', 'content_type', 'target_audience'],
         outputs: ['content_outline', 'key_points', 'narrative_flow'],
         dependencies: ['research'],
-        timeout: 20000
+        timeout: 20000,
       },
       {
         id: 'content_writing',
@@ -129,7 +129,7 @@ export class WorkflowEngine {
         inputs: ['content_outline', 'brand_voice', 'key_points'],
         outputs: ['final_content', 'meta_descriptions', 'call_to_actions'],
         dependencies: ['content_structuring'],
-        timeout: 35000
+        timeout: 35000,
       },
       {
         id: 'optimization',
@@ -139,8 +139,8 @@ export class WorkflowEngine {
         inputs: ['final_content', 'platforms', 'target_keywords'],
         outputs: ['optimized_content', 'seo_metadata', 'engagement_hooks'],
         dependencies: ['content_writing'],
-        timeout: 15000
-      }
+        timeout: 15000,
+      },
     ],
 
     research_analysis: [
@@ -151,7 +151,7 @@ export class WorkflowEngine {
         description: 'Collect data from web, academic, and news sources',
         inputs: ['research_topic', 'data_sources', 'time_range'],
         outputs: ['raw_data', 'source_credibility', 'data_timestamps'],
-        timeout: 40000
+        timeout: 40000,
       },
       {
         id: 'data_processing',
@@ -161,7 +161,7 @@ export class WorkflowEngine {
         inputs: ['raw_data', 'relevance_criteria'],
         outputs: ['processed_data', 'data_quality_report', 'filtered_sources'],
         dependencies: ['data_collection'],
-        timeout: 20000
+        timeout: 20000,
       },
       {
         id: 'analysis',
@@ -171,7 +171,7 @@ export class WorkflowEngine {
         inputs: ['processed_data', 'analysis_framework'],
         outputs: ['insights', 'patterns', 'correlations', 'predictions'],
         dependencies: ['data_processing'],
-        timeout: 30000
+        timeout: 30000,
       },
       {
         id: 'report_generation',
@@ -181,9 +181,9 @@ export class WorkflowEngine {
         inputs: ['insights', 'patterns', 'report_template'],
         outputs: ['final_report', 'executive_summary', 'visualizations'],
         dependencies: ['analysis'],
-        timeout: 25000
-      }
-    ]
+        timeout: 25000,
+      },
+    ],
   };
 
   constructor() {
@@ -204,7 +204,7 @@ export class WorkflowEngine {
       phases: this.WORKFLOW_PHASES[request.type] || [],
       results: new Map(),
       status: 'running',
-      startTime
+      startTime,
     };
 
     this.runningWorkflows.set(request.id, execution);
@@ -214,13 +214,11 @@ export class WorkflowEngine {
 
       for (const phase of execution.phases) {
         console.log(`📋 Executing phase: ${phase.name}`);
-        
+
         // Check dependencies
         if (phase.dependencies) {
-          const missingDeps = phase.dependencies.filter(dep => 
-            !execution.results.has(dep)
-          );
-          
+          const missingDeps = phase.dependencies.filter((dep) => !execution.results.has(dep));
+
           if (missingDeps.length > 0) {
             throw new Error(`Missing dependencies for ${phase.id}: ${missingDeps.join(', ')}`);
           }
@@ -242,12 +240,11 @@ export class WorkflowEngine {
       return {
         success: true,
         workflow_id: request.id,
-        completed_phases: execution.phases.map(p => p.id),
+        completed_phases: execution.phases.map((p) => p.id),
         failed_phases: [],
         results: Object.fromEntries(execution.results),
-        execution_time: executionTime
+        execution_time: executionTime,
       };
-
     } catch (error) {
       execution.status = 'failed';
       const executionTime = Date.now() - startTime;
@@ -256,12 +253,13 @@ export class WorkflowEngine {
         success: false,
         workflow_id: request.id,
         completed_phases: Array.from(execution.results.keys()),
-        failed_phases: [execution.phases.find(p => !execution.results.has(p.id))?.id].filter(Boolean) as string[],
+        failed_phases: [execution.phases.find((p) => !execution.results.has(p.id))?.id].filter(
+          Boolean
+        ) as string[],
         results: Object.fromEntries(execution.results),
         execution_time: executionTime,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
-
     } finally {
       this.runningWorkflows.delete(request.id);
     }
@@ -272,30 +270,30 @@ export class WorkflowEngine {
    */
   private async executePhase(phase: WorkflowPhase, execution: WorkflowExecution): Promise<unknown> {
     const { request } = execution;
-    
+
     // Gather inputs from previous phases and request
     const inputs = this.gatherPhaseInputs(phase, execution);
 
     // Execute based on agent type
     switch (phase.agent) {
       case 'perplexity':
-        return await this.executePerplexityPhase(phase, inputs, request);
-      
+        return this.executePerplexityPhase(phase, inputs, request);
+
       case 'claude':
-        return await this.executeClaudePhase(phase, inputs, request);
-      
+        return this.executeClaudePhase(phase, inputs, request);
+
       case 'platform_specialist':
-        return await this.executePlatformSpecialistPhase(phase, inputs, request);
-      
+        return this.executePlatformSpecialistPhase(phase, inputs, request);
+
       case 'analytics_specialist':
-        return await this.executeAnalyticsSpecialistPhase(phase, inputs, request);
-      
+        return this.executeAnalyticsSpecialistPhase(phase, inputs, request);
+
       case 'data_processor':
-        return await this.executeDataProcessorPhase(phase, inputs, request);
-      
+        return this.executeDataProcessorPhase(phase, inputs, request);
+
       case 'optimization_specialist':
-        return await this.executeOptimizationSpecialistPhase(phase, inputs, request);
-      
+        return this.executeOptimizationSpecialistPhase(phase, inputs, request);
+
       default:
         throw new Error(`Unknown agent type: ${phase.agent}`);
     }
@@ -305,25 +303,25 @@ export class WorkflowEngine {
    * Perplexity Agent Phase Execution
    */
   private async executePerplexityPhase(
-    phase: WorkflowPhase, 
-    inputs: Record<string, unknown>, 
+    phase: WorkflowPhase,
+    inputs: Record<string, unknown>,
     request: WorkflowRequest
   ): Promise<unknown> {
     switch (phase.id) {
       case 'research':
-        return await this.perplexityAgent.research({
+        return this.perplexityAgent.research({
           query: `${request.topic} ${request.target_audience} trends analysis`,
           sources: ['web', 'news', 'academic'],
           maxResults: 15,
-          includeImages: true
+          includeImages: true,
         });
 
       case 'data_collection':
-        return await this.perplexityAgent.research({
+        return this.perplexityAgent.research({
           query: inputs['research_topic'] as string,
-          sources: inputs['data_sources'] as string[] || ['web', 'news', 'academic'],
+          sources: (inputs['data_sources'] as string[]) || ['web', 'news', 'academic'],
           maxResults: 20,
-          includeImages: false
+          includeImages: false,
         });
 
       default:
@@ -341,45 +339,45 @@ export class WorkflowEngine {
   ): Promise<unknown> {
     switch (phase.id) {
       case 'content_alignment':
-        return await this.claudeAgent.generateContent({
+        return this.claudeAgent.generateContent({
           prompt: `Create content strategy based on research data: ${JSON.stringify(inputs['research_data'])}`,
           context: `Brand voice: ${request.brand_voice || 'professional'}. Target: ${request.target_audience}`,
-          maxTokens: 2000
+          maxTokens: 2000,
         });
 
       case 'content_generation':
-        return await this.claudeAgent.generateContent({
+        return this.claudeAgent.generateContent({
           prompt: `Generate ${inputs['post_count'] || 10} social media posts using strategy: ${JSON.stringify(inputs['content_strategy'])}`,
           context: `Platform: ${request.platforms.join(', ')}. Framework: ${JSON.stringify(inputs['messaging_framework'])}`,
-          maxTokens: 3000
+          maxTokens: 3000,
         });
 
       case 'content_structuring':
-        return await this.claudeAgent.generateContent({
+        return this.claudeAgent.generateContent({
           prompt: `Create content structure for ${inputs['content_type']} based on research data`,
           context: `Research: ${JSON.stringify(inputs['research_data'])}. Audience: ${request.target_audience}`,
-          maxTokens: 1500
+          maxTokens: 1500,
         });
 
       case 'content_writing':
-        return await this.claudeAgent.generateContent({
+        return this.claudeAgent.generateContent({
           prompt: `Write content using outline: ${JSON.stringify(inputs['content_outline'])}`,
           context: `Key points: ${JSON.stringify(inputs['key_points'])}. Brand voice: ${request.brand_voice || 'professional'}`,
-          maxTokens: 4000
+          maxTokens: 4000,
         });
 
       case 'analysis':
-        return await this.claudeAgent.generateContent({
+        return this.claudeAgent.generateContent({
           prompt: `Analyze data and extract insights: ${JSON.stringify(inputs['processed_data'])}`,
           context: `Framework: ${inputs['analysis_framework'] || 'comprehensive'}. Focus: ${JSON.stringify(request.parameters['focus_areas'] || [])}`,
-          maxTokens: 3000
+          maxTokens: 3000,
         });
 
       case 'report_generation':
-        return await this.claudeAgent.generateContent({
+        return this.claudeAgent.generateContent({
           prompt: `Generate comprehensive report with insights: ${JSON.stringify(inputs['insights'])}`,
           context: `Patterns: ${JSON.stringify(inputs['patterns'])}. Template: ${inputs['report_template'] || 'executive'}. Audience: ${request.target_audience}`,
-          maxTokens: 5000
+          maxTokens: 5000,
         });
 
       default:
@@ -399,12 +397,12 @@ export class WorkflowEngine {
     return {
       platform_content: this.optimizeForPlatforms(inputs['content_strategy'], request.platforms),
       posting_schedule: this.generatePostingSchedule(request.platforms),
-      hashtag_strategy: this.generateHashtagStrategy(request.topic, request.platforms)
+      hashtag_strategy: this.generateHashtagStrategy(request.topic, request.platforms),
     };
   }
 
   /**
-   * Analytics Specialist Phase Execution  
+   * Analytics Specialist Phase Execution
    */
   private async executeAnalyticsSpecialistPhase(
     phase: WorkflowPhase,
@@ -414,7 +412,7 @@ export class WorkflowEngine {
     return {
       tracking_setup: this.setupTracking(request.platforms, request.goals),
       kpi_definitions: this.defineKPIs(request.goals, request.parameters),
-      monitoring_dashboard: this.createMonitoringDashboard(request.platforms)
+      monitoring_dashboard: this.createMonitoringDashboard(request.platforms),
     };
   }
 
@@ -429,7 +427,7 @@ export class WorkflowEngine {
     return {
       processed_data: this.processRawData(inputs['raw_data']),
       data_quality_report: this.generateDataQualityReport(inputs['raw_data']),
-      filtered_sources: this.filterSources(inputs['source_credibility'])
+      filtered_sources: this.filterSources(inputs['source_credibility']),
     };
   }
 
@@ -444,23 +442,26 @@ export class WorkflowEngine {
     return {
       optimized_content: this.optimizeContent(inputs['final_content'], request.platforms),
       seo_metadata: this.generateSEOMetadata(inputs['final_content']),
-      engagement_hooks: this.createEngagementHooks(inputs['final_content'], request.platforms)
+      engagement_hooks: this.createEngagementHooks(inputs['final_content'], request.platforms),
     };
   }
 
   /**
    * Gather inputs for a phase from previous phases and request
    */
-  private gatherPhaseInputs(phase: WorkflowPhase, execution: WorkflowExecution): Record<string, unknown> {
+  private gatherPhaseInputs(
+    phase: WorkflowPhase,
+    execution: WorkflowExecution
+  ): Record<string, unknown> {
     const inputs: Record<string, unknown> = {};
-    
+
     // Add data from request
     inputs['topic'] = execution.request.topic;
     inputs['platforms'] = execution.request.platforms;
     inputs['brand_voice'] = execution.request.brand_voice;
     inputs['target_audience'] = execution.request.target_audience;
     inputs['goals'] = execution.request.goals;
-    
+
     // Add parameters
     Object.assign(inputs, execution.request.parameters);
 
@@ -479,7 +480,7 @@ export class WorkflowEngine {
    */
   private async storeWorkflowResults(execution: WorkflowExecution): Promise<void> {
     const summary = this.generateWorkflowSummary(execution);
-    
+
     await this.memoryStorage.storeContent({
       content: summary,
       platform: 'workflow_engine',
@@ -489,60 +490,71 @@ export class WorkflowEngine {
         workflow_type: execution.request.type,
         topic: execution.request.topic,
         completed_phases: Array.from(execution.results.keys()),
-        execution_time: Date.now() - execution.startTime
-      }
+        execution_time: Date.now() - execution.startTime,
+      },
     });
   }
 
   // Helper methods for platform optimization
   private optimizeForPlatforms(strategy: unknown, platforms: string[]): Record<string, unknown> {
     // Platform-specific optimization logic
-    return platforms.reduce((acc, platform) => {
-      acc[platform] = {
-        tone: this.getPlatformTone(platform),
-        format: this.getPlatformFormat(platform),
-        optimal_length: this.getPlatformOptimalLength(platform)
-      };
-      return acc;
-    }, {} as Record<string, unknown>);
+    return platforms.reduce(
+      (acc, platform) => {
+        acc[platform] = {
+          tone: this.getPlatformTone(platform),
+          format: this.getPlatformFormat(platform),
+          optimal_length: this.getPlatformOptimalLength(platform),
+        };
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }
 
   private generatePostingSchedule(platforms: string[]): Record<string, unknown> {
     // Generate optimal posting times for each platform
-    return platforms.reduce((acc, platform) => {
-      acc[platform] = this.getOptimalPostingTimes(platform);
-      return acc;
-    }, {} as Record<string, unknown>);
+    return platforms.reduce(
+      (acc, platform) => {
+        acc[platform] = this.getOptimalPostingTimes(platform);
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }
 
   private generateHashtagStrategy(topic: string, platforms: string[]): Record<string, unknown> {
     // Generate hashtag strategies per platform
-    return platforms.reduce((acc, platform) => {
-      acc[platform] = this.getHashtagsForPlatform(topic, platform);
-      return acc;
-    }, {} as Record<string, unknown>);
+    return platforms.reduce(
+      (acc, platform) => {
+        acc[platform] = this.getHashtagsForPlatform(topic, platform);
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }
 
   private setupTracking(platforms: string[], goals?: string[]): Record<string, unknown> {
     return {
-      platforms: platforms.map(p => ({ platform: p, tracking_enabled: true })),
-      goals: goals?.map(g => ({ goal: g, metrics: this.getMetricsForGoal(g) }))
+      platforms: platforms.map((p) => ({ platform: p, tracking_enabled: true })),
+      goals: goals?.map((g) => ({ goal: g, metrics: this.getMetricsForGoal(g) })),
     };
   }
 
   private defineKPIs(goals?: string[], parameters?: Record<string, unknown>): unknown[] {
-    return goals?.map(goal => ({
-      goal,
-      primary_kpi: this.getPrimaryKPIForGoal(goal),
-      secondary_kpis: this.getSecondaryKPIsForGoal(goal),
-      target_values: parameters?.[`${goal}_targets`]
-    })) || [];
+    return (
+      goals?.map((goal) => ({
+        goal,
+        primary_kpi: this.getPrimaryKPIForGoal(goal),
+        secondary_kpis: this.getSecondaryKPIsForGoal(goal),
+        target_values: parameters?.[`${goal}_targets`],
+      })) || []
+    );
   }
 
   private createMonitoringDashboard(platforms: string[]): Record<string, unknown> {
     return {
       dashboard_url: `https://analytics.yourcompany.com/dashboard`,
-      widgets: platforms.map(p => ({ platform: p, widgets: this.getDashboardWidgets(p) }))
+      widgets: platforms.map((p) => ({ platform: p, widgets: this.getDashboardWidgets(p) })),
     };
   }
 
@@ -557,7 +569,7 @@ export class WorkflowEngine {
       total_sources: 0,
       credible_sources: 0,
       quality_score: 0.85,
-      completeness: 0.92
+      completeness: 0.92,
     };
   }
 
@@ -567,14 +579,17 @@ export class WorkflowEngine {
 
   // Content optimization helpers
   private optimizeContent(content: unknown, platforms: string[]): Record<string, unknown> {
-    return platforms.reduce((acc, platform) => {
-      acc[platform] = {
-        optimized_content: content,
-        seo_score: 0.85,
-        readability: 'high'
-      };
-      return acc;
-    }, {} as Record<string, unknown>);
+    return platforms.reduce(
+      (acc, platform) => {
+        acc[platform] = {
+          optimized_content: content,
+          seo_score: 0.85,
+          readability: 'high',
+        };
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }
 
   private generateSEOMetadata(content: unknown): Record<string, unknown> {
@@ -582,18 +597,21 @@ export class WorkflowEngine {
       meta_title: 'Generated Meta Title',
       meta_description: 'Generated Meta Description',
       keywords: ['keyword1', 'keyword2'],
-      schema_markup: {}
+      schema_markup: {},
     };
   }
 
   private createEngagementHooks(content: unknown, platforms: string[]): Record<string, unknown> {
-    return platforms.reduce((acc, platform) => {
-      acc[platform] = {
-        hooks: ['Question hook', 'Statistic hook', 'Story hook'],
-        cta: this.getCTAForPlatform(platform)
-      };
-      return acc;
-    }, {} as Record<string, unknown>);
+    return platforms.reduce(
+      (acc, platform) => {
+        acc[platform] = {
+          hooks: ['Question hook', 'Statistic hook', 'Story hook'],
+          cta: this.getCTAForPlatform(platform),
+        };
+        return acc;
+      },
+      {} as Record<string, unknown>
+    );
   }
 
   // Platform-specific helper methods
@@ -602,7 +620,7 @@ export class WorkflowEngine {
       twitter: 'casual',
       linkedin: 'professional',
       instagram: 'visual',
-      facebook: 'friendly'
+      facebook: 'friendly',
     };
     return tones[platform] || 'neutral';
   }
@@ -612,7 +630,7 @@ export class WorkflowEngine {
       twitter: 'short-form',
       linkedin: 'article',
       instagram: 'visual-story',
-      facebook: 'mixed-media'
+      facebook: 'mixed-media',
     };
     return formats[platform] || 'text';
   }
@@ -622,7 +640,7 @@ export class WorkflowEngine {
       twitter: 280,
       linkedin: 1300,
       instagram: 125,
-      facebook: 250
+      facebook: 250,
     };
     return lengths[platform] || 500;
   }
@@ -632,7 +650,7 @@ export class WorkflowEngine {
       twitter: ['9:00 AM', '12:00 PM', '3:00 PM'],
       linkedin: ['8:00 AM', '12:00 PM', '5:00 PM'],
       instagram: ['11:00 AM', '2:00 PM', '5:00 PM'],
-      facebook: ['9:00 AM', '1:00 PM', '7:00 PM']
+      facebook: ['9:00 AM', '1:00 PM', '7:00 PM'],
     };
     return times[platform] || ['12:00 PM'];
   }
@@ -646,7 +664,7 @@ export class WorkflowEngine {
     const metrics: Record<string, string[]> = {
       engagement: ['likes', 'comments', 'shares'],
       awareness: ['reach', 'impressions', 'mentions'],
-      traffic: ['clicks', 'website_visits', 'conversions']
+      traffic: ['clicks', 'website_visits', 'conversions'],
     };
     return metrics[goal] || ['engagement'];
   }
@@ -655,7 +673,7 @@ export class WorkflowEngine {
     const kpis: Record<string, string> = {
       engagement: 'engagement_rate',
       awareness: 'reach',
-      traffic: 'click_through_rate'
+      traffic: 'click_through_rate',
     };
     return kpis[goal] || 'engagement_rate';
   }
@@ -664,7 +682,7 @@ export class WorkflowEngine {
     const secondaryKPIs: Record<string, string[]> = {
       engagement: ['likes_per_post', 'comment_rate', 'share_rate'],
       awareness: ['impressions', 'brand_mentions', 'follower_growth'],
-      traffic: ['website_sessions', 'bounce_rate', 'conversion_rate']
+      traffic: ['website_sessions', 'bounce_rate', 'conversion_rate'],
     };
     return secondaryKPIs[goal] || [];
   }
@@ -678,7 +696,7 @@ export class WorkflowEngine {
       twitter: 'Join the conversation!',
       linkedin: 'Connect with us',
       instagram: 'Follow for more',
-      facebook: 'Like and share'
+      facebook: 'Like and share',
     };
     return ctas[platform] || 'Learn more';
   }

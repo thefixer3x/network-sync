@@ -1,12 +1,14 @@
 import cron from 'node-cron';
 import { Logger } from '@/utils/Logger';
 import { AutomationEngine } from '../engine/automation-engine';
-import { EngagementAutomator, EngagementRule } from '../services/EngagementAutomator';
+import type { EngagementRule } from '../services/EngagementAutomator';
+import { EngagementAutomator } from '../services/EngagementAutomator';
 import { HashtagResearcher } from '../services/HashtagResearcher';
 import { CompetitorMonitor } from '../services/CompetitorMonitor';
 import { AnalyticsDashboard } from '../services/AnalyticsDashboard';
-import { WorkflowEngine, WorkflowRequest } from './workflow-engine';
-import { SocialPlatform } from '../types/typescript-types';
+import type { WorkflowRequest } from './workflow-engine';
+import { WorkflowEngine } from './workflow-engine';
+import type { SocialPlatform } from '../types/typescript-types';
 
 export interface SocialGrowthConfig {
   platforms: SocialPlatform[];
@@ -45,7 +47,7 @@ export class SocialGrowthEngine {
   private competitorMonitor: CompetitorMonitor;
   private analyticsDashboard: AnalyticsDashboard;
   private workflowEngine: WorkflowEngine;
-  
+
   private isRunning = false;
   private config: SocialGrowthConfig | null = null;
   private scheduledTasks = new Map<string, cron.ScheduledTask>();
@@ -102,7 +104,6 @@ export class SocialGrowthEngine {
 
       // Generate initial strategy report
       await this.generateGrowthStrategy();
-
     } catch (error) {
       this.logger.error('Failed to initialize Social Growth Engine:', error);
       throw error;
@@ -122,26 +123,30 @@ export class SocialGrowthEngine {
             followerCountMin: 100,
             followerCountMax: 100000,
             excludeVerified: false,
-            minEngagement: 5
+            minEngagement: 5,
           },
           actions: {
             reply: true,
-            like: true
+            like: true,
           },
           limits: {
             maxActionsPerHour: 10,
             maxActionsPerDay: 50,
-            cooldownMinutes: 60
+            cooldownMinutes: 60,
           },
-          ...ruleConfig
+          ...ruleConfig,
         });
       }
     }
 
     // Schedule engagement monitoring (every 30 minutes)
-    const engagementTask = cron.schedule('*/30 * * * *', async () => {
-      await this.executeEngagementCycle();
-    }, { scheduled: false });
+    const engagementTask = cron.schedule(
+      '*/30 * * * *',
+      async () => {
+        await this.executeEngagementCycle();
+      },
+      { scheduled: false }
+    );
 
     this.scheduledTasks.set('engagement_automation', engagementTask);
     engagementTask.start();
@@ -162,8 +167,8 @@ export class SocialGrowthEngine {
         alertThresholds: {
           followerGrowth: 10, // Alert if >10% growth
           engagementIncrease: 5, // Alert if >5% engagement
-          viralPostThreshold: 1000 // Alert if post gets >1000 engagement
-        }
+          viralPostThreshold: 1000, // Alert if post gets >1000 engagement
+        },
       });
     }
 
@@ -175,19 +180,31 @@ export class SocialGrowthEngine {
 
   private async setupAnalyticsReporting(): Promise<void> {
     // Schedule daily analytics refresh
-    const dailyAnalytics = cron.schedule('0 8 * * *', async () => {
-      await this.analyticsDashboard.refreshAllWidgets();
-    }, { scheduled: false });
+    const dailyAnalytics = cron.schedule(
+      '0 8 * * *',
+      async () => {
+        await this.analyticsDashboard.refreshAllWidgets();
+      },
+      { scheduled: false }
+    );
 
     // Schedule weekly reports
-    const weeklyReports = cron.schedule('0 9 * * MON', async () => {
-      await this.generateWeeklyReport();
-    }, { scheduled: false });
+    const weeklyReports = cron.schedule(
+      '0 9 * * MON',
+      async () => {
+        await this.generateWeeklyReport();
+      },
+      { scheduled: false }
+    );
 
-    // Schedule monthly reports  
-    const monthlyReports = cron.schedule('0 9 1 * *', async () => {
-      await this.generateMonthlyReport();
-    }, { scheduled: false });
+    // Schedule monthly reports
+    const monthlyReports = cron.schedule(
+      '0 9 1 * *',
+      async () => {
+        await this.generateMonthlyReport();
+      },
+      { scheduled: false }
+    );
 
     this.scheduledTasks.set('daily_analytics', dailyAnalytics);
     this.scheduledTasks.set('weekly_reports', weeklyReports);
@@ -202,9 +219,13 @@ export class SocialGrowthEngine {
 
   private async setupHashtagOptimization(): Promise<void> {
     // Schedule weekly hashtag research
-    const hashtagOptimization = cron.schedule('0 10 * * SUN', async () => {
-      await this.optimizeHashtagStrategy();
-    }, { scheduled: false });
+    const hashtagOptimization = cron.schedule(
+      '0 10 * * SUN',
+      async () => {
+        await this.optimizeHashtagStrategy();
+      },
+      { scheduled: false }
+    );
 
     this.scheduledTasks.set('hashtag_optimization', hashtagOptimization);
     hashtagOptimization.start();
@@ -219,8 +240,10 @@ export class SocialGrowthEngine {
       for (const platform of this.config!.platforms) {
         // Find engagement opportunities
         const opportunities = await this.engagementAutomator.findEngagementOpportunities(platform);
-        
-        if (opportunities.length === 0) continue;
+
+        if (opportunities.length === 0) {
+          continue;
+        }
 
         this.logger.info(`Found ${opportunities.length} opportunities on ${platform}`);
 
@@ -232,7 +255,10 @@ export class SocialGrowthEngine {
 
         for (const opportunity of topOpportunities) {
           for (const action of opportunity.recommendedActions) {
-            const success = await this.engagementAutomator.executeEngagementAction(opportunity, action);
+            const success = await this.engagementAutomator.executeEngagementAction(
+              opportunity,
+              action
+            );
             if (success) {
               this.logger.info(`✅ Executed ${action} on ${platform} post ${opportunity.postId}`);
             }
@@ -241,7 +267,6 @@ export class SocialGrowthEngine {
       }
 
       this.logger.success('Engagement cycle completed');
-
     } catch (error) {
       this.logger.error('Engagement cycle failed:', error);
     }
@@ -249,9 +274,12 @@ export class SocialGrowthEngine {
 
   private getMaxActionsForLevel(level: 'conservative' | 'moderate' | 'aggressive'): number {
     switch (level) {
-      case 'conservative': return 2;
-      case 'moderate': return 5;
-      case 'aggressive': return 10;
+      case 'conservative':
+        return 2;
+      case 'moderate':
+        return 5;
+      case 'aggressive':
+        return 10;
     }
   }
 
@@ -266,7 +294,7 @@ export class SocialGrowthEngine {
             platform,
             industry: this.config!.competitors[0]?.industry || 'general',
             targetAudience: this.config!.content_strategy.target_audience,
-            contentType: 'educational'
+            contentType: 'educational',
           });
 
           this.logger.info(`Generated hashtag strategy for ${topic} on ${platform}:`);
@@ -276,7 +304,6 @@ export class SocialGrowthEngine {
       }
 
       this.logger.success('Hashtag optimization completed');
-
     } catch (error) {
       this.logger.error('Hashtag optimization failed:', error);
     }
@@ -287,10 +314,12 @@ export class SocialGrowthEngine {
       this.logger.task('Reporting', 'Generating weekly analytics report');
 
       const report = await this.analyticsDashboard.generateReport('weekly', this.config!.platforms);
-      
+
       this.logger.info('📊 Weekly Report Generated:');
       this.logger.info(`📈 Followers: ${report.sections.performance_metrics.total_followers}`);
-      this.logger.info(`💬 Engagement: ${report.sections.performance_metrics.average_engagement_rate}%`);
+      this.logger.info(
+        `💬 Engagement: ${report.sections.performance_metrics.average_engagement_rate}%`
+      );
       this.logger.info(`📝 Posts: ${report.sections.content_analysis.published_content}`);
 
       // Log top recommendations
@@ -302,7 +331,6 @@ export class SocialGrowthEngine {
       }
 
       this.logger.success('Weekly report generated');
-
     } catch (error) {
       this.logger.error('Weekly report generation failed:', error);
     }
@@ -312,13 +340,15 @@ export class SocialGrowthEngine {
     try {
       this.logger.task('Reporting', 'Generating monthly analytics report');
 
-      const report = await this.analyticsDashboard.generateReport('monthly', this.config!.platforms);
-      
+      const report = await this.analyticsDashboard.generateReport(
+        'monthly',
+        this.config!.platforms
+      );
+
       this.logger.info('📊 Monthly Report Generated');
       this.logger.info(`Growth Rate: ${report.sections.performance_metrics.growth_rate}%`);
 
       this.logger.success('Monthly report generated');
-
     } catch (error) {
       this.logger.error('Monthly report generation failed:', error);
     }
@@ -335,18 +365,18 @@ export class SocialGrowthEngine {
         id: crypto.randomUUID(),
         type: 'social_campaign',
         topic: this.config!.content_strategy.content_pillars.join(' and '),
-        platforms: this.config!.platforms.filter(p => p !== 'tiktok') as ('twitter' | 'linkedin' | 'instagram' | 'facebook')[],
+        platforms: this.config!.platforms.filter((p) => p !== 'tiktok'),
         parameters: {
           post_count: this.config!.goals.content_frequency * 4, // Monthly posts
-          automation_level: this.config!.goals.automation_level
+          automation_level: this.config!.goals.automation_level,
         },
         brand_voice: this.config!.content_strategy.brand_voice,
         target_audience: this.config!.content_strategy.target_audience,
         goals: [
           `Achieve ${this.config!.goals.follower_growth_rate}% monthly growth`,
           `Maintain ${this.config!.goals.engagement_rate_target}% engagement rate`,
-          `Post ${this.config!.goals.content_frequency} times per week`
-        ]
+          `Post ${this.config!.goals.content_frequency} times per week`,
+        ],
       };
 
       const result = await this.workflowEngine.executeWorkflow(workflowRequest);
@@ -357,7 +387,6 @@ export class SocialGrowthEngine {
       } else {
         this.logger.error(`❌ Strategy generation failed: ${result.error}`);
       }
-
     } catch (error) {
       this.logger.error('Growth strategy generation failed:', error);
     }
@@ -367,24 +396,20 @@ export class SocialGrowthEngine {
    * Execute a custom workflow (research, content creation, etc.)
    */
   async executeWorkflow(request: WorkflowRequest): Promise<any> {
-    return await this.workflowEngine.executeWorkflow(request);
+    return this.workflowEngine.executeWorkflow(request);
   }
 
   /**
    * Get current system status
    */
   async getStatus(): Promise<any> {
-    const [
-      automationStatus,
-      engagementStats,
-      competitorCount,
-      dashboardWidgets
-    ] = await Promise.all([
-      this.automationEngine.getStatus(),
-      this.engagementAutomator.getEngagementStats(),
-      this.competitorMonitor.getCompetitors(),
-      this.analyticsDashboard.getWidgets()
-    ]);
+    const [automationStatus, engagementStats, competitorCount, dashboardWidgets] =
+      await Promise.all([
+        this.automationEngine.getStatus(),
+        this.engagementAutomator.getEngagementStats(),
+        this.competitorMonitor.getCompetitors(),
+        this.analyticsDashboard.getWidgets(),
+      ]);
 
     return {
       isRunning: this.isRunning,
@@ -393,22 +418,22 @@ export class SocialGrowthEngine {
         automation_level: this.config?.goals.automation_level || 'moderate',
         active_features: Object.entries(this.config?.automation || {})
           .filter(([key, enabled]) => enabled)
-          .map(([key]) => key)
+          .map(([key]) => key),
       },
       automation: automationStatus.data,
       engagement: {
         rules_count: engagementStats['totalRules'],
-        daily_actions: engagementStats['dailyActions']
+        daily_actions: engagementStats['dailyActions'],
       },
       competitors: {
         monitored_count: competitorCount.length,
-        active_count: competitorCount.filter(c => c.monitoringEnabled).length
+        active_count: competitorCount.filter((c) => c.monitoringEnabled).length,
       },
       analytics: {
         widgets_count: dashboardWidgets.length,
-        last_updated: dashboardWidgets[0]?.lastUpdated || null
+        last_updated: dashboardWidgets[0]?.lastUpdated || null,
       },
-      scheduled_tasks: Array.from(this.scheduledTasks.keys())
+      scheduled_tasks: Array.from(this.scheduledTasks.keys()),
     };
   }
 
@@ -485,21 +510,25 @@ export class SocialGrowthEngine {
   /**
    * Generate a one-time content campaign
    */
-  async createContentCampaign(topic: string, platforms: SocialPlatform[], postCount = 10): Promise<any> {
+  async createContentCampaign(
+    topic: string,
+    platforms: SocialPlatform[],
+    postCount = 10
+  ): Promise<any> {
     const workflowRequest: WorkflowRequest = {
       id: crypto.randomUUID(),
       type: 'content_creation',
       topic,
-      platforms: platforms.filter(p => p !== 'tiktok') as ('twitter' | 'linkedin' | 'instagram' | 'facebook')[],
+      platforms: platforms.filter((p) => p !== 'tiktok'),
       parameters: {
         post_count: postCount,
-        content_type: 'educational'
+        content_type: 'educational',
       },
       brand_voice: this.config?.content_strategy.brand_voice || 'professional',
-      target_audience: this.config?.content_strategy.target_audience || 'business professionals'
+      target_audience: this.config?.content_strategy.target_audience || 'business professionals',
     };
 
-    return await this.workflowEngine.executeWorkflow(workflowRequest);
+    return this.workflowEngine.executeWorkflow(workflowRequest);
   }
 
   /**
@@ -509,14 +538,15 @@ export class SocialGrowthEngine {
     const competitors = await this.competitorMonitor.getCompetitors();
     const reports = [];
 
-    for (const competitor of competitors.slice(0, 3)) { // Analyze top 3
+    for (const competitor of competitors.slice(0, 3)) {
+      // Analyze top 3
       const report = await this.competitorMonitor.getCompetitorReport(competitor.id);
       reports.push(report);
     }
 
     return {
       competitors_analyzed: reports.length,
-      reports
+      reports,
     };
   }
 
@@ -526,7 +556,7 @@ export class SocialGrowthEngine {
   async getAlertsAndRecommendations(): Promise<any> {
     const [competitorAlerts, engagementStats] = await Promise.all([
       this.competitorMonitor.getAlerts(),
-      this.engagementAutomator.getEngagementStats()
+      this.engagementAutomator.getEngagementStats(),
     ]);
 
     return {
@@ -536,8 +566,8 @@ export class SocialGrowthEngine {
         'Review competitor alerts for growth opportunities',
         'Check engagement automation performance',
         'Update hashtag strategy based on trends',
-        'Analyze top-performing content for patterns'
-      ]
+        'Analyze top-performing content for patterns',
+      ],
     };
   }
 }

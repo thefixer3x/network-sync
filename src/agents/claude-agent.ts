@@ -3,7 +3,11 @@
  */
 
 const formatError = (error: unknown): string =>
-  error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
+  error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : JSON.stringify(error);
 
 interface ClaudeConfig {
   apiKey: string;
@@ -59,31 +63,40 @@ export class ClaudeAgent {
     this.config = {
       apiKey: process.env['CLAUDE_API_KEY'] || '',
       model: 'claude-3-5-sonnet-20241022',
-      maxTokens: 4096
+      maxTokens: 4096,
     };
     this.initializeBrandVoices();
   }
 
   private initializeBrandVoices() {
     this.brandVoices = new Map([
-      ['professional', {
-        tone: 'professional',
-        vocabulary: 'sophisticated',
-        sentenceLength: 'medium',
-        personality: ['authoritative', 'knowledgeable', 'trustworthy']
-      }],
-      ['casual', {
-        tone: 'casual',
-        vocabulary: 'simple',
-        sentenceLength: 'short',
-        personality: ['friendly', 'approachable', 'conversational']
-      }],
-      ['engaging', {
-        tone: 'friendly',
-        vocabulary: 'moderate',
-        sentenceLength: 'varied',
-        personality: ['enthusiastic', 'helpful', 'empathetic']
-      }]
+      [
+        'professional',
+        {
+          tone: 'professional',
+          vocabulary: 'sophisticated',
+          sentenceLength: 'medium',
+          personality: ['authoritative', 'knowledgeable', 'trustworthy'],
+        },
+      ],
+      [
+        'casual',
+        {
+          tone: 'casual',
+          vocabulary: 'simple',
+          sentenceLength: 'short',
+          personality: ['friendly', 'approachable', 'conversational'],
+        },
+      ],
+      [
+        'engaging',
+        {
+          tone: 'friendly',
+          vocabulary: 'moderate',
+          sentenceLength: 'varied',
+          personality: ['enthusiastic', 'helpful', 'empathetic'],
+        },
+      ],
     ]);
   }
 
@@ -99,7 +112,8 @@ export class ClaudeAgent {
     sections?: string[];
   }) {
     const voice =
-      this.brandVoices.get(params.brandVoice || 'professional') ?? this.brandVoices.get('professional');
+      this.brandVoices.get(params.brandVoice || 'professional') ??
+      this.brandVoices.get('professional');
     if (!voice) {
       throw new Error(
         `Brand voice '${params.brandVoice || 'professional'}' not found in brandVoices map.`
@@ -114,17 +128,17 @@ export class ClaudeAgent {
         headers: {
           'x-api-key': this.config.apiKey,
           'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
+          'content-type': 'application/json',
         },
         body: JSON.stringify({
           model: this.config.model,
           max_tokens: params.maxTokens || this.config.maxTokens,
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
+            { role: 'user', content: userPrompt },
           ],
-          temperature: 0.7 // Balanced for creativity and coherence
-        })
+          temperature: 0.7, // Balanced for creativity and coherence
+        }),
       });
 
       const data = await response.json();
@@ -147,7 +161,7 @@ export class ClaudeAgent {
       sentiment: 'Analyze the emotional tone and sentiment of this content',
       readability: 'Assess readability, clarity, and accessibility of this content',
       engagement: 'Evaluate engagement potential and suggest improvements',
-      seo: 'Analyze SEO effectiveness and provide optimization suggestions'
+      seo: 'Analyze SEO effectiveness and provide optimization suggestions',
     };
 
     const prompt = `${analysisPrompts[params.analysisType]}:
@@ -165,7 +179,7 @@ Provide:
 
     const response = await this.generateContent({
       prompt,
-      format: 'analysis'
+      format: 'analysis',
     });
 
     return this.parseAnalysis(response);
@@ -185,7 +199,7 @@ Provide:
       linkedin: { maxLength: 3000, style: 'professional', formatting: 'rich' },
       instagram: { maxLength: 2200, style: 'visual', emojis: true },
       blog: { maxLength: null, style: 'comprehensive', structure: 'full' },
-      email: { maxLength: null, style: 'personalized', cta: true }
+      email: { maxLength: null, style: 'personalized', cta: true },
     };
 
     const toSpec = platformSpecs[params.toPlatform];
@@ -202,7 +216,7 @@ Requirements:
 
     const result = await this.generateContent({
       prompt,
-      format: params.toPlatform
+      format: params.toPlatform,
     });
 
     return result.content;
@@ -218,7 +232,7 @@ Requirements:
     testingGoal: string;
   }) {
     const variations = [];
-    
+
     for (let i = 0; i < params.numberOfVariations; i++) {
       const prompt = `Create variation ${i + 1} of this content for A/B testing:
 
@@ -231,13 +245,13 @@ Make this variation distinctly different while maintaining the core message.`;
 
       const variation = await this.generateContent({
         prompt,
-        format: params.variationType
+        format: params.variationType,
       });
 
       variations.push({
         id: `var_${i + 1}`,
         content: variation.content,
-        hypothesis: `Variation focusing on ${this.generateHypothesis(i)}`
+        hypothesis: `Variation focusing on ${this.generateHypothesis(i)}`,
       });
     }
 
@@ -249,8 +263,10 @@ Make this variation distinctly different while maintaining the core message.`;
    */
   private buildSystemPrompt(voice: BrandVoice | undefined, format?: string): string {
     const basePrompt = `You are an expert content creator specializing in ${format || 'general'} content.`;
-    
-    if (!voice) return basePrompt;
+
+    if (!voice) {
+      return basePrompt;
+    }
 
     return `${basePrompt}
 
@@ -268,15 +284,15 @@ Maintain consistency throughout the content while ensuring high quality and enga
    */
   private buildUserPrompt(params: PromptParams): string {
     let prompt = params.prompt;
-    
+
     if (params.context) {
       prompt = `Context:\n${params.context}\n\nTask:\n${prompt}`;
     }
-    
+
     if (params.sections) {
       prompt += `\n\nInclude these sections:\n${params.sections.map((section) => `- ${section}`).join('\n')}`;
     }
-    
+
     return prompt;
   }
 
@@ -291,8 +307,8 @@ Maintain consistency throughout the content while ensuring high quality and enga
       metadata: {
         model: data.model,
         tokenUsage: data.usage,
-        generatedAt: new Date()
-      }
+        generatedAt: new Date(),
+      },
     };
 
     if (format) {
@@ -328,7 +344,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
    */
   private parseAnalysis(response: FormattedContent): any {
     const content = response.content;
-    
+
     // Extract score if present
     const scoreMatch = content.match(/Score:\s*(\d+)/i);
     const score = scoreMatch?.[1] ? Number.parseInt(scoreMatch[1], 10) : null;
@@ -336,7 +352,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
     return {
       fullAnalysis: content,
       score,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
@@ -349,7 +365,7 @@ Maintain consistency throughout the content while ensuring high quality and enga
       'direct value proposition',
       'social proof emphasis',
       'urgency creation',
-      'benefit-focused messaging'
+      'benefit-focused messaging',
     ];
     const normalizedIndex = Math.abs(index) % hypotheses.length;
     return hypotheses[normalizedIndex] ?? hypotheses[0];

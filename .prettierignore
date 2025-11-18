@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment files
+*.env
+.env.*
+!.env.example
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Logs
+*.log
+
+# Lock files
+*.lock
+
+# Generated files
+*.d.ts
+
+# Web interface (separate Prettier config)
+web-interface/
+
+# Archives
+archive/
+
+# Other
+.git/
+.vscode/
+.idea/
+*.min.js
+*.min.css

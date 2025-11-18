@@ -1,9 +1,8 @@
 // src/engine/automation-engine.ts
 import { randomUUID } from 'node:crypto';
 import cron from 'node-cron';
-import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import {
+import type {
   Content,
   AutomationConfig,
   SocialPlatform,
@@ -12,19 +11,23 @@ import {
   CompetitorAnalysis,
   APIResponse,
   SocialMediaService,
-  RateLimitError,
-  schemas
 } from '@/types';
+import { RateLimitError, schemas } from '@/types';
 import { Logger } from '@/utils/Logger';
 import { SocialMediaFactory } from '@/services/SocialMediaFactory';
 import { OpenAIService } from '@/services/OpenAIService';
 import { TrendAnalyzer } from '@/services/TrendAnalyzer';
 import { ContentOptimizer } from '@/services/ContentOptimizer';
 import { AnalyticsCollector } from '@/services/AnalyticsCollector';
+import { getSupabaseAdminClient } from '@/database/connection-pool';
 import { addMinutes, addHours } from 'date-fns';
 
 const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
+  error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : JSON.stringify(error);
 
 export class AutomationEngine {
   private readonly logger = new Logger('AutomationEngine');
@@ -41,14 +44,9 @@ export class AutomationEngine {
   private config: AutomationConfig | null = null;
 
   constructor() {
-    const supabaseUrl = process.env['SUPABASE_URL'];
-    const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.');
-    }
-
-    this.supabase = createClient(supabaseUrl, serviceRoleKey);
+    // Use shared connection pool for database access
+    this.supabase = getSupabaseAdminClient();
+    this.logger.info('AutomationEngine initialized with connection pool');
 
     void this.initializeServices();
     this.setupErrorHandling();
@@ -58,7 +56,7 @@ export class AutomationEngine {
     try {
       // Initialize social media services
       const platforms: SocialPlatform[] = ['twitter', 'linkedin', 'facebook', 'instagram'];
-      
+
       for (const platform of platforms) {
         try {
           const service = SocialMediaFactory.create(platform);
@@ -94,7 +92,7 @@ export class AutomationEngine {
     try {
       // Load configuration
       this.config = await this.loadConfiguration(configId);
-      
+
       if (!this.config.enabled) {
         this.logger.info('Automation is disabled in configuration');
         return;
@@ -148,9 +146,7 @@ export class AutomationEngine {
 
   private async loadConfiguration(configId?: string): Promise<AutomationConfig> {
     try {
-      let query = this.supabase
-        .from('automation_configs')
-        .select('*');
+      let query = this.supabase.from('automation_configs').select('*');
 
       if (configId) {
         query = query.eq('id', configId);
@@ -170,7 +166,7 @@ export class AutomationEngine {
 
       const config = schemas.AutomationConfig.parse(data[0]);
       this.logger.info(`Loaded configuration: ${config.name}`);
-      
+
       return config;
     } catch (error) {
       this.logger.error('Failed to load configuration:', error);
@@ -179,17 +175,23 @@ export class AutomationEngine {
   }
 
   private async scheduleAutomationTasks(): Promise<void> {
-    if (!this.config) return;
+    if (!this.config) {
+      return;
+    }
 
     const { postingSchedule } = this.config;
 
     // Schedule content generation (daily at 6 AM)
-    const contentGenJob = cron.schedule('0 6 * * *', async () => {
-      await this.generateDailyContent();
-    }, { 
-      timezone: postingSchedule.timezone,
-      scheduled: false 
-    });
+    const contentGenJob = cron.schedule(
+      '0 6 * * *',
+      async () => {
+        await this.generateDailyContent();
+      },
+      {
+        timezone: postingSchedule.timezone,
+        scheduled: false,
+      }
+    );
 
     this.scheduledJobs.set('content-generation', contentGenJob);
 
@@ -198,12 +200,16 @@ export class AutomationEngine {
       const [hour, minute] = timeSlot.split(':').map(Number);
       const cronExpression = `${minute} ${hour} * * ${postingSchedule.daysOfWeek.join(',')}`;
 
-      const postingJob = cron.schedule(cronExpression, async () => {
-        await this.executeScheduledPosting();
-      }, {
-        timezone: postingSchedule.timezone,
-        scheduled: false
-      });
+      const postingJob = cron.schedule(
+        cronExpression,
+        async () => {
+          await this.executeScheduledPosting();
+        },
+        {
+          timezone: postingSchedule.timezone,
+          scheduled: false,
+        }
+      );
 
       this.scheduledJobs.set(`posting-${timeSlot}`, postingJob);
     }
@@ -236,18 +242,20 @@ export class AutomationEngine {
       // Store generated content
       await this.storeGeneratedContent(generatedContent);
 
-      this.logger.info(`Generated ${generatedContent.length} content pieces for ${this.config!.platforms.length} platforms`);
+      this.logger.info(
+        `Generated ${generatedContent.length} content pieces for ${this.config!.platforms.length} platforms`
+      );
     } catch (error) {
       this.logger.error('Failed to generate daily content:', error);
     }
   }
 
   private async generateContentForPlatform(
-    platform: SocialPlatform, 
+    platform: SocialPlatform,
     trends: Trend[]
   ): Promise<Content[]> {
     const contentPieces: Content[] = [];
-    const relevantTrends = trends.filter(t => t.relevanceScore > 0.7).slice(0, 3);
+    const relevantTrends = trends.filter((t) => t.relevanceScore > 0.7).slice(0, 3);
 
     for (const trend of relevantTrends) {
       try {
@@ -279,9 +287,11 @@ export class AutomationEngine {
         // Validate content
         const validatedContent = schemas.Content.parse(content);
         contentPieces.push(validatedContent);
-
       } catch (error) {
-        this.logger.error(`Failed to generate content for ${platform} and trend ${trend.topic}:`, error);
+        this.logger.error(
+          `Failed to generate content for ${platform} and trend ${trend.topic}:`,
+          error
+        );
       }
     }
 
@@ -290,11 +300,16 @@ export class AutomationEngine {
 
   private createContentPrompt(trend: Trend, platform: SocialPlatform): string {
     const platformContext: Record<SocialPlatform, string> = {
-      twitter: 'Create a concise, engaging tweet that drives discussion and includes relevant hashtags.',
-      linkedin: 'Write a professional LinkedIn post that provides business insights and encourages professional networking.',
-      facebook: "Craft a Facebook post that's conversational, engaging, and suitable for community discussion.",
-      instagram: "Create an Instagram caption that's visually appealing, uses relevant hashtags, and encourages engagement.",
-      tiktok: 'Outline a TikTok script that captures attention quickly, leverages current trends, and delivers clear value.'
+      twitter:
+        'Create a concise, engaging tweet that drives discussion and includes relevant hashtags.',
+      linkedin:
+        'Write a professional LinkedIn post that provides business insights and encourages professional networking.',
+      facebook:
+        "Craft a Facebook post that's conversational, engaging, and suitable for community discussion.",
+      instagram:
+        "Create an Instagram caption that's visually appealing, uses relevant hashtags, and encourages engagement.",
+      tiktok:
+        'Outline a TikTok script that captures attention quickly, leverages current trends, and delivers clear value.',
     };
 
     return `
@@ -318,9 +333,7 @@ export class AutomationEngine {
 
   private async storeGeneratedContent(contentPieces: Content[]): Promise<void> {
     try {
-      const { error } = await this.supabase
-        .from('content')
-        .insert(contentPieces);
+      const { error } = await this.supabase.from('content').insert(contentPieces);
 
       if (error) {
         throw new Error(`Failed to store content: ${error.message}`);
@@ -348,12 +361,12 @@ export class AutomationEngine {
 
       // Process each content piece
       const results = await Promise.allSettled(
-        scheduledContent.map(content => this.publishContent(content))
+        scheduledContent.map((content) => this.publishContent(content))
       );
 
       // Log results
-      const successful = results.filter(r => r.status === 'fulfilled').length;
-      const failed = results.filter(r => r.status === 'rejected').length;
+      const successful = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.filter((r) => r.status === 'rejected').length;
 
       this.logger.info(`Publishing results: ${successful} successful, ${failed} failed`);
 
@@ -367,12 +380,11 @@ export class AutomationEngine {
           )
           .map(({ result, content }) => ({
             content,
-            error: result.reason
+            error: result.reason,
           }));
 
         await this.handleFailedPosts(failedResults);
       }
-
     } catch (error) {
       this.logger.error('Failed to execute scheduled posting:', error);
     }
@@ -393,13 +405,13 @@ export class AutomationEngine {
       throw new Error(`Failed to fetch scheduled content: ${error.message}`);
     }
 
-    return (data || []).map(item => schemas.Content.parse(item));
+    return (data || []).map((item) => schemas.Content.parse(item));
   }
 
   private async publishContent(content: Content): Promise<void> {
     try {
       const service = this.socialServices.get(content.platform);
-      
+
       if (!service) {
         throw new Error(`No service available for platform: ${content.platform}`);
       }
@@ -412,11 +424,10 @@ export class AutomationEngine {
       // Update content status
       await this.updateContentStatus(content.id, 'published', {
         publishedTime: new Date(),
-        externalId: postId
+        externalId: postId,
       });
 
       this.logger.info(`Successfully published content ${content.id} as post ${postId}`);
-
     } catch (error) {
       this.logger.error(`Failed to publish content ${content.id}:`, error);
 
@@ -431,8 +442,8 @@ export class AutomationEngine {
   }
 
   private async updateContentStatus(
-    contentId: string, 
-    status: Content['status'], 
+    contentId: string,
+    status: Content['status'],
     updates: Partial<Content> = {}
   ): Promise<void> {
     const { error } = await this.supabase
@@ -440,7 +451,7 @@ export class AutomationEngine {
       .update({
         status,
         updated_at: new Date().toISOString(),
-        ...updates
+        ...updates,
       })
       .eq('id', contentId);
 
@@ -454,11 +465,13 @@ export class AutomationEngine {
 
     // Reschedule content after rate limit resets
     await this.updateContentStatus(content.id, 'scheduled', {
-      scheduledTime: addMinutes(resetTime, 5) // Add 5 minutes buffer
+      scheduledTime: addMinutes(resetTime, 5), // Add 5 minutes buffer
     });
   }
 
-  private async handleFailedPosts(failedPosts: Array<{ content: Content; error: unknown }>): Promise<void> {
+  private async handleFailedPosts(
+    failedPosts: Array<{ content: Content; error: unknown }>
+  ): Promise<void> {
     for (const { content, error } of failedPosts) {
       if (error instanceof RateLimitError) {
         continue;
@@ -472,7 +485,7 @@ export class AutomationEngine {
       if (retryable) {
         const retryTime = addHours(new Date(), 1);
         await this.updateContentStatus(content.id, 'scheduled', {
-          scheduledTime: retryTime
+          scheduledTime: retryTime,
         });
       } else {
         await this.updateContentStatus(content.id, 'failed');
@@ -483,9 +496,13 @@ export class AutomationEngine {
   }
 
   private async startTrendMonitoring(): Promise<void> {
-    const trendJob = cron.schedule('0 */6 * * *', async () => {
-      await this.collectTrends();
-    }, { scheduled: false });
+    const trendJob = cron.schedule(
+      '0 */6 * * *',
+      async () => {
+        await this.collectTrends();
+      },
+      { scheduled: false }
+    );
 
     this.scheduledJobs.set('trend-monitoring', trendJob);
     trendJob.start();
@@ -494,9 +511,13 @@ export class AutomationEngine {
   }
 
   private async startCompetitorTracking(): Promise<void> {
-    const competitorJob = cron.schedule('0 8,20 * * *', async () => {
-      await this.analyzeCompetitors();
-    }, { scheduled: false });
+    const competitorJob = cron.schedule(
+      '0 8,20 * * *',
+      async () => {
+        await this.analyzeCompetitors();
+      },
+      { scheduled: false }
+    );
 
     this.scheduledJobs.set('competitor-tracking', competitorJob);
     competitorJob.start();
@@ -505,9 +526,13 @@ export class AutomationEngine {
   }
 
   private async scheduleAnalyticsCollection(): Promise<void> {
-    const analyticsJob = cron.schedule('0 23 * * *', async () => {
-      await this.collectAnalytics();
-    }, { scheduled: false });
+    const analyticsJob = cron.schedule(
+      '0 23 * * *',
+      async () => {
+        await this.collectAnalytics();
+      },
+      { scheduled: false }
+    );
 
     this.scheduledJobs.set('analytics-collection', analyticsJob);
     analyticsJob.start();
@@ -525,9 +550,7 @@ export class AutomationEngine {
       );
 
       // Store trends in database
-      const { error } = await this.supabase
-        .from('trends')
-        .insert(trends);
+      const { error } = await this.supabase.from('trends').insert(trends);
 
       if (error) {
         throw new Error(`Failed to store trends: ${error.message}`);
@@ -550,7 +573,9 @@ export class AutomationEngine {
         for (const [platform, handle] of Object.entries(competitor.handles)) {
           try {
             const service = this.socialServices.get(platform as SocialPlatform);
-            if (!service) continue;
+            if (!service) {
+              continue;
+            }
 
             // Get competitor's recent posts and analyze them
             const analysis = await this.analyticsCollector.analyzeCompetitor(
@@ -561,16 +586,17 @@ export class AutomationEngine {
 
             analyses.push(analysis);
           } catch (error) {
-            this.logger.error(`Failed to analyze competitor ${competitor.name} on ${platform}:`, error);
+            this.logger.error(
+              `Failed to analyze competitor ${competitor.name} on ${platform}:`,
+              error
+            );
           }
         }
       }
 
       // Store competitor analyses
       if (analyses.length > 0) {
-        const { error } = await this.supabase
-          .from('competitor_analyses')
-          .insert(analyses);
+        const { error } = await this.supabase.from('competitor_analyses').insert(analyses);
 
         if (error) {
           throw new Error(`Failed to store competitor analyses: ${error.message}`);
@@ -592,7 +618,9 @@ export class AutomationEngine {
       for (const platform of this.config!.platforms) {
         try {
           const service = this.socialServices.get(platform);
-          if (!service) continue;
+          if (!service) {
+            continue;
+          }
 
           const platformMetrics = await service.getMetrics();
           metrics.push(platformMetrics);
@@ -603,9 +631,7 @@ export class AutomationEngine {
 
       // Store metrics
       if (metrics.length > 0) {
-        const { error } = await this.supabase
-          .from('account_metrics')
-          .insert(metrics);
+        const { error } = await this.supabase.from('account_metrics').insert(metrics);
 
         if (error) {
           throw new Error(`Failed to store metrics: ${error.message}`);
@@ -631,11 +657,11 @@ export class AutomationEngine {
         servicesStatus: Object.fromEntries(
           Array.from(this.socialServices.entries()).map(([platform, service]) => [
             platform,
-            service ? 'connected' : 'disconnected'
+            service ? 'connected' : 'disconnected',
           ])
-        )
+        ),
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
@@ -660,13 +686,13 @@ export class AutomationEngine {
 
       return {
         success: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } catch (error) {
       return {
         success: false,
         error: getErrorMessage(error),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
@@ -692,13 +718,13 @@ export class AutomationEngine {
 
       return {
         success: true,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } catch (error) {
       return {
         success: false,
         error: getErrorMessage(error),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
