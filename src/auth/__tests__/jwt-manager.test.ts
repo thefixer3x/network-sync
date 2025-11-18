@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, jest } from '@jest/globals';
+import { describe, expect, it, beforeEach } from '@jest/globals';
 import * as jwt from 'jsonwebtoken';
 import {
   generateAccessToken,
@@ -19,9 +19,7 @@ describe('JWT Manager', () => {
 
   beforeEach(() => {
     // Set up test environment variables
-    process.env['JWT_SECRET'] = 'test-jwt-secret-at-least-32-characters-long';
     process.env['JWT_EXPIRES_IN'] = '1h';
-    process.env['JWT_REFRESH_SECRET'] = 'test-refresh-secret-at-least-32-characters-long';
     process.env['JWT_REFRESH_EXPIRES_IN'] = '7d';
 
     testPayload = {
@@ -60,7 +58,7 @@ describe('JWT Manager', () => {
 
     it('should include payload data in token', () => {
       const token = generateAccessToken(testPayload);
-      const decoded = jwt.decode(token) as JWTPayload;
+      const decoded = verifyAccessToken(token);
 
       expect(decoded.userId).toBe(testPayload.userId);
       expect(decoded.email).toBe(testPayload.email);
@@ -100,7 +98,8 @@ describe('JWT Manager', () => {
 
     it('should throw error for expired access token', () => {
       // Generate token with very short expiration
-      const expiredToken = jwt.sign(testPayload, 'test-jwt-secret-at-least-32-characters-long', {
+      const secret = process.env['JWT_SECRET'] as string;
+      const expiredToken = jwt.sign(testPayload, secret, {
         expiresIn: '1ms',
       });
 
@@ -146,7 +145,8 @@ describe('JWT Manager', () => {
     });
 
     it('should detect expired token', () => {
-      const expiredToken = jwt.sign(testPayload, 'test-jwt-secret-at-least-32-characters-long', {
+      const secret = process.env['JWT_SECRET'] as string;
+      const expiredToken = jwt.sign(testPayload, secret, {
         expiresIn: '-1h', // Already expired
       });
 
@@ -186,13 +186,10 @@ describe('JWT Manager', () => {
     });
 
     it('should throw error for expired refresh token', () => {
-      const expiredToken = jwt.sign(
-        testPayload,
-        'test-refresh-secret-at-least-32-characters-long',
-        {
-          expiresIn: '-1h',
-        }
-      );
+      const refreshSecret = process.env['JWT_REFRESH_SECRET'] as string;
+      const expiredToken = jwt.sign(testPayload, refreshSecret, {
+        expiresIn: '-1h',
+      });
 
       expect(() => refreshAccessToken(expiredToken)).toThrow('Refresh token expired');
     });
