@@ -14,6 +14,7 @@ import { cacheRouter } from '../routes/cache.routes.js';
 import { aiOptimizationRouter } from '../routes/ai-optimization.routes.js';
 import { agentSupervisionRouter } from '../routes/agent-supervision.routes.js';
 import { workflowManagementRouter } from '../routes/workflow-management.routes.js';
+import { contextRouter } from '../routes/context.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -83,6 +84,9 @@ export function createApp(): Express {
   // Workflow management endpoints
   app.use('/workflows', workflowManagementRouter);
 
+  // Context management endpoints
+  app.use('/context', contextRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -118,6 +122,14 @@ export function createApp(): Express {
         workflowExecutions: '/workflows/executions/:executionId',
         workflowTemplates: '/workflows/templates',
         workflowStatistics: '/workflows/statistics',
+        context: '/context',
+        contextSet: '/context/:contextId/set',
+        contextGet: '/context/:contextId/get/:key',
+        contextScope: '/context/:contextId/scope/:scope',
+        contextSnapshot: '/context/:contextId/snapshot',
+        contextSnapshots: '/context/:contextId/snapshots',
+        contextRollback: '/context/:contextId/rollback',
+        contextStatistics: '/context/statistics/all',
       },
     });
   });
