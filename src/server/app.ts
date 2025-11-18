@@ -13,6 +13,7 @@ import { aiCostRouter } from '../routes/ai-cost.routes.js';
 import { cacheRouter } from '../routes/cache.routes.js';
 import { aiOptimizationRouter } from '../routes/ai-optimization.routes.js';
 import { agentSupervisionRouter } from '../routes/agent-supervision.routes.js';
+import { workflowManagementRouter } from '../routes/workflow-management.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -79,6 +80,9 @@ export function createApp(): Express {
   // Agent supervision endpoints
   app.use('/agent-supervision', agentSupervisionRouter);
 
+  // Workflow management endpoints
+  app.use('/workflows', workflowManagementRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -108,6 +112,12 @@ export function createApp(): Express {
         agentSupervision: '/agent-supervision',
         agentSupervisionStatus: '/agent-supervision/status',
         agentSupervisionStatistics: '/agent-supervision/statistics',
+        workflows: '/workflows',
+        workflowVersions: '/workflows/versions',
+        workflowExecute: '/workflows/:workflowId/execute',
+        workflowExecutions: '/workflows/executions/:executionId',
+        workflowTemplates: '/workflows/templates',
+        workflowStatistics: '/workflows/statistics',
       },
     });
   });
