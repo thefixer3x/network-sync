@@ -2,6 +2,8 @@
  * Claude Agent - Specialized for High-Quality Writing & Analysis
  */
 
+import { httpClient } from '../utils/http-client.js';
+
 const formatError = (error: unknown): string =>
   error instanceof Error
     ? error.message
@@ -123,14 +125,9 @@ export class ClaudeAgent {
     const userPrompt = this.buildUserPrompt(params);
 
     try {
-      const response = await fetch(this.apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'x-api-key': this.config.apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await httpClient.post(
+        this.apiEndpoint,
+        {
           model: this.config.model,
           max_tokens: params.maxTokens || this.config.maxTokens,
           messages: [
@@ -138,8 +135,21 @@ export class ClaudeAgent {
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.7, // Balanced for creativity and coherence
-        }),
-      });
+        },
+        {
+          headers: {
+            'x-api-key': this.config.apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          timeout: 30000, // 30 second timeout for content generation
+          maxRetries: 3, // Retry up to 3 times on transient failures
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
       const data = await response.json();
       return this.formatContent(data, params.format);
