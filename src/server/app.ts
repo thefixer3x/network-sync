@@ -15,6 +15,7 @@ import { aiOptimizationRouter } from '../routes/ai-optimization.routes.js';
 import { agentSupervisionRouter } from '../routes/agent-supervision.routes.js';
 import { workflowManagementRouter } from '../routes/workflow-management.routes.js';
 import { contextRouter } from '../routes/context.routes.js';
+import { contentManagementRouter } from '../routes/content-management.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -87,6 +88,9 @@ export function createApp(): Express {
   // Context management endpoints
   app.use('/context', contextRouter);
 
+  // Content management endpoints
+  app.use('/content-management', contentManagementRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -130,6 +134,14 @@ export function createApp(): Express {
         contextSnapshots: '/context/:contextId/snapshots',
         contextRollback: '/context/:contextId/rollback',
         contextStatistics: '/context/statistics/all',
+        contentManagement: '/content-management',
+        contentCreate: '/content-management/content',
+        contentVersions: '/content-management/content/:contentId/versions',
+        contentTemplates: '/content-management/templates',
+        contentVariations: '/content-management/content/:contentId/variations',
+        contentApproval: '/content-management/content/:contentId/approval',
+        contentAnalytics: '/content-management/content/:contentId/analytics',
+        contentStatistics: '/content-management/statistics',
       },
     });
   });
