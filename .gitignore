@@ -73,3 +73,5 @@ temp/
 .cache_ggshield
 .env-backup-20251025-201216/.env.preview.local
 web-interface/.env.vercel
+
+.config/
