@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 // import { SocialGrowthEngine } from '@/../src/orchestrator/SocialGrowthEngine';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
 export async function GET(request: NextRequest) {
