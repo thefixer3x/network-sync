@@ -15,6 +15,7 @@ import { initializeCacheWarming, shutdownCacheWarming } from '@/cache/cache-init
 import { initializeQueueManager, getQueueManager } from '@/queue/bull-queue';
 import { aiRequestOptimizer } from '@/services/ai-request-optimizer';
 import { aiRequestQueue } from '@/services/ai-request-queue';
+import { agentSupervisor } from '@/services/agent-supervisor';
 
 const logger = new Logger('ServerInit');
 
@@ -151,7 +152,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down AI request optimizer', error);
     }
 
-    // 3. Shutdown job queue manager
+    // 3. Shutdown agent supervisor
+    try {
+      agentSupervisor.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down agent supervisor', error);
+    }
+
+    // 4. Shutdown job queue manager
     try {
       const queueManager = getQueueManager();
       await queueManager.shutdown();
@@ -159,14 +167,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down job queue manager', error);
     }
 
-    // 4. Stop cache warming
+    // 5. Stop cache warming
     try {
       shutdownCacheWarming();
     } catch (error) {
       logger.error('Error stopping cache warming', error);
     }
 
-    // 5. Disconnect Redis cache
+    // 6. Disconnect Redis cache
     try {
       const cache = getCache();
       if (cache.connected) {
@@ -176,7 +184,7 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error disconnecting Redis cache', error);
     }
 
-    // 6. Shutdown database connection pool
+    // 7. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
 

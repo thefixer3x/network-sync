@@ -12,6 +12,7 @@ import { metricsRouter } from '../routes/metrics.routes.js';
 import { aiCostRouter } from '../routes/ai-cost.routes.js';
 import { cacheRouter } from '../routes/cache.routes.js';
 import { aiOptimizationRouter } from '../routes/ai-optimization.routes.js';
+import { agentSupervisionRouter } from '../routes/agent-supervision.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -75,6 +76,9 @@ export function createApp(): Express {
   // AI optimization endpoints
   app.use('/ai-optimization', aiOptimizationRouter);
 
+  // Agent supervision endpoints
+  app.use('/agent-supervision', agentSupervisionRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -101,6 +105,9 @@ export function createApp(): Express {
         aiOptimizationPerformance: '/ai-optimization/performance',
         aiOptimizationQueue: '/ai-optimization/queue',
         aiOptimizationRecommendations: '/ai-optimization/recommendations',
+        agentSupervision: '/agent-supervision',
+        agentSupervisionStatus: '/agent-supervision/status',
+        agentSupervisionStatistics: '/agent-supervision/statistics',
       },
     });
   });
