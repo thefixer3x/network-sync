@@ -8,7 +8,14 @@ import { rateLimit } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { createClient } from 'redis';
 import { Logger } from '@/utils/Logger';
-import type { NextRequest } from 'next/server';
+
+// Conditional import for Next.js (optional dependency)
+type NextRequest = {
+  headers: {
+    get(name: string): string | null;
+  };
+  user?: { userId?: string };
+};
 
 const logger = new Logger('RateLimiter');
 
@@ -74,7 +81,7 @@ async function getRedisClient() {
   try {
     const client = createClient({
       url: REDIS_URL,
-      password: REDIS_PASSWORD,
+      ...(REDIS_PASSWORD ? { password: REDIS_PASSWORD } : {}),
     });
 
     client.on('error', (err) => {
