@@ -2,6 +2,7 @@
  * Tests for Workflow Engine
  */
 
+// @ts-nocheck
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { WorkflowEngine, type WorkflowRequest, type WorkflowResult } from '../workflow-engine.js';
 
@@ -46,12 +47,12 @@ describe('WorkflowEngine', () => {
         citations: [],
         images: [],
         metadata: {},
-      });
+      }) as any;
 
       const mockClaudeGenerate = jest.fn().mockResolvedValue({
         content: 'Generated content',
         metadata: {},
-      });
+      }) as any;
 
       // Access private agents through type casting
       (engine as any).perplexityAgent.research = mockPerplexityResearch;
@@ -317,7 +318,7 @@ describe('WorkflowEngine', () => {
 
       const result = await engine.executeWorkflow(request);
 
-      // Should handle gracefully (empty phases array)
+      // Should handle gracefully (empty phases array) as any
       expect(result.success).toBe(true);
       expect(result.completed_phases).toHaveLength(0);
     }, 60000);

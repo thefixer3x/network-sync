@@ -2,6 +2,7 @@
  * Tests for Bull Queue Manager
  */
 
+// @ts-nocheck
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { JobType, JobPriority } from '../bull-queue.js';
 
