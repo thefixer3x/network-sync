@@ -63,11 +63,19 @@ export function createAxiosClient(config: AxiosClientConfig = {}): AxiosInstance
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
 
   // Create axios instance with base configuration
-  const instance = axios.create({
-    baseURL: config.baseURL,
+  const axiosConfig: any = {
     timeout: mergedConfig.timeout,
-    headers: config.headers || {},
-  });
+  };
+
+  if (config.baseURL) {
+    axiosConfig.baseURL = config.baseURL;
+  }
+
+  if (config.headers) {
+    axiosConfig.headers = config.headers;
+  }
+
+  const instance = axios.create(axiosConfig);
 
   // Request interceptor for logging
   instance.interceptors.request.use(
@@ -154,11 +162,16 @@ export function createSocialMediaClient(
   baseURL: string,
   headers?: Record<string, string>,
 ): AxiosInstance {
-  return createAxiosClient({
+  const clientConfig: AxiosClientConfig = {
     baseURL,
     timeout: 15000, // 15 seconds for social media APIs
     maxRetries: 3,
     retryDelay: 2000, // 2 seconds base delay
-    headers,
-  });
+  };
+
+  if (headers) {
+    clientConfig.headers = headers;
+  }
+
+  return createAxiosClient(clientConfig);
 }

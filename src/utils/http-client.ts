@@ -69,8 +69,12 @@ function createRetryableError(
 ): RetryableError {
   const error = new Error(message) as RetryableError;
   error.retryable = retryable;
-  error.statusCode = statusCode;
-  error.response = response;
+  if (statusCode !== undefined) {
+    error.statusCode = statusCode;
+  }
+  if (response !== undefined) {
+    error.response = response;
+  }
   return error;
 }
 
@@ -324,15 +328,20 @@ export class HttpClient {
     body?: unknown,
     options: HttpRequestOptions = {},
   ): Promise<Response> {
-    return this.fetch(url, {
+    const fetchOptions: HttpRequestOptions = {
       ...options,
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    });
+    };
+
+    if (body) {
+      fetchOptions.body = JSON.stringify(body);
+    }
+
+    return this.fetch(url, fetchOptions);
   }
 
   /**
@@ -343,15 +352,20 @@ export class HttpClient {
     body?: unknown,
     options: HttpRequestOptions = {},
   ): Promise<Response> {
-    return this.fetch(url, {
+    const fetchOptions: HttpRequestOptions = {
       ...options,
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    });
+    };
+
+    if (body) {
+      fetchOptions.body = JSON.stringify(body);
+    }
+
+    return this.fetch(url, fetchOptions);
   }
 
   /**

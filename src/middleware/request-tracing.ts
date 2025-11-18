@@ -91,15 +91,14 @@ export function requestTracingMiddleware(
   // Create trace context
   const traceContext: TraceContext = {
     requestId,
-    parentId,
+    ...(parentId ? { parentId } : {}),
     endpoint: req.path,
     method: req.method,
     startTime: req.startTime,
-    userAgent: req.headers['user-agent'],
+    ...(req.headers['user-agent'] ? { userAgent: req.headers['user-agent'] } : {}),
     ip: getClientIp(req),
     // Can be populated from JWT token after auth middleware
-    userId: undefined,
-    sessionId: req.headers['x-session-id'] as string | undefined,
+    ...(req.headers['x-session-id'] ? { sessionId: req.headers['x-session-id'] as string } : {}),
   };
 
   req.traceContext = traceContext;
@@ -138,7 +137,7 @@ export function requestTracingMiddleware(
       statusCode: res.statusCode,
       duration,
       timestamp: new Date(),
-      userId: req.traceContext?.userId,
+      ...(req.traceContext?.userId ? { userId: req.traceContext.userId } : {}),
     };
 
     metrics.push(metric);
@@ -189,7 +188,7 @@ export function errorTracingMiddleware(
     statusCode: res.statusCode || 500,
     duration,
     timestamp: new Date(),
-    userId: req.traceContext?.userId,
+    ...(req.traceContext?.userId ? { userId: req.traceContext.userId } : {}),
     error: error.message,
   };
 
@@ -311,8 +310,9 @@ export function createChildTrace(parentRequestId: string, serviceName: string): 
     endpoint: serviceName,
     method: 'INTERNAL',
     startTime: Date.now(),
-    userId: parentTrace?.userId,
-    sessionId: parentTrace?.sessionId,
+    ip: 'internal',
+    ...(parentTrace?.userId ? { userId: parentTrace.userId } : {}),
+    ...(parentTrace?.sessionId ? { sessionId: parentTrace.sessionId } : {}),
   };
 
   traces.set(childRequestId, childTrace);
@@ -336,7 +336,7 @@ export function completeChildTrace(requestId: string, statusCode: number): void 
     statusCode,
     duration,
     timestamp: new Date(),
-    userId: trace.userId,
+    ...(trace.userId ? { userId: trace.userId } : {}),
   };
 
   metrics.push(metric);
