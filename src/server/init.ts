@@ -13,6 +13,8 @@ import { initializeConnectionPool, getConnectionPool } from '@/database/connecti
 import { initializeCache, getCache } from '@/cache/redis-cache';
 import { initializeCacheWarming, shutdownCacheWarming } from '@/cache/cache-init';
 import { initializeQueueManager, getQueueManager } from '@/queue/bull-queue';
+import { aiRequestOptimizer } from '@/services/ai-request-optimizer';
+import { aiRequestQueue } from '@/services/ai-request-queue';
 
 const logger = new Logger('ServerInit');
 
@@ -135,7 +137,21 @@ export async function shutdownServer(): Promise<void> {
   logger.info('Shutting down server infrastructure...');
 
   try {
-    // 1. Shutdown job queue manager (first to complete pending jobs)
+    // 1. Shutdown AI request queue (first to complete pending requests)
+    try {
+      aiRequestQueue.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down AI request queue', error);
+    }
+
+    // 2. Shutdown AI request optimizer
+    try {
+      aiRequestOptimizer.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down AI request optimizer', error);
+    }
+
+    // 3. Shutdown job queue manager
     try {
       const queueManager = getQueueManager();
       await queueManager.shutdown();
@@ -143,14 +159,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down job queue manager', error);
     }
 
-    // 2. Stop cache warming
+    // 4. Stop cache warming
     try {
       shutdownCacheWarming();
     } catch (error) {
       logger.error('Error stopping cache warming', error);
     }
 
-    // 3. Disconnect Redis cache
+    // 5. Disconnect Redis cache
     try {
       const cache = getCache();
       if (cache.connected) {
@@ -160,7 +176,7 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error disconnecting Redis cache', error);
     }
 
-    // 4. Shutdown database connection pool
+    // 6. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
 

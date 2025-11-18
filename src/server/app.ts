@@ -11,6 +11,7 @@ import { healthRouter } from '../routes/health.routes.js';
 import { metricsRouter } from '../routes/metrics.routes.js';
 import { aiCostRouter } from '../routes/ai-cost.routes.js';
 import { cacheRouter } from '../routes/cache.routes.js';
+import { aiOptimizationRouter } from '../routes/ai-optimization.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -71,6 +72,9 @@ export function createApp(): Express {
   // Cache management endpoints
   app.use('/cache', cacheRouter);
 
+  // AI optimization endpoints
+  app.use('/ai-optimization', aiOptimizationRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -92,6 +96,11 @@ export function createApp(): Express {
         cacheStats: '/cache/stats',
         cacheHealth: '/cache/health',
         cacheInvalidations: '/cache/invalidations',
+        aiOptimization: '/ai-optimization',
+        aiOptimizationStats: '/ai-optimization/stats',
+        aiOptimizationPerformance: '/ai-optimization/performance',
+        aiOptimizationQueue: '/ai-optimization/queue',
+        aiOptimizationRecommendations: '/ai-optimization/recommendations',
       },
     });
   });
