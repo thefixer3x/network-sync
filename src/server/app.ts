@@ -17,6 +17,7 @@ import { workflowManagementRouter } from '../routes/workflow-management.routes.j
 import { contextRouter } from '../routes/context.routes.js';
 import { contentManagementRouter } from '../routes/content-management.routes.js';
 import { analyticsRouter } from '../routes/analytics.routes.js';
+import { securityRouter } from '../routes/security.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -95,6 +96,9 @@ export function createApp(): Express {
   // Analytics endpoints
   app.use('/analytics', analyticsRouter);
 
+  // Security endpoints
+  app.use('/security', securityRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -155,6 +159,16 @@ export function createApp(): Express {
         analyticsFunnel: '/analytics/funnel',
         analyticsUsers: '/analytics/users/:userId',
         analyticsStatistics: '/analytics/statistics',
+        security: '/security',
+        securityLogin: '/security/auth/login',
+        securityLogout: '/security/auth/logout',
+        securityRefresh: '/security/auth/refresh',
+        securitySessions: '/security/auth/sessions',
+        securityApiKeys: '/security/api-keys',
+        securityEvents: '/security/events',
+        securityStatistics: '/security/statistics',
+        securityIpBlock: '/security/ip/block',
+        securityIpWhitelist: '/security/ip/whitelist',
       },
     });
   });
