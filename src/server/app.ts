@@ -10,6 +10,7 @@ import { Logger } from '../utils/Logger.js';
 import { healthRouter } from '../routes/health.routes.js';
 import { metricsRouter } from '../routes/metrics.routes.js';
 import { aiCostRouter } from '../routes/ai-cost.routes.js';
+import { cacheRouter } from '../routes/cache.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -67,6 +68,9 @@ export function createApp(): Express {
   // AI cost monitoring endpoints
   app.use('/ai-cost', aiCostRouter);
 
+  // Cache management endpoints
+  app.use('/cache', cacheRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -84,6 +88,10 @@ export function createApp(): Express {
         aiCostCurrent: '/ai-cost/current',
         aiCostAnalytics: '/ai-cost/analytics',
         aiCostPricing: '/ai-cost/pricing',
+        cache: '/cache',
+        cacheStats: '/cache/stats',
+        cacheHealth: '/cache/health',
+        cacheInvalidations: '/cache/invalidations',
       },
     });
   });

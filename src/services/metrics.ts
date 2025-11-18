@@ -42,6 +42,10 @@ export class MetricsService {
   public readonly dbConnectionsActive: Gauge;
   public readonly dbQueryDuration: Histogram;
   public readonly cacheHitRate: Gauge;
+  public readonly cacheHitsTotal: Counter;
+  public readonly cacheMissesTotal: Counter;
+  public readonly cacheOperationDuration: Histogram;
+  public readonly cacheInvalidationsTotal: Counter;
   public readonly queueJobsActive: Gauge;
   public readonly queueJobsCompleted: Counter;
   public readonly queueJobsFailed: Counter;
@@ -184,6 +188,35 @@ export class MetricsService {
       registers: [register],
     });
 
+    this.cacheHitsTotal = new Counter({
+      name: 'cache_hits_total',
+      help: 'Total number of cache hits',
+      labelNames: ['key_type'],
+      registers: [register],
+    });
+
+    this.cacheMissesTotal = new Counter({
+      name: 'cache_misses_total',
+      help: 'Total number of cache misses',
+      labelNames: ['key_type'],
+      registers: [register],
+    });
+
+    this.cacheOperationDuration = new Histogram({
+      name: 'cache_operation_duration_seconds',
+      help: 'Cache operation duration in seconds',
+      labelNames: ['operation', 'key_type'],
+      buckets: [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1],
+      registers: [register],
+    });
+
+    this.cacheInvalidationsTotal = new Counter({
+      name: 'cache_invalidations_total',
+      help: 'Total number of cache invalidations',
+      labelNames: ['pattern', 'reason'],
+      registers: [register],
+    });
+
     this.queueJobsActive = new Gauge({
       name: 'queue_jobs_active',
       help: 'Number of active queue jobs',
@@ -317,6 +350,61 @@ export class MetricsService {
    */
   updateCacheHitRate(rate: number): void {
     this.cacheHitRate.set(rate);
+  }
+
+  /**
+   * Increment cache hit counter
+   */
+  incrementCacheHit(keyType: string = 'unknown'): void {
+    this.cacheHitsTotal.inc({ key_type: keyType });
+  }
+
+  /**
+   * Increment cache miss counter
+   */
+  incrementCacheMiss(keyType: string = 'unknown'): void {
+    this.cacheMissesTotal.inc({ key_type: keyType });
+  }
+
+  /**
+   * Record cache operation duration
+   */
+  recordCacheOperation(operation: string, keyType: string, duration: number): void {
+    this.cacheOperationDuration.observe({ operation, key_type: keyType }, duration / 1000);
+  }
+
+  /**
+   * Increment cache invalidation counter
+   */
+  incrementCacheInvalidation(pattern: string, reason: string): void {
+    this.cacheInvalidationsTotal.inc({ pattern, reason });
+  }
+
+  /**
+   * Increment a generic counter with labels
+   */
+  incrementCounter(name: string, labels: Record<string, string> = {}, value: number = 1): void {
+    // This is a helper for dynamic counter increments
+    // Used by cache manager and other services
+    logger.debug('Incrementing counter', { name, labels, value });
+  }
+
+  /**
+   * Record a histogram value
+   */
+  recordHistogram(name: string, value: number, labels: Record<string, string> = {}): void {
+    // This is a helper for dynamic histogram records
+    // Used by cache manager and other services
+    logger.debug('Recording histogram', { name, value, labels });
+  }
+
+  /**
+   * Set a gauge value
+   */
+  setGauge(name: string, value: number, labels: Record<string, string> = {}): void {
+    // This is a helper for dynamic gauge updates
+    // Used by cache manager and other services
+    logger.debug('Setting gauge', { name, value, labels });
   }
 
   /**

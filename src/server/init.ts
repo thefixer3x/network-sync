@@ -11,6 +11,7 @@
 import { Logger } from '@/utils/Logger';
 import { initializeConnectionPool, getConnectionPool } from '@/database/connection-pool';
 import { initializeCache, getCache } from '@/cache/redis-cache';
+import { initializeCacheWarming, shutdownCacheWarming } from '@/cache/cache-init';
 import { initializeQueueManager, getQueueManager } from '@/queue/bull-queue';
 
 const logger = new Logger('ServerInit');
@@ -28,7 +29,10 @@ export async function initializeServer(): Promise<void> {
     // 2. Initialize Redis cache
     await initializeRedisCache();
 
-    // 3. Initialize job queue manager
+    // 3. Initialize cache warming
+    await initializeCacheWarming();
+
+    // 4. Initialize job queue manager
     await initializeJobQueue();
 
     logger.info('Server infrastructure initialized successfully');
@@ -139,7 +143,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down job queue manager', error);
     }
 
-    // 2. Disconnect Redis cache
+    // 2. Stop cache warming
+    try {
+      shutdownCacheWarming();
+    } catch (error) {
+      logger.error('Error stopping cache warming', error);
+    }
+
+    // 3. Disconnect Redis cache
     try {
       const cache = getCache();
       if (cache.connected) {
@@ -149,7 +160,7 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error disconnecting Redis cache', error);
     }
 
-    // 3. Shutdown database connection pool
+    // 4. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
 
