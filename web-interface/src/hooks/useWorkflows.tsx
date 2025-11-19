@@ -1,60 +1,51 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import useSWR from 'swr';
+
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch');
+  }
+  const data = await response.json();
+  return data.workflows;
+};
 
 export function useWorkflows() {
-  const queryClient = useQueryClient();
-
-  const { data: workflows, isLoading } = useQuery(
-    'workflows',
-    async () => {
-      const response = await fetch('/api/workflows');
-      if (!response.ok) {
-        throw new Error('Failed to fetch workflows');
-      }
-      const data = await response.json();
-      return data.workflows;
-    }
+  const { data: workflows, error, isLoading, mutate } = useSWR(
+    '/api/workflows',
+    fetcher
   );
 
-  const toggleWorkflow = useMutation(
-    async (workflowId: string) => {
-      const response = await fetch(`/api/workflows/${workflowId}/toggle`, {
-        method: 'POST',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to toggle workflow');
-      }
-      return response.json();
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('workflows');
-      },
+  const toggleWorkflow = async (workflowId: string) => {
+    const response = await fetch(`/api/workflows/${workflowId}/toggle`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to toggle workflow');
     }
-  );
+    const result = await response.json();
+    mutate(); // Revalidate after toggling
+    return result;
+  };
 
-  const deleteWorkflow = useMutation(
-    async (workflowId: string) => {
-      const response = await fetch(`/api/workflows/${workflowId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to delete workflow');
-      }
-      return response.json();
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('workflows');
-      },
+  const deleteWorkflow = async (workflowId: string) => {
+    const response = await fetch(`/api/workflows/${workflowId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete workflow');
     }
-  );
+    const result = await response.json();
+    mutate(); // Revalidate after deleting
+    return result;
+  };
 
   return {
     workflows,
     isLoading,
-    toggleWorkflow: toggleWorkflow.mutateAsync,
-    deleteWorkflow: deleteWorkflow.mutateAsync,
+    error,
+    toggleWorkflow,
+    deleteWorkflow,
   };
 }
