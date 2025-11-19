@@ -49,6 +49,12 @@ const traces = new Map<string, TraceContext>();
 const metrics: RequestMetrics[] = [];
 const MAX_METRICS_SIZE = 10000; // Keep last 10k requests
 
+function sanitizeForLog(value: unknown, maxLength = 200): string {
+  const str = String(value ?? '');
+  // Remove control characters and limit length
+  return str.replace(/[\r\n\t]+/g, ' ').slice(0, maxLength);
+}
+
 /**
  * Generates a unique request ID
  */
@@ -108,11 +114,14 @@ export function requestTracingMiddleware(
   res.setHeader('X-Request-ID', requestId);
 
   // Log request start
+  const safePath = sanitizeForLog(req.path, 200);
+  const safeIp = sanitizeForLog(traceContext.ip, 50);
+  const safeUserAgent = sanitizeForLog(traceContext.userAgent, 100);
   console.log(
-    `[${requestId}] --> ${req.method} ${req.path}`,
+    `[${requestId}] --> ${req.method} ${safePath}`,
     {
-      ip: traceContext.ip,
-      userAgent: traceContext.userAgent?.substring(0, 50),
+      ip: safeIp,
+      userAgent: safeUserAgent,
       parentId,
     },
   );
@@ -171,8 +180,9 @@ export function errorTracingMiddleware(
   const duration = Date.now() - (req.startTime || Date.now());
 
   // Log error with trace context
+  const safePath = sanitizeForLog(req.path, 200);
   console.error(
-    `[${requestId}] ❌ ERROR ${req.method} ${req.path} (${duration}ms)`,
+    `[${requestId}] ❌ ERROR ${req.method} ${safePath} (${duration}ms)`,
     {
       error: error.message,
       stack: error.stack,

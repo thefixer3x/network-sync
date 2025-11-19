@@ -146,8 +146,19 @@ export function verifyRefreshToken(token: string): DecodedToken {
  */
 export function decodeToken(token: string): DecodedToken | null {
   try {
-    const decoded = jwt.decode(token) as DecodedToken;
-    return decoded;
+    try {
+      // First try verifying as an access token, ignoring expiration
+      const decodedAccess = jwt.verify(token, JWT_SECRET, {
+        ignoreExpiration: true,
+      }) as DecodedToken;
+      return decodedAccess;
+    } catch (accessError) {
+      // If that fails, try verifying as a refresh token
+      const decodedRefresh = jwt.verify(token, JWT_REFRESH_SECRET, {
+        ignoreExpiration: true,
+      }) as DecodedToken;
+      return decodedRefresh;
+    }
   } catch (error) {
     logger.error('Error decoding token:', error);
     return null;
