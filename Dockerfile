@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Social Media Orchestrator API
 # Stage 1: Build
-FROM oven/bun:1.0-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY . .
 RUN bun run build
 
 # Stage 2: Production
-FROM oven/bun:1.0-alpine AS production
+FROM oven/bun:1.3-alpine AS production
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
