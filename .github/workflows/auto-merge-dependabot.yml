@@ -1,0 +1,157 @@
+name: Auto-merge Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge safe dependency updates
+    runs-on: ubuntu-latest
+
+    # Only run for Dependabot PRs
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Check if auto-merge is allowed
+        id: check-automerge
+        run: |
+          UPDATE_TYPE="${{ steps.metadata.outputs.update-type }}"
+          DEPENDENCY_NAME="${{ steps.metadata.outputs.dependency-names }}"
+
+          echo "Update type: $UPDATE_TYPE"
+          echo "Dependency: $DEPENDENCY_NAME"
+
+          # Auto-merge criteria:
+          # 1. Patch updates (e.g., 1.0.0 -> 1.0.1)
+          # 2. Minor updates for dev dependencies
+          # 3. Security updates (always)
+
+          AUTO_MERGE="false"
+
+          # Always auto-merge security updates
+          if [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]]; then
+            echo "✓ Patch update detected - safe to auto-merge"
+            AUTO_MERGE="true"
+          fi
+
+          # Auto-merge minor updates for dev dependencies
+          if [[ "${{ steps.metadata.outputs.dependency-type }}" == "direct:development" ]] && [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]]; then
+            echo "✓ Minor dev dependency update - safe to auto-merge"
+            AUTO_MERGE="true"
+          fi
+
+          # Auto-merge GitHub Actions updates
+          if [[ "${{ steps.metadata.outputs.package-ecosystem }}" == "github_actions" ]]; then
+            echo "✓ GitHub Actions update - safe to auto-merge"
+            AUTO_MERGE="true"
+          fi
+
+          echo "auto-merge=$AUTO_MERGE" >> $GITHUB_OUTPUT
+
+      - name: Approve PR
+        if: steps.check-automerge.outputs.auto-merge == 'true'
+        run: |
+          gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for PR
+        if: steps.check-automerge.outputs.auto-merge == 'true'
+        run: |
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR (auto-merge enabled)
+        if: steps.check-automerge.outputs.auto-merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Auto-merge enabled**
+
+              This PR will be automatically merged after all checks pass.
+
+              **Update Details:**
+              - Type: \`${{ steps.metadata.outputs.update-type }}\`
+              - Dependency: \`${{ steps.metadata.outputs.dependency-names }}\`
+              - Ecosystem: \`${{ steps.metadata.outputs.package-ecosystem }}\`
+
+              *This is a safe dependency update that meets auto-merge criteria.*`
+            })
+
+      - name: Comment on PR (manual review required)
+        if: steps.check-automerge.outputs.auto-merge == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚠️ **Manual review required**
+
+              This PR requires manual review before merging.
+
+              **Update Details:**
+              - Type: \`${{ steps.metadata.outputs.update-type }}\`
+              - Dependency: \`${{ steps.metadata.outputs.dependency-names }}\`
+              - Ecosystem: \`${{ steps.metadata.outputs.package-ecosystem }}\`
+
+              **Reason:** This is a ${{ steps.metadata.outputs.update-type }} update which requires careful review for breaking changes.
+
+              Please review the changelog and test thoroughly before merging.`
+            })
+
+  # Add security check job
+  security-check:
+    name: Security vulnerability check
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Check for security vulnerabilities
+        run: |
+          echo "Checking for security vulnerabilities..."
+          echo "CVE IDs: ${{ steps.metadata.outputs.cve-ids }}"
+          echo "CVSS: ${{ steps.metadata.outputs.cvss }}"
+          echo "Alert state: ${{ steps.metadata.outputs.alert-state }}"
+
+          # If this is a security update, add high priority label
+          if [[ -n "${{ steps.metadata.outputs.cve-ids }}" ]]; then
+            gh pr edit "$PR_URL" --add-label "security,priority-high"
+            echo "🔒 Security update detected - high priority"
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
