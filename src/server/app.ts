@@ -18,6 +18,7 @@ import { contextRouter } from '../routes/context.routes.js';
 import { contentManagementRouter } from '../routes/content-management.routes.js';
 import { analyticsRouter } from '../routes/analytics.routes.js';
 import { securityRouter } from '../routes/security.routes.js';
+import { complianceRouter } from '../routes/compliance.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -99,6 +100,9 @@ export function createApp(): Express {
   // Security endpoints
   app.use('/security', securityRouter);
 
+  // Compliance endpoints
+  app.use('/compliance', complianceRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -169,6 +173,15 @@ export function createApp(): Express {
         securityStatistics: '/security/statistics',
         securityIpBlock: '/security/ip/block',
         securityIpWhitelist: '/security/ip/whitelist',
+        compliance: '/compliance',
+        complianceAudit: '/compliance/audit',
+        complianceConsent: '/compliance/consent',
+        complianceGDPR: '/compliance/gdpr/request',
+        complianceData: '/compliance/data/:userId',
+        complianceExport: '/compliance/export/:userId',
+        complianceRetention: '/compliance/retention',
+        compliancePrivacyPolicy: '/compliance/privacy-policy',
+        complianceReport: '/compliance/report',
       },
     });
   });

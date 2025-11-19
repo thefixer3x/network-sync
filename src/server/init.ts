@@ -21,6 +21,7 @@ import { contextManager } from '@/services/context-manager';
 import { contentManagementService } from '@/services/content-management';
 import { analyticsService } from '@/services/analytics';
 import { securityService } from '@/services/security';
+import { complianceService } from '@/services/compliance';
 
 const logger = new Logger('ServerInit');
 
@@ -199,7 +200,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down security service', error);
     }
 
-    // 9. Shutdown job queue manager
+    // 9. Shutdown compliance service
+    try {
+      complianceService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down compliance service', error);
+    }
+
+    // 10. Shutdown job queue manager
     try {
       const queueManager = getQueueManager();
       await queueManager.shutdown();
@@ -207,14 +215,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down job queue manager', error);
     }
 
-    // 10. Stop cache warming
+    // 11. Stop cache warming
     try {
       shutdownCacheWarming();
     } catch (error) {
       logger.error('Error stopping cache warming', error);
     }
 
-    // 11. Disconnect Redis cache
+    // 12. Disconnect Redis cache
     try {
       const cache = getCache();
       if (cache.connected) {
@@ -224,7 +232,7 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error disconnecting Redis cache', error);
     }
 
-    // 12. Shutdown database connection pool
+    // 13. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
 
