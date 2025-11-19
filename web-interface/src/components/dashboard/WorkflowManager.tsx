@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Switch } from '@/components/ui/Switch';
-import { CreateWorkflowModal } from './CreateWorkflowModal';
+import { CreateWorkflowModal } from '@/components/dynamic-imports';
 import { useWorkflows } from '@/hooks/useWorkflows';
 import { toast } from 'react-hot-toast';
 

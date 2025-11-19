@@ -11,6 +11,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import { Logger } from '@/utils/Logger';
 
 // Extend Express Request type to include tracing data
 declare module 'express' {
@@ -49,9 +50,25 @@ const traces = new Map<string, TraceContext>();
 const metrics: RequestMetrics[] = [];
 const MAX_METRICS_SIZE = 10000; // Keep last 10k requests
 
+const logger = new Logger('RequestTracing');
+
 function sanitizeForLog(value: unknown, maxLength = 200): string {
-  const str = String(value ?? '');
-  // Remove control characters and limit length
+  let str: string;
+
+  if (typeof value === 'string') {
+    str = value;
+  } else if (typeof value === 'number' || typeof value === 'boolean') {
+    str = String(value);
+  } else if (value === null || value === undefined) {
+    str = '';
+  } else {
+    try {
+      str = JSON.stringify(value);
+    } catch {
+      str = '[unserializable]';
+    }
+  }
+
   return str.replace(/[\r\n\t]+/g, ' ').slice(0, maxLength);
 }
 
@@ -67,9 +84,9 @@ function generateRequestId(): string {
  */
 function getClientIp(req: Request): string {
   return (
-    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-    (req.headers['x-real-ip'] as string) ||
-    req.socket.remoteAddress ||
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+    (req.headers['x-real-ip'] as string) ??
+    req.socket.remoteAddress ??
     'unknown'
   );
 }
@@ -86,7 +103,7 @@ export function requestTracingMiddleware(
 ): void {
   // Generate or extract request ID
   const requestId =
-    (req.headers['x-request-id'] as string) || generateRequestId();
+    (req.headers['x-request-id'] as string) ?? generateRequestId();
 
   const parentId = req.headers['x-parent-request-id'] as string | undefined;
 
@@ -117,7 +134,7 @@ export function requestTracingMiddleware(
   const safePath = sanitizeForLog(req.path, 200);
   const safeIp = sanitizeForLog(traceContext.ip, 50);
   const safeUserAgent = sanitizeForLog(traceContext.userAgent, 100);
-  console.log(
+  logger.debug(
     `[${requestId}] --> ${req.method} ${safePath}`,
     {
       ip: safeIp,
@@ -128,13 +145,13 @@ export function requestTracingMiddleware(
 
   // Capture response
   const originalSend = res.send;
-  res.send = function (body: any): Response {
+  res.send = function (body: unknown): Response {
     res.send = originalSend; // Restore original send
 
-    const duration = Date.now() - (req.startTime || Date.now());
+    const duration = Date.now() - (req.startTime ?? Date.now());
 
     // Log request completion
-    console.log(
+    logger.debug(
       `[${requestId}] <-- ${req.method} ${req.path} ${res.statusCode} (${duration}ms)`,
     );
 
@@ -174,10 +191,10 @@ export function errorTracingMiddleware(
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ): void {
   const requestId = req.requestId || 'unknown';
-  const duration = Date.now() - (req.startTime || Date.now());
+  const duration = Date.now() - (req.startTime ?? Date.now());
 
   // Log error with trace context
   const safePath = sanitizeForLog(req.path, 200);
@@ -277,8 +294,8 @@ export function getMetricsSummary(): {
   const requestsByMethod: Record<string, number> = {};
 
   for (const metric of metrics) {
-    requestsByEndpoint[metric.endpoint] = (requestsByEndpoint[metric.endpoint] || 0) + 1;
-    requestsByMethod[metric.method] = (requestsByMethod[metric.method] || 0) + 1;
+    requestsByEndpoint[metric.endpoint] = (requestsByEndpoint[metric.endpoint] ?? 0) + 1;
+    requestsByMethod[metric.method] = (requestsByMethod[metric.method] ?? 0) + 1;
   }
 
   // Calculate percentiles
@@ -293,9 +310,9 @@ export function getMetricsSummary(): {
     errorRate: Math.round(errorRate * 100) / 100,
     requestsByEndpoint,
     requestsByMethod,
-    p50Duration: sortedDurations[p50Index] || 0,
-    p95Duration: sortedDurations[p95Index] || 0,
-    p99Duration: sortedDurations[p99Index] || 0,
+    p50Duration: sortedDurations[p50Index] ?? 0,
+    p95Duration: sortedDurations[p95Index] ?? 0,
+    p99Duration: sortedDurations[p99Index] ?? 0,
   };
 }
 
@@ -335,7 +352,9 @@ export function createChildTrace(parentRequestId: string, serviceName: string): 
  */
 export function completeChildTrace(requestId: string, statusCode: number): void {
   const trace = traces.get(requestId);
-  if (!trace) return;
+  if (!trace) {
+    return;
+  }
 
   const duration = Date.now() - trace.startTime;
 
@@ -355,7 +374,7 @@ export function completeChildTrace(requestId: string, statusCode: number): void 
     metrics.shift();
   }
 
-  console.log(
+  logger.debug(
     `[${requestId}] <-- INTERNAL ${trace.endpoint} ${statusCode} (${duration}ms)`,
   );
 }

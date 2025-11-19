@@ -8,6 +8,8 @@
 import jwt from 'jsonwebtoken';
 import { Logger } from '@/utils/Logger';
 
+type JwtExpiresIn = NonNullable<jwt.SignOptions['expiresIn']>;
+
 const logger = new Logger('JWTManager');
 
 // JWT Configuration - MUST be set via environment variables
@@ -20,9 +22,10 @@ if (!process.env['JWT_SECRET'] || !process.env['JWT_REFRESH_SECRET']) {
 }
 
 const JWT_SECRET = process.env['JWT_SECRET'];
-const JWT_EXPIRES_IN: string | number = process.env['JWT_EXPIRES_IN'] || '1h';
+const JWT_EXPIRES_IN: JwtExpiresIn = (process.env['JWT_EXPIRES_IN'] ?? '1h') as JwtExpiresIn;
 const JWT_REFRESH_SECRET = process.env['JWT_REFRESH_SECRET'];
-const JWT_REFRESH_EXPIRES_IN: string | number = process.env['JWT_REFRESH_EXPIRES_IN'] || '7d';
+const JWT_REFRESH_EXPIRES_IN: JwtExpiresIn =
+  (process.env['JWT_REFRESH_EXPIRES_IN'] ?? '7d') as JwtExpiresIn;
 
 // JWT Payload Interface
 export interface JWTPayload {
@@ -50,9 +53,8 @@ export interface DecodedToken extends JWTPayload {
  */
 export function generateAccessToken(payload: JWTPayload): string {
   try {
-    const options: jwt.SignOptions = {
-      expiresIn: JWT_EXPIRES_IN as any,
-    };
+    const options: jwt.SignOptions = {};
+    options.expiresIn = JWT_EXPIRES_IN;
 
     const token = jwt.sign(payload, JWT_SECRET, options);
 
@@ -69,9 +71,8 @@ export function generateAccessToken(payload: JWTPayload): string {
  */
 export function generateRefreshToken(payload: JWTPayload): string {
   try {
-    const options: jwt.SignOptions = {
-      expiresIn: JWT_REFRESH_EXPIRES_IN as any,
-    };
+    const options: jwt.SignOptions = {};
+    options.expiresIn = JWT_REFRESH_EXPIRES_IN;
 
     const token = jwt.sign(payload, JWT_REFRESH_SECRET, options);
 
@@ -152,7 +153,7 @@ export function decodeToken(token: string): DecodedToken | null {
         ignoreExpiration: true,
       }) as DecodedToken;
       return decodedAccess;
-    } catch (accessError) {
+    } catch {
       // If that fails, try verifying as a refresh token
       const decodedRefresh = jwt.verify(token, JWT_REFRESH_SECRET, {
         ignoreExpiration: true,
@@ -171,7 +172,9 @@ export function decodeToken(token: string): DecodedToken | null {
 export function isTokenExpired(token: string): boolean {
   try {
     const decoded = decodeToken(token);
-    if (!decoded) return true;
+    if (decoded === null) {
+      return true;
+    }
 
     const currentTime = Math.floor(Date.now() / 1000);
     return decoded.exp < currentTime;
@@ -187,7 +190,9 @@ export function isTokenExpired(token: string): boolean {
 export function getTokenExpiration(token: string): Date | null {
   try {
     const decoded = decodeToken(token);
-    if (!decoded) return null;
+    if (decoded === null) {
+      return null;
+    }
 
     return new Date(decoded.exp * 1000);
   } catch (error) {

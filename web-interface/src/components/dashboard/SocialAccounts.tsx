@@ -6,7 +6,7 @@ import { Plus, Settings, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lu
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { ConnectAccountModal } from './ConnectAccountModal';
+import { ConnectAccountModal } from '@/components/dynamic-imports';
 import { useSocialAccounts } from '@/hooks/useSocialAccounts';
 import { toast } from 'react-hot-toast';
 
@@ -142,7 +142,11 @@ export function SocialAccounts() {
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(account.status)}
-                    <button className="p-1 rounded-md hover:bg-gray-100">
+                    <button
+                      type="button"
+                      className="p-1 rounded-md hover:bg-gray-100"
+                      aria-label="Account settings"
+                    >
                       <Settings className="w-4 h-4 text-gray-400" />
                     </button>
                   </div>
@@ -188,6 +192,7 @@ export function SocialAccounts() {
                           checked={account.isActive}
                           className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                           readOnly
+                          aria-label="Auto-posting enabled"
                         />
                       </div>
                     </div>
