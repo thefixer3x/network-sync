@@ -1,0 +1,184 @@
+# Dependabot Configuration
+# Automated dependency updates with security scanning
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Backend Dependencies (npm/bun)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "thefixer3x"
+    assignees:
+      - "thefixer3x"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Group minor and patch updates together
+    groups:
+      backend-production:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "eslint*"
+          - "typescript"
+        update-types:
+          - "minor"
+          - "patch"
+      backend-dev:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "typescript"
+        update-types:
+          - "minor"
+          - "patch"
+    # Allow specific dependencies to be updated
+    allow:
+      - dependency-type: "all"
+    # Ignore major version updates for stable packages
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+    # Security updates have higher priority
+    versioning-strategy: "increase"
+
+  # Frontend Dependencies (web-interface)
+  - package-ecosystem: "npm"
+    directory: "/web-interface"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "thefixer3x"
+    assignees:
+      - "thefixer3x"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Group Next.js ecosystem updates
+    groups:
+      nextjs-ecosystem:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+        update-types:
+          - "minor"
+          - "patch"
+      frontend-ui:
+        patterns:
+          - "@headlessui/*"
+          - "@heroicons/*"
+          - "lucide-react"
+          - "framer-motion"
+        update-types:
+          - "minor"
+          - "patch"
+      frontend-utils:
+        patterns:
+          - "axios"
+          - "date-fns"
+          - "clsx"
+          - "zod"
+        update-types:
+          - "minor"
+          - "patch"
+      frontend-dev:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "typescript"
+          - "tailwindcss"
+          - "postcss"
+          - "autoprefixer"
+        update-types:
+          - "minor"
+          - "patch"
+    allow:
+      - dependency-type: "all"
+    # Ignore known issues
+    ignore:
+      # Keep glob at current version until security fix is available
+      - dependency-name: "glob"
+        update-types: ["version-update:semver-major"]
+      # React major versions require migration
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+    versioning-strategy: "increase"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "thefixer3x"
+    assignees:
+      - "thefixer3x"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Docker (if Dockerfile exists in root)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "thefixer3x"
+    assignees:
+      - "thefixer3x"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+
+# Notes:
+# - Security updates are automatically prioritized
+# - Major version updates require manual review
+# - Grouped PRs reduce PR noise
+# - Auto-merge can be configured via GitHub Actions (see auto-merge-dependabot.yml)
+# - Enable "Dependabot security updates" in repository settings
