@@ -47,6 +47,6 @@
     "webpack-bundle-analyzer": "^4.10.1"
   },
   "optionalDependencies": {
-    "recharts": "^2.8.0"
+    "recharts": "^3.4.1"
   }
 }
