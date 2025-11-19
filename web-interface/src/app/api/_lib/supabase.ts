@@ -1,9 +1,11 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
 
+type AnySupabaseClient = SupabaseClient<any, any, any>;
+
 const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || process.env.SUPABASE_SCHEMA || 'network_sync';
 
-export function createServiceSupabaseClient(): SupabaseClient {
+export function createServiceSupabaseClient(): AnySupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -11,14 +13,14 @@ export function createServiceSupabaseClient(): SupabaseClient {
     throw new Error('Supabase URL/service role key must be configured');
   }
 
-  return createClient(url, serviceRoleKey, {
+  return createClient<any, any, any>(url, serviceRoleKey, {
     db: { schema },
   });
 }
 
 export async function extractUserId(
   request: NextRequest,
-  supabase: SupabaseClient
+  supabase: AnySupabaseClient
 ): Promise<string | null> {
   const headerUserId = request.headers.get('x-user-id');
   if (headerUserId) return headerUserId;
