@@ -19,6 +19,7 @@ import { contentManagementRouter } from '../routes/content-management.routes.js'
 import { analyticsRouter } from '../routes/analytics.routes.js';
 import { securityRouter } from '../routes/security.routes.js';
 import { complianceRouter } from '../routes/compliance.routes.js';
+import { backupRouter } from '../routes/backup.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -103,6 +104,9 @@ export function createApp(): Express {
   // Compliance endpoints
   app.use('/compliance', complianceRouter);
 
+  // Backup and disaster recovery endpoints
+  app.use('/backup', backupRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -182,6 +186,12 @@ export function createApp(): Express {
         complianceRetention: '/compliance/retention',
         compliancePrivacyPolicy: '/compliance/privacy-policy',
         complianceReport: '/compliance/report',
+        backup: '/backup',
+        backupConfig: '/backup/config',
+        backupJobs: '/backup/jobs',
+        backupRecoveryPoints: '/backup/recovery-points',
+        backupRestore: '/backup/restore/:recoveryPointId',
+        backupMetrics: '/backup/metrics',
       },
     });
   });
