@@ -8,14 +8,18 @@
 
 import { useState } from 'react';
 import { WorkflowCanvas } from '@/components/workflow-builder/WorkflowCanvas';
+import { TemplateBrowser } from '@/components/workflow-builder/TemplateBrowser';
 import { workflowApi } from '@/lib/api/workflow';
-import type { VisualWorkflow } from '@/types/workflow';
+import { createWorkflowFromTemplate } from '@/lib/workflow-templates';
+import type { VisualWorkflow, WorkflowTemplate } from '@/types/workflow';
 import toast from 'react-hot-toast';
+import { RectangleStackIcon } from '@heroicons/react/24/outline';
 
 export default function WorkflowBuilderPage() {
   const [currentWorkflow, setCurrentWorkflow] = useState<VisualWorkflow | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [showTemplateBrowser, setShowTemplateBrowser] = useState(false);
 
   const handleSave = async (workflowData: Partial<VisualWorkflow>) => {
     setIsSaving(true);
@@ -100,6 +104,18 @@ export default function WorkflowBuilderPage() {
     }
   };
 
+  const handleSelectTemplate = (template: WorkflowTemplate) => {
+    const workflowData = createWorkflowFromTemplate(template);
+    setCurrentWorkflow({
+      id: '',
+      ...workflowData,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    } as VisualWorkflow);
+    setShowTemplateBrowser(false);
+    toast.success(`Template "${template.name}" loaded!`);
+  };
+
   return (
     <div className="h-screen flex flex-col">
       {/* Page header */}
@@ -119,6 +135,13 @@ export default function WorkflowBuilderPage() {
             {isExecuting && (
               <span className="text-sm text-gray-500">Executing...</span>
             )}
+            <button
+              onClick={() => setShowTemplateBrowser(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <RectangleStackIcon className="w-5 h-5" />
+              Start from Template
+            </button>
           </div>
         </div>
       </div>
@@ -142,6 +165,14 @@ export default function WorkflowBuilderPage() {
           </span>
         </div>
       </div>
+
+      {/* Template Browser Modal */}
+      {showTemplateBrowser && (
+        <TemplateBrowser
+          onSelectTemplate={handleSelectTemplate}
+          onClose={() => setShowTemplateBrowser(false)}
+        />
+      )}
     </div>
   );
 }

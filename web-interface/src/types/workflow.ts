@@ -86,7 +86,8 @@ export type NodeConfig =
   | LoopConfig
   | ApiConfig
   | WebhookConfig
-  | NotificationConfig;
+  | NotificationConfig
+  | EndConfig;
 
 export interface TriggerConfig {
   type: 'trigger';
@@ -170,6 +171,10 @@ export interface NotificationConfig {
   recipients: string[];
   template: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
+}
+
+export interface EndConfig {
+  type: 'end';
 }
 
 export interface RetryPolicy {
