@@ -10,7 +10,11 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseClient, releaseConnection } from '@/database/connection-pool';
+import {
+  getSupabaseAdminClient,
+  getSupabaseClient,
+  releaseConnection,
+} from '@/database/connection-pool';
 import { getCache } from '@/cache/redis-cache';
 import { cacheAside, CacheKeyBuilder } from '@/cache/cache-helpers';
 import { Logger } from '@/utils/Logger';
@@ -59,9 +63,14 @@ export class VectorStore {
 
   constructor() {
     try {
-      // Use shared connection pool instead of creating new client
-      this.supabase = getSupabaseClient();
-      logger.info('VectorStore initialized with connection pool and caching');
+      // Prefer admin client to avoid RLS failures; fall back to anon client if unavailable
+      try {
+        this.supabase = getSupabaseAdminClient();
+        logger.info('VectorStore initialized with admin client, connection pool, and caching');
+      } catch {
+        this.supabase = getSupabaseClient();
+        logger.info('VectorStore initialized with anon client, connection pool, and caching');
+      }
 
       // Note: Database schema must be initialized via migrations
       // See: migrations/001_create_vector_store.sql
@@ -69,6 +78,20 @@ export class VectorStore {
       logger.error('Failed to initialize VectorStore', error);
       throw error;
     }
+  }
+
+  /**
+   * Normalize metadata to include user ownership for RLS
+   */
+  private ensureOwnershipMetadata(metadata?: Record<string, any>): Record<string, any> {
+    const normalized = { ...(metadata || {}) };
+    if (normalized.userId && !normalized.user_id) {
+      normalized.user_id = normalized.userId;
+    }
+    if (!normalized.user_id) {
+      logger.debug('metadata.user_id not provided; RLS will restrict non-service-role access');
+    }
+    return normalized;
   }
 
   /**
@@ -92,7 +115,7 @@ export class VectorStore {
       .insert({
         content: contentString,
         embedding,
-        metadata: params.metadata || {},
+        metadata: this.ensureOwnershipMetadata(params.metadata),
       })
       .select('id')
       .single();
@@ -126,7 +149,7 @@ export class VectorStore {
         const documents = batch.map((e) => ({
           content: e.content,
           embedding: e.embedding,
-          metadata: e.metadata || {},
+          metadata: this.ensureOwnershipMetadata(e.metadata),
         }));
 
         const { data, error } = await this.supabase

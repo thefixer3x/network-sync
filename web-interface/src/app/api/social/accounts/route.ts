@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceSupabaseClient, extractUserId } from '../../_lib/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+const supabase = createServiceSupabaseClient();
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = await extractUserId(request, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { data, error } = await supabase
       .from('social_accounts')
       .select(`
@@ -22,6 +24,7 @@ export async function GET(request: NextRequest) {
         is_active,
         created_at
       `)
+      .eq('credentials->>user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -41,7 +44,7 @@ export async function GET(request: NextRequest) {
       profileImage: account.profile_image,
       status: account.status,
       followers: account.followers,
-      lastSync: new Date(account.last_sync),
+      lastSync: account.last_sync ? new Date(account.last_sync) : null,
       isActive: account.is_active,
     })) || [];
 
@@ -58,12 +61,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await extractUserId(request, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const accountData = await request.json();
 
     const { data, error } = await supabase
       .from('social_accounts')
       .insert([{
         ...accountData,
+        credentials: { ...(accountData.credentials || {}), user_id: userId },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }])

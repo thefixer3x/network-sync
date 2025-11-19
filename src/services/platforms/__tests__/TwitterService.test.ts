@@ -1,13 +1,13 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import type { Content } from '../../../types/typescript-types';
-import { AuthenticationError, RateLimitError } from '../../../types/typescript-types';
+import { AuthenticationError } from '../../../types/typescript-types';
 
 // Mock twitter-api-v2
-const mockTweet = jest.fn();
-const mockMe = jest.fn();
-const mockUploadMedia = jest.fn();
-const mockUserTimeline = jest.fn();
-const mockDeleteTweet = jest.fn();
+const mockTweet = jest.fn() as jest.Mock;
+const mockMe = jest.fn() as jest.Mock;
+const mockUploadMedia = jest.fn() as jest.Mock;
+const mockUserTimeline = jest.fn() as jest.Mock;
+const mockDeleteTweet = jest.fn() as jest.Mock;
 
 jest.mock('twitter-api-v2', () => ({
   TwitterApi: jest.fn().mockImplementation(() => ({
@@ -38,10 +38,10 @@ import { TwitterService } from '../TwitterService';
 describe('TwitterService', () => {
   let service: TwitterService;
   const mockCredentials = {
-    apiKey: 'test-api-key',
-    apiSecret: 'test-api-secret',
-    accessToken: 'test-access-token',
-    accessSecret: 'test-access-secret',
+    apiKey: 'test-twitter-api-key-for-tests',
+    apiSecret: 'test-twitter-api-secret-for-tests',
+    accessToken: 'test-twitter-access-token-for-tests',
+    accessSecret: 'test-twitter-access-secret-for-tests',
   };
 
   beforeEach(() => {
@@ -61,10 +61,10 @@ describe('TwitterService', () => {
     });
 
     it('should use environment variables when credentials not provided', () => {
-      process.env['TWITTER_API_KEY'] = 'env-key';
-      process.env['TWITTER_API_SECRET'] = 'env-secret';
-      process.env['TWITTER_ACCESS_TOKEN'] = 'env-token';
-      process.env['TWITTER_ACCESS_SECRET'] = 'env-access-secret';
+      process.env['TWITTER_API_KEY'] = 'twitter-env-api-key-for-tests';
+      process.env['TWITTER_API_SECRET'] = 'twitter-env-api-secret-for-tests';
+      process.env['TWITTER_ACCESS_TOKEN'] = 'twitter-env-access-token-for-tests';
+      process.env['TWITTER_ACCESS_SECRET'] = 'twitter-env-access-secret-for-tests';
 
       const envService = new TwitterService();
       expect(envService).toBeInstanceOf(TwitterService);
@@ -78,7 +78,7 @@ describe('TwitterService', () => {
 
   describe('authenticate', () => {
     it('should successfully authenticate and return true', async () => {
-      (mockMe as any).mockResolvedValue({
+      mockMe.mockResolvedValue({
         data: {
           id: '123456',
           username: 'testuser',
@@ -92,7 +92,7 @@ describe('TwitterService', () => {
     });
 
     it('should throw AuthenticationError on authentication failure', async () => {
-      (mockMe as any).mockRejectedValue(new Error('Invalid credentials'));
+      mockMe.mockRejectedValue(new Error('Invalid credentials'));
 
       await expect(service.authenticate()).rejects.toThrow(AuthenticationError);
       await expect(service.authenticate()).rejects.toThrow('Invalid credentials');
@@ -114,7 +114,7 @@ describe('TwitterService', () => {
     };
 
     it('should post a text-only tweet successfully', async () => {
-      (mockTweet as any).mockResolvedValue({
+      mockTweet.mockResolvedValue({
         data: {
           id: 'tweet-123',
           text: 'Test tweet content',
@@ -135,8 +135,8 @@ describe('TwitterService', () => {
         mediaUrls: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
       };
 
-      (mockUploadMedia as any).mockResolvedValue('media-id-1');
-      (mockTweet as any).mockResolvedValue({
+      mockUploadMedia.mockResolvedValue('media-id-1');
+      mockTweet.mockResolvedValue({
         data: {
           id: 'tweet-456',
           text: 'Test tweet with media',
@@ -160,7 +160,7 @@ describe('TwitterService', () => {
     });
 
     it('should handle rate limit errors', async () => {
-      (mockTweet as any).mockRejectedValue({
+      mockTweet.mockRejectedValue({
         code: 429,
         message: 'Rate limit exceeded',
       });
@@ -171,7 +171,7 @@ describe('TwitterService', () => {
 
   describe('getMetrics', () => {
     it('should retrieve account metrics successfully', async () => {
-      (mockMe as any).mockResolvedValue({
+      mockMe.mockResolvedValue({
         data: {
           id: '123456',
           username: 'testuser',
@@ -184,7 +184,7 @@ describe('TwitterService', () => {
         },
       });
 
-      (mockUserTimeline as any).mockResolvedValue({
+      mockUserTimeline.mockResolvedValue({
         data: {
           data: [
             {
@@ -210,7 +210,7 @@ describe('TwitterService', () => {
     });
 
     it('should handle missing public_metrics gracefully', async () => {
-      (mockMe as any).mockResolvedValue({
+      mockMe.mockResolvedValue({
         data: {
           id: '123456',
           username: 'testuser',
@@ -218,7 +218,7 @@ describe('TwitterService', () => {
         },
       });
 
-      (mockUserTimeline as any).mockResolvedValue({
+      mockUserTimeline.mockResolvedValue({
         data: { data: [] },
       });
 
@@ -232,7 +232,7 @@ describe('TwitterService', () => {
 
   describe('deletePost', () => {
     it('should successfully delete a tweet', async () => {
-      (mockDeleteTweet as any).mockResolvedValue({
+      mockDeleteTweet.mockResolvedValue({
         data: { deleted: true },
       });
 
@@ -243,7 +243,7 @@ describe('TwitterService', () => {
     });
 
     it('should return false when tweet deletion fails', async () => {
-      (mockDeleteTweet as any).mockRejectedValue(new Error('Tweet not found'));
+      mockDeleteTweet.mockRejectedValue(new Error('Tweet not found'));
 
       await expect(service.deletePost('invalid-tweet')).rejects.toThrow();
     });
@@ -271,7 +271,7 @@ describe('TwitterService', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors', async () => {
-      (mockTweet as any).mockRejectedValue(new Error('Network error'));
+      mockTweet.mockRejectedValue(new Error('Network error'));
 
       const content: Content = {
         id: '123e4567-e89b-12d3-a456-426614174000',
@@ -290,7 +290,7 @@ describe('TwitterService', () => {
     });
 
     it('should handle API errors with proper error types', async () => {
-      (mockMe as any).mockRejectedValue({
+      mockMe.mockRejectedValue({
         code: 401,
         message: 'Unauthorized',
       });

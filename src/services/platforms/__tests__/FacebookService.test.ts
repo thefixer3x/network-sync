@@ -3,9 +3,9 @@ import type { Content } from '../../../types/typescript-types';
 import { AuthenticationError } from '../../../types/typescript-types';
 
 // Mock axios
-const mockAxiosGet = jest.fn();
-const mockAxiosPost = jest.fn();
-const mockAxiosDelete = jest.fn();
+const mockAxiosGet = jest.fn() as jest.Mock;
+const mockAxiosPost = jest.fn() as jest.Mock;
+const mockAxiosDelete = jest.fn() as jest.Mock;
 
 jest.mock('axios', () => ({
   default: {
@@ -30,8 +30,8 @@ import { FacebookService } from '../FacebookService';
 describe('FacebookService', () => {
   let service: FacebookService;
   const mockCredentials = {
-    accessToken: 'test-facebook-token',
-    pageId: 'test-page-id',
+    accessToken: 'facebook-access-token-for-tests',
+    pageId: 'facebook-page-id-for-tests',
   };
 
   beforeEach(() => {
@@ -51,8 +51,8 @@ describe('FacebookService', () => {
     });
 
     it('should use environment variables when credentials not provided', () => {
-      process.env['FACEBOOK_ACCESS_TOKEN'] = 'env-token';
-      process.env['FACEBOOK_PAGE_ID'] = 'env-page-id';
+      process.env['FACEBOOK_ACCESS_TOKEN'] = 'facebook-env-access-token-for-tests';
+      process.env['FACEBOOK_PAGE_ID'] = 'facebook-env-page-id-for-tests';
 
       const envService = new FacebookService();
       expect(envService).toBeInstanceOf(FacebookService);
@@ -64,7 +64,7 @@ describe('FacebookService', () => {
 
   describe('authenticate', () => {
     it('should successfully authenticate and return true', async () => {
-      (mockAxiosGet as any).mockResolvedValue({
+      mockAxiosGet.mockResolvedValue({
         data: {
           id: '123456',
           name: 'Test User',
@@ -83,7 +83,7 @@ describe('FacebookService', () => {
     });
 
     it('should throw AuthenticationError on authentication failure', async () => {
-      (mockAxiosGet as any).mockRejectedValue({
+      mockAxiosGet.mockRejectedValue({
         response: {
           data: {
             error: {
@@ -112,7 +112,7 @@ describe('FacebookService', () => {
     };
 
     it('should post a text-only update successfully', async () => {
-      (mockAxiosPost as any).mockResolvedValue({
+      mockAxiosPost.mockResolvedValue({
         data: {
           id: 'post_123456',
         },
@@ -136,7 +136,7 @@ describe('FacebookService', () => {
         mediaUrls: ['https://example.com/image.jpg'],
       };
 
-      (mockAxiosPost as any).mockResolvedValue({
+      mockAxiosPost.mockResolvedValue({
         data: {
           id: 'post_789',
         },
@@ -160,7 +160,7 @@ describe('FacebookService', () => {
 
   describe('getMetrics', () => {
     it('should retrieve account metrics successfully', async () => {
-      (mockAxiosGet as any).mockResolvedValue({
+      mockAxiosGet.mockResolvedValue({
         data: {
           id: '123456',
           followers_count: 1000,
@@ -178,7 +178,7 @@ describe('FacebookService', () => {
 
   describe('deletePost', () => {
     it('should successfully delete a post', async () => {
-      (mockAxiosDelete as any).mockResolvedValue({
+      mockAxiosDelete.mockResolvedValue({
         data: { success: true },
       });
 

@@ -3,9 +3,9 @@ import type { Content } from '../../../types/typescript-types';
 import { AuthenticationError } from '../../../types/typescript-types';
 
 // Mock axios
-const mockAxiosGet = jest.fn();
-const mockAxiosPost = jest.fn();
-const mockAxiosDelete = jest.fn();
+const mockAxiosGet = jest.fn() as jest.Mock;
+const mockAxiosPost = jest.fn() as jest.Mock;
+const mockAxiosDelete = jest.fn() as jest.Mock;
 
 jest.mock('axios', () => ({
   default: {
@@ -30,8 +30,8 @@ import { LinkedInService } from '../LinkedInService';
 describe('LinkedInService', () => {
   let service: LinkedInService;
   const mockCredentials = {
-    accessToken: 'test-linkedin-token',
-    personId: '12345',
+    accessToken: 'linkedin-access-token-for-tests',
+    personId: 'linkedin-person-id-for-tests',
   };
 
   beforeEach(() => {
@@ -51,8 +51,8 @@ describe('LinkedInService', () => {
     });
 
     it('should use environment variables when credentials not provided', () => {
-      process.env['LINKEDIN_ACCESS_TOKEN'] = 'env-token';
-      process.env['LINKEDIN_PERSON_ID'] = 'env-person-id';
+      process.env['LINKEDIN_ACCESS_TOKEN'] = 'linkedin-env-access-token-for-tests';
+      process.env['LINKEDIN_PERSON_ID'] = 'linkedin-env-person-id-for-tests';
 
       const envService = new LinkedInService();
       expect(envService).toBeInstanceOf(LinkedInService);
@@ -64,7 +64,7 @@ describe('LinkedInService', () => {
 
   describe('authenticate', () => {
     it('should successfully authenticate and return true', async () => {
-      (mockAxiosGet as any).mockResolvedValue({
+      mockAxiosGet.mockResolvedValue({
         data: {
           id: '12345',
           localizedFirstName: 'John',
@@ -86,7 +86,7 @@ describe('LinkedInService', () => {
     });
 
     it('should throw AuthenticationError on authentication failure', async () => {
-      (mockAxiosGet as any).mockRejectedValue({
+      mockAxiosGet.mockRejectedValue({
         response: {
           data: {
             message: 'Invalid access token',
@@ -113,7 +113,7 @@ describe('LinkedInService', () => {
     };
 
     it('should post a text-only update successfully', async () => {
-      (mockAxiosPost as any).mockResolvedValue({
+      mockAxiosPost.mockResolvedValue({
         data: {
           id: 'urn:li:share:123456789',
         },
@@ -142,7 +142,7 @@ describe('LinkedInService', () => {
         mediaUrls: ['https://example.com/image.jpg'],
       };
 
-      (mockAxiosPost as any).mockResolvedValue({
+      mockAxiosPost.mockResolvedValue({
         data: {
           id: 'urn:li:share:987654321',
         },
@@ -177,7 +177,7 @@ describe('LinkedInService', () => {
 
   describe('getMetrics', () => {
     it('should retrieve account metrics successfully', async () => {
-      (mockAxiosGet as any).mockResolvedValue({
+      mockAxiosGet.mockResolvedValue({
         data: {
           id: '12345',
           localizedFirstName: 'John',
@@ -194,7 +194,7 @@ describe('LinkedInService', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      (mockAxiosGet as any).mockRejectedValue(new Error('API error'));
+      mockAxiosGet.mockRejectedValue(new Error('API error'));
 
       await expect(service.getMetrics()).rejects.toThrow();
     });
@@ -202,7 +202,7 @@ describe('LinkedInService', () => {
 
   describe('deletePost', () => {
     it('should successfully delete a post', async () => {
-      (mockAxiosDelete as any).mockResolvedValue({
+      mockAxiosDelete.mockResolvedValue({
         status: 204,
       });
 
@@ -213,7 +213,7 @@ describe('LinkedInService', () => {
     });
 
     it('should handle deletion errors', async () => {
-      (mockAxiosDelete as any).mockRejectedValue(new Error('Post not found'));
+      mockAxiosDelete.mockRejectedValue(new Error('Post not found'));
 
       await expect(service.deletePost('invalid-id')).rejects.toThrow();
     });
@@ -241,7 +241,7 @@ describe('LinkedInService', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors', async () => {
-      (mockAxiosPost as any).mockRejectedValue(new Error('Network timeout'));
+      mockAxiosPost.mockRejectedValue(new Error('Network timeout'));
 
       const content: Content = {
         id: '123e4567-e89b-12d3-a456-426614174000',
@@ -260,7 +260,7 @@ describe('LinkedInService', () => {
     });
 
     it('should handle invalid response format', async () => {
-      (mockAxiosPost as any).mockResolvedValue({
+      mockAxiosPost.mockResolvedValue({
         data: {}, // Missing id field
       });
 

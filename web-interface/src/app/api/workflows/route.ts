@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceSupabaseClient, extractUserId } from '../_lib/supabase';
 // import { SocialGrowthEngine } from '@/../src/orchestrator/SocialGrowthEngine';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+const supabase = createServiceSupabaseClient();
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = await extractUserId(request, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { data, error } = await supabase
       .from('workflows')
       .select('*')
+      .eq('config->>user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -52,15 +55,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await extractUserId(request, supabase);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const workflowData = await request.json();
 
     // Calculate next run time based on schedule
-    const nextRun = calculateNextRun(workflowData.schedule);
+    const nextRun = workflowData.schedule?.time
+      ? calculateNextRun(workflowData.schedule)
+      : new Date();
 
     const { data, error } = await supabase
       .from('workflows')
       .insert([{
         ...workflowData,
+        config: { ...(workflowData.config || {}), user_id: userId },
         id: crypto.randomUUID(),
         status: 'paused', // Start paused by default
         total_runs: 0,
@@ -92,6 +103,10 @@ export async function POST(request: NextRequest) {
 }
 
 function calculateNextRun(schedule: any): Date {
+  if (!schedule?.time) {
+    return new Date();
+  }
+
   const now = new Date();
   const [hours, minutes] = schedule.time.split(':').map(Number);
   

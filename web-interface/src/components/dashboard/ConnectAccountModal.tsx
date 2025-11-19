@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ConnectAccountModalProps {
   isOpen: boolean;
@@ -87,6 +88,7 @@ export function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProp
     accessToken: '',
     accessSecret: '',
   });
+  const { session } = useAuth();
 
   const handleOAuthConnect = async (platform: Platform) => {
     setIsConnecting(true);
@@ -101,6 +103,10 @@ export function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProp
 
   const handleManualConnect = async () => {
     if (!selectedPlatform) return;
+    if (!session?.access_token) {
+      toast.error('Please sign in before connecting an account.');
+      return;
+    }
     
     setIsConnecting(true);
     try {
@@ -108,6 +114,9 @@ export function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
         },
         body: JSON.stringify({
           platform: selectedPlatform,

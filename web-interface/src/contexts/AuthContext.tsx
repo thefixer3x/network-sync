@@ -6,7 +6,12 @@ import type { User, Session } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder'
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder',
+  {
+    db: {
+      schema: process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'network_sync',
+    },
+  }
 );
 
 interface AuthContextType {

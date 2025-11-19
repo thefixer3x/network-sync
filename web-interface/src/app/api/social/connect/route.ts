@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceSupabaseClient, extractUserId } from '../../_lib/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+const supabase = createServiceSupabaseClient();
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await extractUserId(request, supabase);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { platform, credentials } = await request.json();
 
     // Validate the incoming data
@@ -24,18 +29,20 @@ export async function POST(request: NextRequest) {
     // 3. Fetch initial account information
 
     // For now, we'll simulate the process
+    const now = new Date().toISOString();
     const accountData = {
       id: crypto.randomUUID(),
       platform,
       username: `user_${Date.now()}`,
-      displayName: `User on ${platform}`,
-      profileImage: 'https://via.placeholder.com/150',
+      display_name: `User on ${platform}`,
+      profile_image: 'https://via.placeholder.com/150',
       status: 'connected',
       followers: Math.floor(Math.random() * 10000),
-      lastSync: new Date().toISOString(),
-      isActive: true,
-      credentials: credentials, // In production, encrypt this!
-      createdAt: new Date().toISOString(),
+      last_sync: now,
+      is_active: true,
+      credentials: { ...(credentials || {}), user_id: userId }, // In production, encrypt this!
+      created_at: now,
+      updated_at: now,
     };
 
     // Store in database
