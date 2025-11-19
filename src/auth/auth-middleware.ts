@@ -4,15 +4,24 @@
  * Middleware functions for protecting routes and validating JWT tokens
  */
 
-import type { NextRequest } from 'next/server';
 import { verifyAccessToken, extractTokenFromHeader, type DecodedToken } from './jwt-manager';
 import { Logger } from '@/utils/Logger';
 
 const logger = new Logger('AuthMiddleware');
 
+// Minimal NextRequest type definition (since Next.js is not a dependency)
+export interface NextRequest {
+  headers: {
+    get(name: string): string | null;
+  };
+  cookies?: {
+    get(name: string): { value: string } | undefined;
+  };
+}
+
 // Extended Request with user data
 export interface AuthenticatedRequest extends NextRequest {
-  user?: DecodedToken;
+  user?: DecodedToken | undefined;
 }
 
 /**

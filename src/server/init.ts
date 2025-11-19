@@ -11,7 +11,18 @@
 import { Logger } from '@/utils/Logger';
 import { initializeConnectionPool, getConnectionPool } from '@/database/connection-pool';
 import { initializeCache, getCache } from '@/cache/redis-cache';
+import { initializeCacheWarming, shutdownCacheWarming } from '@/cache/cache-init';
 import { initializeQueueManager, getQueueManager } from '@/queue/bull-queue';
+import { aiRequestOptimizer } from '@/services/ai-request-optimizer';
+import { aiRequestQueue } from '@/services/ai-request-queue';
+import { agentSupervisor } from '@/services/agent-supervisor';
+import { workflowManager } from '@/services/workflow-manager';
+import { contextManager } from '@/services/context-manager';
+import { contentManagementService } from '@/services/content-management';
+import { analyticsService } from '@/services/analytics';
+import { securityService } from '@/services/security';
+import { complianceService } from '@/services/compliance';
+import { backupService } from '@/services/backup';
 
 const logger = new Logger('ServerInit');
 
@@ -28,7 +39,10 @@ export async function initializeServer(): Promise<void> {
     // 2. Initialize Redis cache
     await initializeRedisCache();
 
-    // 3. Initialize job queue manager
+    // 3. Initialize cache warming
+    await initializeCacheWarming();
+
+    // 4. Initialize job queue manager
     await initializeJobQueue();
 
     logger.info('Server infrastructure initialized successfully');
@@ -131,7 +145,77 @@ export async function shutdownServer(): Promise<void> {
   logger.info('Shutting down server infrastructure...');
 
   try {
-    // 1. Shutdown job queue manager (first to complete pending jobs)
+    // 1. Shutdown AI request queue (first to complete pending requests)
+    try {
+      aiRequestQueue.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down AI request queue', error);
+    }
+
+    // 2. Shutdown AI request optimizer
+    try {
+      aiRequestOptimizer.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down AI request optimizer', error);
+    }
+
+    // 3. Shutdown agent supervisor
+    try {
+      agentSupervisor.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down agent supervisor', error);
+    }
+
+    // 4. Shutdown workflow manager
+    try {
+      workflowManager.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down workflow manager', error);
+    }
+
+    // 5. Shutdown context manager
+    try {
+      await contextManager.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down context manager', error);
+    }
+
+    // 6. Shutdown content management service
+    try {
+      contentManagementService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down content management service', error);
+    }
+
+    // 7. Shutdown analytics service
+    try {
+      analyticsService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down analytics service', error);
+    }
+
+    // 8. Shutdown security service
+    try {
+      securityService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down security service', error);
+    }
+
+    // 9. Shutdown compliance service
+    try {
+      complianceService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down compliance service', error);
+    }
+
+    // 10. Shutdown backup service
+    try {
+      backupService.shutdown();
+    } catch (error) {
+      logger.error('Error shutting down backup service', error);
+    }
+
+    // 11. Shutdown job queue manager
     try {
       const queueManager = getQueueManager();
       await queueManager.shutdown();
@@ -139,7 +223,14 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error shutting down job queue manager', error);
     }
 
-    // 2. Disconnect Redis cache
+    // 12. Stop cache warming
+    try {
+      shutdownCacheWarming();
+    } catch (error) {
+      logger.error('Error stopping cache warming', error);
+    }
+
+    // 13. Disconnect Redis cache
     try {
       const cache = getCache();
       if (cache.connected) {
@@ -149,7 +240,7 @@ export async function shutdownServer(): Promise<void> {
       logger.error('Error disconnecting Redis cache', error);
     }
 
-    // 3. Shutdown database connection pool
+    // 14. Shutdown database connection pool
     const pool = getConnectionPool();
     await pool.shutdown();
 

@@ -4,9 +4,20 @@
  * CORS, CSRF, and security headers configuration
  */
 
-import type { NextRequest } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { Logger } from '@/utils/Logger';
+
+// Minimal NextRequest type definition (since Next.js is not a dependency)
+interface NextRequest {
+  headers: {
+    get(name: string): string | null;
+  };
+  cookies?: {
+    get(name: string): { value: string } | undefined;
+  };
+  method?: string;
+  url?: string;
+}
 
 const logger = new Logger('SecurityMiddleware');
 
@@ -158,7 +169,7 @@ function cleanupExpiredTokens(): void {
  */
 export function csrfProtection(request: NextRequest): Response | null {
   // Skip CSRF for GET, HEAD, OPTIONS
-  if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+  if (request.method && ['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
     return null;
   }
 
@@ -169,7 +180,7 @@ export function csrfProtection(request: NextRequest): Response | null {
   }
 
   // Get session ID from cookie or header
-  const sessionId = request.cookies.get('sessionId')?.value || request.headers.get('x-session-id');
+  const sessionId = request.cookies?.get('sessionId')?.value || request.headers.get('x-session-id');
 
   if (!sessionId) {
     logger.warn('CSRF protection: No session ID provided');

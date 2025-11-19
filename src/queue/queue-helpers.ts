@@ -293,16 +293,14 @@ export async function addPriorityJob<T = any>(
 export async function scheduleRecurringJob<T = any>(
   jobType: JobType,
   data: T,
-  repeatOptions: {
-    cron?: string;
-    every?: number; // milliseconds
-    limit?: number;
-  }
+  repeatOptions:
+    | { cron: string; limit?: number }
+    | { every: number; limit?: number }
 ): Promise<string> {
   const manager = getQueueManager();
 
   const options: JobOptions = {
-    repeat: repeatOptions,
+    repeat: repeatOptions as any, // Bull types are complex, using any for repeat
   };
 
   const job = await manager.addJob(jobType, data, options);

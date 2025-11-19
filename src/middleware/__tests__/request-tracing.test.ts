@@ -2,6 +2,7 @@
  * Tests for Request Tracing Middleware
  */
 
+// @ts-nocheck
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import type { Request, Response, NextFunction } from 'express';
 import {

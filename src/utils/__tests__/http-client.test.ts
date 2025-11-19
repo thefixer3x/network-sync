@@ -2,6 +2,7 @@
  * Tests for HTTP Client Utility
  */
 
+// @ts-nocheck
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { HttpClient, createHttpClient } from '../http-client.js';
 

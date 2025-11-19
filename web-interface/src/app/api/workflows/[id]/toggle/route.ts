@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceSupabaseClient, extractUserId } from '../../_lib/supabase';
+import { createServiceSupabaseClient, extractUserId } from '../../../_lib/supabase';
 
 const supabase = createServiceSupabaseClient();
 
@@ -12,7 +12,6 @@ export async function POST(
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const workflowId = params.id;
 
     // Get current workflow

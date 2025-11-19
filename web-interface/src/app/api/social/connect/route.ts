@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
     const { platform, credentials } = await request.json();
 
     // Validate the incoming data

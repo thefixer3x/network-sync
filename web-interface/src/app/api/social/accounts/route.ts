@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const { data, error } = await supabase
       .from('social_accounts')
       .select(`
