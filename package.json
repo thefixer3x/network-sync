@@ -50,7 +50,7 @@
     "express-rate-limit": "^8.2.1",
     "googleapis": "^144.0.0",
     "helmet": "^8.1.0",
-    "inquirer": "^9.3.8",
+    "inquirer": "^13.0.1",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
     "openai": "^4.104.0",
