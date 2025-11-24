@@ -24,7 +24,7 @@
     "@supabase/supabase-js": "^2.39.3",
     "@supabase/auth-ui-react": "^0.4.6",
     "@supabase/auth-ui-shared": "^0.1.8",
-    "react-hot-toast": "^2.4.1",
+    "react-hot-toast": "^2.6.0",
     "framer-motion": "^10.16.16",
     "date-fns": "^2.30.0",
     "react-hook-form": "^7.48.2",
