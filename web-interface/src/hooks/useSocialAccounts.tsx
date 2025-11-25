@@ -8,8 +8,8 @@ export function useSocialAccounts() {
   const { session } = useAuth();
 
   const authHeaders = session?.access_token
-    ? { Authorization: `Bearer ${session.access_token}` }
-    : {};
+    ? { 'Authorization': `Bearer ${session.access_token}` } as Record<string, string>
+    : {} as Record<string, string>;
 
   const { data: accounts, isLoading, refetch } = useQuery(
     'socialAccounts',

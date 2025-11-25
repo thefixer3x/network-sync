@@ -20,6 +20,7 @@ import { analyticsRouter } from '../routes/analytics.routes.js';
 import { securityRouter } from '../routes/security.routes.js';
 import { complianceRouter } from '../routes/compliance.routes.js';
 import { backupRouter } from '../routes/backup.routes.js';
+import { visualWorkflowRouter } from '../routes/visual-workflow.routes.js';
 import { requestTracingMiddleware } from '../middleware/request-tracing.js';
 import { metricsMiddleware } from '../middleware/metrics.js';
 
@@ -107,6 +108,9 @@ export function createApp(): Express {
   // Backup and disaster recovery endpoints
   app.use('/backup', backupRouter);
 
+  // Visual workflow builder endpoints
+  app.use('/visual-workflows', visualWorkflowRouter);
+
   // Root endpoint
   app.get('/', (req: Request, res: Response) => {
     res.json({
@@ -192,6 +196,12 @@ export function createApp(): Express {
         backupRecoveryPoints: '/backup/recovery-points',
         backupRestore: '/backup/restore/:recoveryPointId',
         backupMetrics: '/backup/metrics',
+        visualWorkflows: '/visual-workflows',
+        visualWorkflowCreate: '/visual-workflows',
+        visualWorkflowGet: '/visual-workflows/:id',
+        visualWorkflowExecute: '/visual-workflows/:id/execute',
+        visualWorkflowValidate: '/visual-workflows/validate',
+        visualWorkflowTemplates: '/visual-workflows/templates/all',
       },
     });
   });

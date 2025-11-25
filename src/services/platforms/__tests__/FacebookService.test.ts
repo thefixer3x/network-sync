@@ -3,17 +3,9 @@ import type { Content } from '../../../types/typescript-types';
 import { AuthenticationError } from '../../../types/typescript-types';
 
 // Mock axios
-const mockAxiosGet = jest.fn() as jest.Mock;
-const mockAxiosPost = jest.fn() as jest.Mock;
-const mockAxiosDelete = jest.fn() as jest.Mock;
-
-jest.mock('axios', () => ({
-  default: {
-    get: mockAxiosGet,
-    post: mockAxiosPost,
-    delete: mockAxiosDelete,
-  },
-}));
+jest.mock('axios');
+import axios from 'axios';
+const mockedAxios = jest.mocked(axios);
 
 // Mock Logger
 jest.mock('../../../utils/Logger', () => ({
@@ -64,7 +56,7 @@ describe('FacebookService', () => {
 
   describe('authenticate', () => {
     it('should successfully authenticate and return true', async () => {
-      mockAxiosGet.mockResolvedValue({
+      mockedAxios.get.mockResolvedValue({
         data: {
           id: '123456',
           name: 'Test User',
@@ -74,7 +66,7 @@ describe('FacebookService', () => {
       const result = await service.authenticate();
 
       expect(result).toBe(true);
-      expect(mockAxiosGet).toHaveBeenCalledWith(
+      expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining('/me'),
         expect.objectContaining({
           params: { access_token: 'test-facebook-token' },
@@ -83,7 +75,7 @@ describe('FacebookService', () => {
     });
 
     it('should throw AuthenticationError on authentication failure', async () => {
-      mockAxiosGet.mockRejectedValue({
+      mockedAxios.get.mockRejectedValue({
         response: {
           data: {
             error: {
@@ -112,7 +104,7 @@ describe('FacebookService', () => {
     };
 
     it('should post a text-only update successfully', async () => {
-      mockAxiosPost.mockResolvedValue({
+      mockedAxios.post.mockResolvedValue({
         data: {
           id: 'post_123456',
         },
@@ -121,7 +113,7 @@ describe('FacebookService', () => {
       const postId = await service.post(validContent);
 
       expect(postId).toBe('post_123456');
-      expect(mockAxiosPost).toHaveBeenCalledWith(
+      expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('/posts'),
         expect.objectContaining({
           message: 'Test Facebook post',
@@ -136,7 +128,7 @@ describe('FacebookService', () => {
         mediaUrls: ['https://example.com/image.jpg'],
       };
 
-      mockAxiosPost.mockResolvedValue({
+      mockedAxios.post.mockResolvedValue({
         data: {
           id: 'post_789',
         },
@@ -145,7 +137,7 @@ describe('FacebookService', () => {
       const postId = await service.post(contentWithMedia);
 
       expect(postId).toBe('post_789');
-      expect(mockAxiosPost).toHaveBeenCalled();
+      expect(mockedAxios.post).toHaveBeenCalled();
     });
 
     it('should reject empty content', async () => {
@@ -160,7 +152,7 @@ describe('FacebookService', () => {
 
   describe('getMetrics', () => {
     it('should retrieve account metrics successfully', async () => {
-      mockAxiosGet.mockResolvedValue({
+      mockedAxios.get.mockResolvedValue({
         data: {
           id: '123456',
           followers_count: 1000,
@@ -178,14 +170,14 @@ describe('FacebookService', () => {
 
   describe('deletePost', () => {
     it('should successfully delete a post', async () => {
-      mockAxiosDelete.mockResolvedValue({
+      mockedAxios.delete.mockResolvedValue({
         data: { success: true },
       });
 
       const result = await service.deletePost('post_123');
 
       expect(result).toBe(true);
-      expect(mockAxiosDelete).toHaveBeenCalled();
+      expect(mockedAxios.delete).toHaveBeenCalled();
     });
   });
 
