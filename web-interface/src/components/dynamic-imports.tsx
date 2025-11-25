@@ -50,6 +50,34 @@ export const ExecutionViewer = dynamic(
 );
 
 // =============================================================================
+// DASHBOARD MODALS - Lazy loaded
+// =============================================================================
+
+/**
+ * CreateWorkflowModal - Dynamically imported
+ * Only loads when creating a new workflow
+ */
+export const CreateWorkflowModal = dynamic(
+  () => import('./dashboard/CreateWorkflowModal').then(mod => ({ default: mod.CreateWorkflowModal })),
+  {
+    ssr: false,
+    loading: () => <div className="p-4 text-center">Loading workflow creator...</div>
+  }
+);
+
+/**
+ * ConnectAccountModal - Dynamically imported  
+ * Only loads when connecting a social media account
+ */
+export const ConnectAccountModal = dynamic(
+  () => import('./dashboard/ConnectAccountModal').then(mod => ({ default: mod.ConnectAccountModal })),
+  {
+    ssr: false,
+    loading: () => <div className="p-4 text-center">Loading account connector...</div>
+  }
+);
+
+// =============================================================================
 // USAGE EXAMPLE
 // =============================================================================
 

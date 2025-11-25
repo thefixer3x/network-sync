@@ -85,10 +85,10 @@ export class VectorStore {
    */
   private ensureOwnershipMetadata(metadata?: Record<string, any>): Record<string, any> {
     const normalized = { ...(metadata || {}) };
-    if (normalized.userId && !normalized.user_id) {
-      normalized.user_id = normalized.userId;
+    if (normalized['userId'] && !normalized['user_id']) {
+      normalized['user_id'] = normalized['userId'];
     }
-    if (!normalized.user_id) {
+    if (!normalized['user_id']) {
       logger.debug('metadata.user_id not provided; RLS will restrict non-service-role access');
     }
     return normalized;
