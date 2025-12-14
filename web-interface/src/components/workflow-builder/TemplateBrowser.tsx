@@ -14,7 +14,7 @@ import {
   StarIcon,
   ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
-import { workflowTemplates, createWorkflowFromTemplate } from '@/lib/workflow-templates';
+import { workflowTemplates } from '@/lib/workflow-templates';
 import type { WorkflowTemplate } from '@/types/workflow';
 
 interface TemplateBrowserProps {

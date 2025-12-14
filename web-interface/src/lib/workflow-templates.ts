@@ -7,7 +7,7 @@
 import type { WorkflowTemplate, VisualWorkflow } from '../types/workflow';
 
 // Helper to generate workflow ID
-const generateId = () => `wf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+export const generateId = () => `wf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 /**
  * Template 1: Daily Content Scheduler

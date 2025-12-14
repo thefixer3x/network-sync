@@ -6,7 +6,7 @@
  * Real-time visualization of workflow execution status
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { XMarkIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import type { WorkflowExecution, NodeExecution, ExecutionLog, ExecutionStatus } from '@/types/workflow';
 
@@ -107,9 +107,6 @@ function TabButton({
 function OverviewTab({ execution }: { execution: WorkflowExecution }) {
   const successfulNodes = execution.nodeExecutions.filter(
     (n) => n.status === 'completed'
-  ).length;
-  const failedNodes = execution.nodeExecutions.filter(
-    (n) => n.status === 'failed'
   ).length;
 
   return (

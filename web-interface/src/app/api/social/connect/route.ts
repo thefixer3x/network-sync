@@ -60,7 +60,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Return success response without sensitive data
-    const { credentials: _, ...safeAccountData } = data;
+    const { credentials: storedCredentials, ...safeAccountData } = data;
+    void storedCredentials;
     
     return NextResponse.json({
       success: true,

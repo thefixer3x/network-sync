@@ -44,7 +44,7 @@ import { NodeConfigPanel } from './panels/NodeConfigPanel';
 import { WorkflowToolbar } from './panels/WorkflowToolbar';
 
 // Types
-import type { WorkflowNode, WorkflowEdge, VisualWorkflow } from '@/types/workflow';
+import type { VisualWorkflow } from '@/types/workflow';
 
 // Node type mapping
 const nodeTypes: NodeTypes = {
@@ -78,7 +78,7 @@ function WorkflowCanvasInner({ workflow, onSave, onExecute, readOnly = false }: 
   const [edges, setEdges, onEdgesChange] = useEdgesState(workflow?.edges || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [workflowName, setWorkflowName] = useState(workflow?.name || 'Untitled Workflow');
-  const [workflowDescription, setWorkflowDescription] = useState(workflow?.description || '');
+  const [workflowDescription] = useState(workflow?.description || '');
 
   // Connection handler
   const onConnect = useCallback(
