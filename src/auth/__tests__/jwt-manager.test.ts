@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from '@jest/globals';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -104,9 +104,12 @@ describe('JWT Manager', () => {
       });
 
       // Wait for token to expire
-      setTimeout(() => {
-        expect(() => verifyAccessToken(expiredToken)).toThrow('Token expired');
-      }, 100);
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          expect(() => verifyAccessToken(expiredToken)).toThrow('Token expired');
+          resolve();
+        }, 50);
+      });
     });
 
     it('should not verify access token with refresh secret', () => {

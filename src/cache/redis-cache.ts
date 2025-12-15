@@ -10,6 +10,140 @@ import { Logger } from '@/utils/Logger';
 
 const logger = new Logger('RedisCache');
 
+class InMemoryRedisClient {
+  private store = new Map<string, { value: string; expiresAt: number | null }>();
+
+  on(): this {
+    return this;
+  }
+
+  async connect(): Promise<void> {
+    return;
+  }
+
+  async quit(): Promise<void> {
+    this.store.clear();
+  }
+
+  private isExpired(key: string): boolean {
+    const entry = this.store.get(key);
+    if (!entry) return true;
+    if (entry.expiresAt === null) return false;
+    if (entry.expiresAt < Date.now()) {
+      this.store.delete(key);
+      return true;
+    }
+    return false;
+  }
+
+  private ensureFresh(key: string): void {
+    this.isExpired(key);
+  }
+
+  async get(key: string): Promise<string | null> {
+    this.ensureFresh(key);
+    const entry = this.store.get(key);
+    return entry ? entry.value : null;
+  }
+
+  async set(key: string, value: string): Promise<void> {
+    this.store.set(key, { value, expiresAt: null });
+  }
+
+  async setEx(key: string, ttl: number, value: string): Promise<void> {
+    const expiresAt = Date.now() + ttl * 1000;
+    this.store.set(key, { value, expiresAt });
+  }
+
+  async del(keys: string | string[]): Promise<number> {
+    const toDelete = Array.isArray(keys) ? keys : [keys];
+    let deleted = 0;
+    for (const key of toDelete) {
+      this.ensureFresh(key);
+      if (this.store.delete(key)) {
+        deleted++;
+      }
+    }
+    return deleted;
+  }
+
+  async exists(key: string): Promise<number> {
+    this.ensureFresh(key);
+    return this.store.has(key) ? 1 : 0;
+  }
+
+  async mGet(keys: string[]): Promise<(string | null)[]> {
+    return Promise.all(keys.map((key) => this.get(key)));
+  }
+
+  multi() {
+    const ops: Array<() => Promise<void>> = [];
+    const pipeline: any = {};
+    pipeline.setEx = (key: string, ttl: number, value: string) => {
+      ops.push(() => this.setEx(key, ttl, value));
+      return pipeline;
+    };
+    pipeline.set = (key: string, value: string) => {
+      ops.push(() => this.set(key, value));
+      return pipeline;
+    };
+    pipeline.exec = async () => {
+      for (const op of ops) {
+        await op();
+      }
+      return [];
+    };
+    return pipeline;
+  }
+
+  async *scanIterator({ MATCH }: { MATCH: string; COUNT?: number }) {
+    const regex = new RegExp('^' + MATCH.replace(/\*/g, '.*') + '$');
+    for (const key of Array.from(this.store.keys())) {
+      this.ensureFresh(key);
+      if (regex.test(key) && this.store.has(key)) {
+        yield key;
+      }
+    }
+  }
+
+  async ttl(key: string): Promise<number> {
+    this.ensureFresh(key);
+    const entry = this.store.get(key);
+    if (!entry) return -2;
+    if (entry.expiresAt === null) return -1;
+    const remaining = Math.floor((entry.expiresAt - Date.now()) / 1000);
+    return remaining >= 0 ? remaining : -2;
+  }
+
+  async expire(key: string, ttl: number): Promise<number> {
+    this.ensureFresh(key);
+    const entry = this.store.get(key);
+    if (!entry) return 0;
+    entry.expiresAt = Date.now() + ttl * 1000;
+    this.store.set(key, entry);
+    return 1;
+  }
+
+  async incrBy(key: string, amount: number): Promise<number> {
+    const current = parseInt((await this.get(key)) ?? '0', 10) || 0;
+    const next = current + amount;
+    await this.set(key, JSON.stringify(next));
+    return next;
+  }
+
+  async decrBy(key: string, amount: number): Promise<number> {
+    return this.incrBy(key, -amount);
+  }
+
+  async ping(): Promise<string> {
+    return 'PONG';
+  }
+
+  async info(): Promise<string> {
+    return 'in-memory-redis';
+  }
+}
+
 /**
  * Cache configuration
  */
@@ -65,7 +199,7 @@ const DEFAULT_CONFIG: Required<CacheConfig> = {
  */
 class RedisCacheManager {
   private static instance: RedisCacheManager;
-  private client: RedisClientType | null = null;
+  private client: RedisClientType | InMemoryRedisClient | null = null;
   private config: Required<CacheConfig>;
   private isConnected = false;
   private stats: CacheStats = {
@@ -107,6 +241,19 @@ class RedisCacheManager {
         ...DEFAULT_CONFIG,
         ...config,
       };
+
+      const shouldUseInMemory =
+        process.env['REDIS_MOCK'] === 'true' ||
+        process.env['USE_IN_MEMORY_CACHE'] === 'true' ||
+        process.env['NODE_ENV'] === 'test';
+
+      if (shouldUseInMemory) {
+        this.client = new InMemoryRedisClient();
+        await this.client.connect();
+        this.isConnected = true;
+        logger.info('Redis cache using in-memory client (test mode)');
+        return;
+      }
 
       logger.info('Connecting to Redis cache', {
         host: this.config.host,
@@ -415,7 +562,9 @@ class RedisCacheManager {
       const fullPattern = this.buildKey(pattern);
       const keys = [];
 
-      for await (const key of this.client.scanIterator({ MATCH: fullPattern, COUNT: 100 })) {
+      const client: any = this.client;
+
+      for await (const key of client.scanIterator({ MATCH: fullPattern, COUNT: 100 })) {
         keys.push(key);
       }
 

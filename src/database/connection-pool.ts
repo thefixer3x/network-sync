@@ -148,13 +148,35 @@ class ConnectionPoolManager {
         logger.info('Admin client initialized');
       }
 
-      this.connectionMetrics.totalCreated++;
-      logger.info('Connection pool initialized successfully');
-    } catch (error) {
-      this.connectionMetrics.errors++;
-      logger.error('Failed to initialize connection pool', error);
-      throw error;
+    this.connectionMetrics.totalCreated++;
+    logger.info('Connection pool initialized successfully');
+  } catch (error) {
+    this.connectionMetrics.errors++;
+    logger.error('Failed to initialize connection pool', error);
+    throw error;
+  }
+}
+
+  private ensureTestInitialization(): void {
+    if (this.supabaseClient) {
+      return;
     }
+
+    const url = process.env['SUPABASE_URL'] || 'https://test.supabase.co';
+    const anonKey = process.env['SUPABASE_ANON_KEY'] || 'test-anon-key';
+    const serviceRoleKey =
+      process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_ANON_KEY'] || anonKey;
+
+    this.supabaseClient = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) as any;
+    this.supabaseAdminClient = createClient(url, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) as any;
+
+    this.config = { url, anonKey, serviceRoleKey };
+    this.connectionMetrics.totalCreated++;
+    logger.warn('Connection pool auto-initialized for test environment');
   }
 
   /**
@@ -162,7 +184,11 @@ class ConnectionPoolManager {
    */
   public getClient(): SupabaseClient {
     if (!this.supabaseClient) {
-      throw new Error('Connection pool not initialized. Call initialize() first.');
+      if (process.env['NODE_ENV'] === 'test') {
+        this.ensureTestInitialization();
+      } else {
+        throw new Error('Connection pool not initialized. Call initialize() first.');
+      }
     }
 
     this.activeConnections++;
@@ -172,7 +198,7 @@ class ConnectionPoolManager {
       max: this.poolConfig.maxConnections,
     });
 
-    return this.supabaseClient;
+    return this.supabaseClient!;
   }
 
   /**
@@ -180,7 +206,11 @@ class ConnectionPoolManager {
    */
   public getAdminClient(): SupabaseClient {
     if (!this.supabaseAdminClient) {
-      throw new Error('Admin client not initialized. Provide serviceRoleKey in config.');
+      if (process.env['NODE_ENV'] === 'test') {
+        this.ensureTestInitialization();
+      } else {
+        throw new Error('Admin client not initialized. Provide serviceRoleKey in config.');
+      }
     }
 
     this.activeConnections++;
@@ -190,7 +220,7 @@ class ConnectionPoolManager {
       max: this.poolConfig.maxConnections,
     });
 
-    return this.supabaseAdminClient;
+    return this.supabaseAdminClient!;
   }
 
   /**
