@@ -36,7 +36,7 @@
     "@lanonasis/memory-client": "^1.0.1",
     "@lanonasis/memory-sdk-standalone": "^1.0.0",
     "@supabase/mcp-server-supabase": "^0.5.9",
-    "@supabase/supabase-js": "^2.83.0",
+    "@supabase/supabase-js": "^2.87.1",
     "@types/bull": "^3.15.9",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
