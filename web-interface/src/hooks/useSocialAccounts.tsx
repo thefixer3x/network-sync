@@ -8,8 +8,8 @@ export function useSocialAccounts() {
   const { session } = useAuth();
 
   const authHeaders = session?.access_token
-    ? { 'Authorization': `Bearer ${session.access_token}` } as Record<string, string>
-    : {} as Record<string, string>;
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : undefined;
 
   const { data: accounts, isLoading, refetch } = useQuery(
     'socialAccounts',
@@ -17,9 +17,7 @@ export function useSocialAccounts() {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
-      const response = await fetch('/api/social/accounts', {
-        headers: authHeaders,
-      });
+      const response = await fetch('/api/social/accounts', authHeaders ? { headers: authHeaders } : undefined);
       if (!response.ok) {
         throw new Error('Failed to fetch accounts');
       }
@@ -36,11 +34,16 @@ export function useSocialAccounts() {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
-      const response = await fetch('/api/social/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify(accountData),
-      });
+      const response = await fetch(
+        '/api/social/connect',
+        {
+          method: 'POST',
+          headers: authHeaders
+            ? { 'Content-Type': 'application/json', ...authHeaders }
+            : { 'Content-Type': 'application/json' },
+          body: JSON.stringify(accountData),
+        }
+      );
       if (!response.ok) {
         throw new Error('Failed to connect account');
       }

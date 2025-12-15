@@ -24,7 +24,7 @@ const nextConfig = {
 
   // Performance optimizations
   experimental: {
-    // optimizeCss: true, // Disabled - requires critters package
+    optimizeCss: false,
     optimizePackageImports: ['recharts', 'lucide-react', '@heroicons/react', 'framer-motion'],
   },
 
