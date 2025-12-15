@@ -9,7 +9,7 @@ export function useWorkflows() {
 
   const authHeaders = session?.access_token
     ? { Authorization: `Bearer ${session.access_token}` }
-    : {};
+    : undefined;
 
   const { data: workflows, isLoading } = useQuery(
     'workflows',
@@ -17,7 +17,7 @@ export function useWorkflows() {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
-      const response = await fetch('/api/workflows', { headers: authHeaders });
+      const response = await fetch('/api/workflows', authHeaders ? { headers: authHeaders } : undefined);
       if (!response.ok) {
         throw new Error('Failed to fetch workflows');
       }
@@ -34,10 +34,17 @@ export function useWorkflows() {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
-      const response = await fetch(`/api/workflows/${workflowId}/toggle`, {
-        method: 'POST',
-        headers: authHeaders,
-      });
+      const response = await fetch(
+        `/api/workflows/${workflowId}/toggle`,
+        authHeaders
+          ? {
+              method: 'POST',
+              headers: authHeaders,
+            }
+          : {
+              method: 'POST',
+            }
+      );
       if (!response.ok) {
         throw new Error('Failed to toggle workflow');
       }
@@ -55,10 +62,17 @@ export function useWorkflows() {
       if (!session?.access_token) {
         throw new Error('Not authenticated');
       }
-      const response = await fetch(`/api/workflows/${workflowId}`, {
-        method: 'DELETE',
-        headers: authHeaders,
-      });
+      const response = await fetch(
+        `/api/workflows/${workflowId}`,
+        authHeaders
+          ? {
+              method: 'DELETE',
+              headers: authHeaders,
+            }
+          : {
+              method: 'DELETE',
+            }
+      );
       if (!response.ok) {
         throw new Error('Failed to delete workflow');
       }
