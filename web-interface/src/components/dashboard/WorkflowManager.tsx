@@ -79,7 +79,7 @@ const WORKFLOW_TYPES = {
 
 export function WorkflowManager() {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [, setSelectedWorkflow] = useState<Workflow | null>(null);
   const { workflows, isLoading, toggleWorkflow, deleteWorkflow } = useWorkflows();
 
   const handleToggleWorkflow = async (workflow: Workflow) => {
@@ -88,7 +88,7 @@ export function WorkflowManager() {
       toast.success(
         `Workflow ${workflow.status === 'active' ? 'paused' : 'activated'} successfully`
       );
-    } catch (error) {
+    } catch {
       toast.error('Failed to toggle workflow');
     }
   };
@@ -99,7 +99,7 @@ export function WorkflowManager() {
     try {
       await deleteWorkflow(workflowId);
       toast.success('Workflow deleted successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete workflow');
     }
   };

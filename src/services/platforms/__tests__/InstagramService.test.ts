@@ -3,17 +3,9 @@ import type { Content } from '../../../types/typescript-types';
 import { AuthenticationError } from '../../../types/typescript-types';
 
 // Mock axios
-const mockAxiosGet = jest.fn() as jest.Mock;
-const mockAxiosPost = jest.fn() as jest.Mock;
-const mockAxiosDelete = jest.fn() as jest.Mock;
-
-jest.mock('axios', () => ({
-  default: {
-    get: mockAxiosGet,
-    post: mockAxiosPost,
-    delete: mockAxiosDelete,
-  },
-}));
+jest.mock('axios');
+import axios from 'axios';
+const mockedAxios = jest.mocked(axios);
 
 // Mock Logger
 jest.mock('../../../utils/Logger', () => ({
@@ -64,7 +56,7 @@ describe('InstagramService', () => {
 
   describe('authenticate', () => {
     it('should successfully authenticate and return true', async () => {
-      mockAxiosGet.mockResolvedValue({
+      mockedAxios.get.mockResolvedValue({
         data: {
           id: '123456',
           username: 'testuser',
@@ -74,11 +66,11 @@ describe('InstagramService', () => {
       const result = await service.authenticate();
 
       expect(result).toBe(true);
-      expect(mockAxiosGet).toHaveBeenCalled();
+      expect(mockedAxios.get).toHaveBeenCalled();
     });
 
     it('should throw AuthenticationError on authentication failure', async () => {
-      mockAxiosGet.mockRejectedValue({
+      mockedAxios.get.mockRejectedValue({
         response: {
           data: {
             error: {
@@ -108,14 +100,14 @@ describe('InstagramService', () => {
 
     it('should post content with media successfully', async () => {
       // Mock container creation
-      mockAxiosPost.mockResolvedValueOnce({
+      mockedAxios.post.mockResolvedValueOnce({
         data: {
           id: 'container_123',
         },
       });
 
       // Mock publish
-      mockAxiosPost.mockResolvedValueOnce({
+      mockedAxios.post.mockResolvedValueOnce({
         data: {
           id: 'media_456',
         },
@@ -124,7 +116,7 @@ describe('InstagramService', () => {
       const postId = await service.post(validContent);
 
       expect(postId).toBe('media_456');
-      expect(mockAxiosPost).toHaveBeenCalledTimes(2);
+      expect(mockedAxios.post).toHaveBeenCalledTimes(2);
     });
 
     it('should reject content without media', async () => {
@@ -148,7 +140,7 @@ describe('InstagramService', () => {
 
   describe('getMetrics', () => {
     it('should retrieve account metrics successfully', async () => {
-      mockAxiosGet.mockResolvedValue({
+      mockedAxios.get.mockResolvedValue({
         data: {
           followers_count: 5000,
           follows_count: 500,
@@ -164,7 +156,7 @@ describe('InstagramService', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      mockAxiosGet.mockRejectedValue(new Error('API error'));
+      mockedAxios.get.mockRejectedValue(new Error('API error'));
 
       await expect(service.getMetrics()).rejects.toThrow();
     });
@@ -172,18 +164,18 @@ describe('InstagramService', () => {
 
   describe('deletePost', () => {
     it('should successfully delete a media item', async () => {
-      mockAxiosDelete.mockResolvedValue({
+      mockedAxios.delete.mockResolvedValue({
         data: { success: true },
       });
 
       const result = await service.deletePost('media_123');
 
       expect(result).toBe(true);
-      expect(mockAxiosDelete).toHaveBeenCalled();
+      expect(mockedAxios.delete).toHaveBeenCalled();
     });
 
     it('should handle deletion errors', async () => {
-      mockAxiosDelete.mockRejectedValue(new Error('Media not found'));
+      mockedAxios.delete.mockRejectedValue(new Error('Media not found'));
 
       await expect(service.deletePost('invalid-id')).rejects.toThrow();
     });
@@ -211,7 +203,7 @@ describe('InstagramService', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors', async () => {
-      mockAxiosPost.mockRejectedValue(new Error('Network timeout'));
+      mockedAxios.post.mockRejectedValue(new Error('Network timeout'));
 
       const content: Content = {
         id: '123e4567-e89b-12d3-a456-426614174000',
@@ -230,7 +222,7 @@ describe('InstagramService', () => {
     });
 
     it('should handle rate limit errors', async () => {
-      mockAxiosPost.mockRejectedValue({
+      mockedAxios.post.mockRejectedValue({
         response: {
           status: 429,
           data: {

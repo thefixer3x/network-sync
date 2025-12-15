@@ -95,7 +95,7 @@ export function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProp
     try {
       // Redirect to OAuth flow
       window.location.href = PLATFORMS[platform].oauthUrl;
-    } catch (error) {
+    } catch {
       toast.error(`Failed to connect to ${PLATFORMS[platform].name}`);
       setIsConnecting(false);
     }
@@ -130,7 +130,7 @@ export function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProp
 
       toast.success(`Successfully connected ${PLATFORMS[selectedPlatform].name}!`);
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('Failed to connect account. Please check your credentials.');
     } finally {
       setIsConnecting(false);
@@ -211,7 +211,7 @@ export function ConnectAccountModal({ isOpen, onClose }: ConnectAccountModalProp
                   <p className="font-medium mb-1">Quick OAuth Setup</p>
                   <p>
                     Click the button below to securely connect your {platform.name} account.
-                    You'll be redirected to {platform.name} to authorize access.
+                    You&apos;ll be redirected to {platform.name} to authorize access.
                   </p>
                 </div>
               </div>

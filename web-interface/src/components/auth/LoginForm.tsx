@@ -44,7 +44,7 @@ export function LoginForm() {
           toast.success('Welcome back!');
         }
       }
-    } catch (error) {
+    } catch {
       toast.error('Something went wrong');
     } finally {
       setIsLoading(false);
