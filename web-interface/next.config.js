@@ -24,7 +24,7 @@ const nextConfig = {
 
   // Performance optimizations
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false,
     optimizePackageImports: ['recharts', 'lucide-react', '@heroicons/react', 'framer-motion'],
   },
 
