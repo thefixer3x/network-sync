@@ -12,6 +12,15 @@ type JwtExpiresIn = NonNullable<jwt.SignOptions['expiresIn']>;
 
 const logger = new Logger('JWTManager');
 
+const isTestEnv = process.env['NODE_ENV'] === 'test';
+
+if ((!process.env['JWT_SECRET'] || !process.env['JWT_REFRESH_SECRET']) && isTestEnv) {
+  process.env['JWT_SECRET'] = process.env['JWT_SECRET'] || 'test-jwt-secret';
+  process.env['JWT_REFRESH_SECRET'] =
+    process.env['JWT_REFRESH_SECRET'] || 'test-jwt-refresh-secret';
+  logger.warn('Using fallback JWT secrets for test environment');
+}
+
 // JWT Configuration - MUST be set via environment variables
 // Validated by env-validation.ts at startup
 if (!process.env['JWT_SECRET'] || !process.env['JWT_REFRESH_SECRET']) {

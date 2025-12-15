@@ -88,7 +88,7 @@ describe('RedisCacheManager', () => {
       };
 
       await cache.set('test-object', testObject, 60);
-      const value = await cache.get(typeof testObject);
+      const value = await cache.get('test-object');
 
       expect(value).toEqual(testObject);
     });

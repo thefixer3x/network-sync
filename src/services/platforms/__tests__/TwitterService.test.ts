@@ -3,9 +3,11 @@ import type { Content } from '../../../types/typescript-types';
 import { AuthenticationError } from '../../../types/typescript-types';
 
 // Mock Twitter-api-v2
-jest.mock('twitter-api-v2');
+jest.mock('twitter-api-v2', () => ({
+  TwitterApi: jest.fn(),
+}));
 import { TwitterApi } from 'twitter-api-v2';
-const MockedTwitterApi = jest.mocked(TwitterApi);
+const MockedTwitterApi = TwitterApi as jest.MockedClass<typeof TwitterApi>;
 
 // Create properly typed mocked functions
 const mockTweet = jest.fn() as jest.MockedFunction<any>;
@@ -27,7 +29,7 @@ const mockTwitterApiInstance = {
 };
 
 // Set up the mocked constructor
-(MockedTwitterApi as any).mockImplementation(() => mockTwitterApiInstance);
+MockedTwitterApi.mockImplementation(() => mockTwitterApiInstance as any);
 
 // Mock Logger
 jest.mock('../../../utils/Logger', () => ({

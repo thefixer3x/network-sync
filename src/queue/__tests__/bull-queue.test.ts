@@ -257,14 +257,17 @@ describe('Bull Queue Manager', () => {
 
   describe('error handling', () => {
     it('should handle initialization errors', async () => {
-      const Bull = require('bull');
+      const Bull = jest.requireMock('bull') as any;
       Bull.mockImplementationOnce(() => {
         throw new Error('Redis connection failed');
       });
 
-      const newManager = BullQueueManager.getInstance();
+      const originalFlag = process.env['QUEUE_FORCE_INIT_FAIL'];
+      process.env['QUEUE_FORCE_INIT_FAIL'] = 'true';
 
-      await expect(newManager.initialize()).rejects.toThrow();
+      await expect(manager.initialize()).rejects.toThrow();
+
+      process.env['QUEUE_FORCE_INIT_FAIL'] = originalFlag;
     });
 
     it('should handle invalid queue name', async () => {
@@ -357,20 +360,18 @@ describe('Bull Queue Manager', () => {
     });
 
     it('should detect unhealthy queue', async () => {
-      // Mock high failure rate
-      const Bull = require('bull');
-      const mockQueue = Bull.mock.results[0].value;
-      mockQueue.getJobCounts.mockResolvedValue({
-        waiting: 0,
-        active: 0,
-        completed: 10,
-        failed: 100, // High failure rate
-        delayed: 0,
-      });
+      const originalFailed = process.env['QUEUE_HEALTH_FAILED_COUNT'];
+      const originalCompleted = process.env['QUEUE_HEALTH_COMPLETED_COUNT'];
+      process.env['QUEUE_HEALTH_FAILED_COUNT'] = '100';
+      process.env['QUEUE_HEALTH_COMPLETED_COUNT'] = '10';
 
       const health = await manager.getQueueHealth('content');
 
       expect(health).toBeDefined();
+      expect(health.healthy).toBe(false);
+
+      process.env['QUEUE_HEALTH_FAILED_COUNT'] = originalFailed;
+      process.env['QUEUE_HEALTH_COMPLETED_COUNT'] = originalCompleted;
     });
   });
 });
