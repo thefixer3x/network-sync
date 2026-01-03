@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow all hosts for Replit proxy
+  allowedDevOrigins: ['*'],
+  
   // Image optimization
   images: {
     domains: ['images.unsplash.com', 'pbs.twimg.com', 'media.licdn.com'],
