@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Allow all hosts for Replit proxy
-  allowedDevOrigins: ['*'],
+  // Allow Replit proxy hosts
+  allowedDevOrigins: [
+    'https://*.replit.dev',
+    'https://*.kirk.replit.dev',
+    'https://*.repl.co',
+  ],
   
   // Image optimization
   images: {
