@@ -21,13 +21,13 @@ args = "Web Interface"
 name = "Web Interface"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd web-interface && bun run dev --port 5000 --hostname 0.0.0.0"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd web-interface && npm run dev -- --port 5000 --hostname 0.0.0.0"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000

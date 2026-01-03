@@ -104,12 +104,7 @@ export function LoginForm() {
           </div>
 
           {!isLogin && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="relative"
-            >
+            <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type={showPassword ? 'text' : 'password'}
@@ -120,7 +115,7 @@ export function LoginForm() {
                 required={!isLogin}
                 minLength={6}
               />
-            </motion.div>
+            </div>
           )}
         </div>
 

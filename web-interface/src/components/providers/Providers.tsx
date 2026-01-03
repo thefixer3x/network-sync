@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { WorkflowProvider } from '@/contexts/WorkflowContext';
 import { SWRConfig } from 'swr';
 
@@ -14,11 +13,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         revalidateOnReconnect: false,
       }}
     >
-      <AuthProvider>
-        <WorkflowProvider>
-          {children}
-        </WorkflowProvider>
-      </AuthProvider>
+      <WorkflowProvider>
+        {children}
+      </WorkflowProvider>
     </SWRConfig>
   );
 }

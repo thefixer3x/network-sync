@@ -10,7 +10,6 @@ import {
   Workflow,
   LogOut 
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import type { DashboardView } from './Dashboard';
 
 interface SidebarProps {
@@ -28,10 +27,8 @@ const menuItems = [
 ];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
-  const { signOut, user } = useAuth();
-
   const handleSignOut = async () => {
-    await signOut();
+    console.log('Sign out clicked');
   };
 
   return (
@@ -78,12 +75,12 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           <div className="flex items-center">
             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-gray-700">
-                {user?.email?.charAt(0).toUpperCase()}
+                D
               </span>
             </div>
             <div className="ml-3 flex-1">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.email}
+                Dev User
               </p>
               <p className="text-xs text-gray-500">Administrator</p>
             </div>

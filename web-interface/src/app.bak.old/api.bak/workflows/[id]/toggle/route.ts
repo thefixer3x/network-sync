@@ -5,14 +5,15 @@ const supabase = createServiceSupabaseClient();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = await extractUserId(request, supabase);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const workflowId = params.id;
+    const workflowId = id;
 
     // Get current workflow
     const { data: workflow, error: fetchError } = await supabase
