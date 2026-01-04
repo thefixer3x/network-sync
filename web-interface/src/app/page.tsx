@@ -6,7 +6,7 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
