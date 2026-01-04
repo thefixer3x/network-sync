@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceSupabaseClient, extractUserId } from '../../_lib/supabase';
 
-const supabase = createServiceSupabaseClient();
-
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createServiceSupabaseClient();
     const userId = await extractUserId(request, supabase);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -60,6 +59,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createServiceSupabaseClient();
     const userId = await extractUserId(request, supabase);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
