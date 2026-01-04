@@ -57,10 +57,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      if (!error && data.session) {
+        // Immediately update state on successful login
+        setSession(data.session);
+        setUser(data.session.user);
+      }
+
       return { error };
     } catch (error) {
       return { error };
@@ -72,10 +79,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
+
+      // If auto-confirm is enabled and user is created, update state
+      if (!error && data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+      }
+
       return { error };
     } catch (error) {
       return { error };
