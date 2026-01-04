@@ -106,6 +106,34 @@ services:
       retries: 3
       start_period: 40s
 
+  # Frontend - Next.js Application
+  frontend:
+    build:
+      context: ./web-interface
+      dockerfile: Dockerfile
+    container_name: social-media-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+      - redis
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - NEXT_PUBLIC_SUPABASE_SCHEMA=${SUPABASE_SCHEMA:-network_sync}
+      - NEXT_PUBLIC_API_URL=http://api:3000
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    networks:
+      - social-media-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/alive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   # Nginx Reverse Proxy (Optional)
   nginx:
     image: nginx:alpine
