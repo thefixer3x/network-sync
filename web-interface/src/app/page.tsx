@@ -1,14 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Dashboard } from '@/components/dashboard/Dashboard';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
 
   if (loading) {
     return (
@@ -18,7 +20,13 @@ export default function HomePage() {
     );
   }
 
-  if (!user) {
+  // Show dashboard if logged in
+  if (user) {
+    return <Dashboard />;
+  }
+
+  // Show auth form if user clicked "Get Started"
+  if (showAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <motion.div
@@ -39,17 +47,26 @@ export default function HomePage() {
               </svg>
             </motion.div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Social Automation
+              Network Sync
             </h1>
             <p className="text-gray-600">
-              AI-powered social media management platform
+              AI-powered social media automation platform
             </p>
           </div>
           <LoginForm />
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowAuth(false)}
+              className="text-gray-500 hover:text-gray-700 text-sm"
+            >
+              &larr; Back to home
+            </button>
+          </div>
         </motion.div>
       </div>
     );
   }
 
-  return <Dashboard />;
+  // Show landing page by default
+  return <LandingPage onGetStarted={() => setShowAuth(true)} />;
 }
