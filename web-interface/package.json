@@ -45,7 +45,7 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
-    "webpack-bundle-analyzer": "^4.10.1"
+    "webpack-bundle-analyzer": "^5.1.0"
   },
   "optionalDependencies": {
     "recharts": "^3.5.1"
