@@ -333,5 +333,15 @@ export class AgentOrchestrator {
   }
 }
 
-// Export singleton instance
-export const orchestrator = new AgentOrchestrator();
+let orchestratorInstance: AgentOrchestrator | null = null;
+
+export function getAgentOrchestrator(): AgentOrchestrator {
+  if (!orchestratorInstance) {
+    orchestratorInstance = new AgentOrchestrator();
+  }
+  return orchestratorInstance;
+}
+
+// Export singleton instance for app runtime (skipped in tests)
+export const orchestrator =
+  process.env['NODE_ENV'] === 'test' ? undefined : getAgentOrchestrator();

@@ -1,92 +1,112 @@
-# Social Media Automation System
+# Social Intelligence OS
 
-An advanced multi-agent orchestration system for social media automation, leveraging specialized AI agents for research, content creation, and platform management.
+> **Your brand. Your voice. Amplified.**
 
-## 🏗️ Project Structure
+We built the system that top-tier talent managers don't want you to know about.
+
+While everyone else is copy-pasting ChatGPT into their LinkedIn, your content is:
+
+- **Researched** with real-time market intelligence
+- **Crafted** to match your exact voice and positioning
+- **Contextual** - knows what you said last month, last year
+- **Consistent** - your brand never drifts, never contradicts
+- **Human-approved** - AI drafts, you greenlight
+
+Rising creators spend 10+ hours a week on content. Their managers spend more.
+
+**We compressed that into a workflow.**
+
+---
+
+*"It's not AI content. It's YOUR content, accelerated."*
+
+---
+
+## How It Works
+
+```
+Research (Perplexity) → Draft (Claude) → Context Check (Vectors) → You Approve → Deliver
+```
+
+Every piece of content is:
+1. Researched against real-time data and your niche
+2. Written in YOUR voice, using YOUR brand context
+3. Checked for consistency with everything you've said before
+4. Sent to you for approval - nothing posts without your sign-off
+5. Delivered ready-to-post across platforms
+
+## The Stack
+
+| Layer | Technology |
+|-------|------------|
+| Intelligence | Perplexity (research), Claude (writing), OpenAI (embeddings) |
+| Memory | Vector storage for brand context and history |
+| Queue | Redis + Bull for scheduled workflows |
+| Auth | JWT with refresh tokens |
+| Platforms | Twitter, LinkedIn, Instagram, Facebook |
+
+## Quick Start
+
+```bash
+# Install
+bun install
+
+# Configure
+cp .env.example .env
+# Add your API keys
+
+# Run
+bun run dev
+```
+
+## Project Structure
 
 ```
 src/
-├── agents/                 # Specialized AI agents
-│   ├── perplexity-agent.ts # Research and real-time data agent
-│   └── claude-agent.ts     # Writing and analysis agent
-├── orchestrator/           # Agent orchestration system
-│   └── agent-orchestrator.ts
-├── services/               # Platform and AI services
-│   ├── social-media-services.ts
-│   └── ai-content-services.ts
-├── engine/                 # Automation engine
-│   └── automation-engine.ts
-├── storage/                # Data storage solutions
-│   └── vector-store.ts
-├── cli/                    # Command-line interface
-│   └── cli-interface.ts
-├── types/                  # TypeScript types and schemas
-│   └── typescript-types.ts
-├── utils/                  # Utility functions
-├── example-usage.ts        # Usage examples
+├── agents/           # Specialized AI agents
+├── orchestrator/     # Task routing and coordination
+├── services/         # Platform integrations
+├── storage/          # Vector store for context
+├── queue/            # Job scheduling (Bull + Redis)
+├── auth/             # JWT authentication
+└── cli/              # Command-line interface
+
+web-interface/        # Next.js dashboard
+├── components/       # UI components
+├── hooks/            # React hooks
+└── app/              # Pages and routes
 ```
 
-## 🚀 Quick Start
+## Commands
 
-1. Install dependencies:
-   ```bash
-   bun install
-   ```
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start development server |
+| `bun run build` | Build for production |
+| `bun run test` | Run test suite |
+| `bun run demo` | Run demo workflow |
 
-2. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys
-   ```
+## Architecture
 
-3. Run the demo:
-   ```bash
-   bun run demo
-   ```
+The system uses specialized agents for different tasks:
 
-## 📦 Dependencies
+- **Perplexity Agent** - Real-time research, trending topics, competitor analysis
+- **Claude Agent** - Content creation, brand voice matching, engagement copy
+- **Orchestrator** - Routes tasks to the right agent based on context
+- **Vector Store** - Maintains brand memory for consistency
 
-- **AI Services**: OpenAI, Perplexity, Anthropic (Claude)
-- **Database**: Supabase (Vector storage)
-- **Social Platforms**: Twitter, LinkedIn, Facebook, Instagram
-- **Utilities**: Zod (validation), Node-cron (scheduling)
+## Security
 
-## 🧠 System Architecture
+- AES-256 encryption for sensitive data
+- Rate limiting across 6 tiers
+- CORS allowlist
+- Webhook signature verification
+- Human-in-the-loop for all publishing
 
-The system uses a multi-agent approach where different AI models are specialized for specific tasks:
+---
 
-- **Perplexity Agent**: Research and real-time data gathering
-- **Claude Agent**: Content creation and analysis
-- **Orchestrator**: Routes tasks to the most appropriate agent
-- **Automation Engine**: Schedules and manages automated workflows
+Built for creators who value their time and their brand.
 
-## 🛠️ Available Scripts
+## License
 
-- `bun run dev` - Run development server
-- `bun run build` - Build for production
-- `bun run start` - Start production server
-- `bun run test` - Run tests
-- `bun run demo` - Run demonstration
-- `bun run orchestrate` - Run orchestrator
-
-## 📊 Features
-
-- Multi-platform social media management
-- AI-powered content generation
-- Automated scheduling
-- Trend analysis
-- Competitor monitoring
-- Analytics collection
-- Vector storage for semantic search
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
+MIT

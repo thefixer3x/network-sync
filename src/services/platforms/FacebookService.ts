@@ -200,6 +200,13 @@ export class FacebookService implements SocialMediaService {
   }
 
   private validateContent(content: Content): void {
+    if (!content.content || content.content.trim().length === 0) {
+      throw new SocialMediaError(
+        'Facebook content cannot be empty',
+        'facebook',
+        'CONTENT_EMPTY'
+      );
+    }
     if (content.content.length > 63206) {
       throw new SocialMediaError(
         'Facebook post exceeds character limit',

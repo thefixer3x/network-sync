@@ -61,7 +61,7 @@ describe('ClaudeAgent', () => {
           method: 'POST',
           headers: expect.objectContaining({
             'x-api-key': 'test-claude-key',
-            'content-type': 'application/json',
+            'Content-Type': 'application/json',
             'anthropic-version': '2023-06-01',
           }),
         })
@@ -158,7 +158,7 @@ describe('ClaudeAgent', () => {
     });
 
     it('should format errors properly', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network timeout'));
+      mockFetch.mockRejectedValue(new Error('Network timeout'));
 
       await expect(agent.generateContent({ prompt: 'test' })).rejects.toThrow();
     });
@@ -237,7 +237,7 @@ describe('ClaudeAgent', () => {
         usage: { input_tokens: 10, output_tokens: 50 },
       };
 
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: async () => mockResponse,
       } as Response);

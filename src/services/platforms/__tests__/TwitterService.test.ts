@@ -1,11 +1,6 @@
-import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import { describe, expect, it, jest, beforeEach, beforeAll } from '@jest/globals';
 import type { Content } from '../../../types/typescript-types';
 import { AuthenticationError } from '../../../types/typescript-types';
-
-// Mock Twitter-api-v2
-jest.mock('twitter-api-v2');
-import { TwitterApi } from 'twitter-api-v2';
-const MockedTwitterApi = jest.mocked(TwitterApi);
 
 // Create properly typed mocked functions
 const mockTweet = jest.fn() as jest.MockedFunction<any>;
@@ -19,15 +14,20 @@ const mockTwitterApiInstance = {
     tweet: mockTweet,
     me: mockMe,
     userTimeline: mockUserTimeline,
+    deleteTweet: mockDeleteTweet,
   },
   v1: {
     uploadMedia: mockUploadMedia,
-    deleteTweet: mockDeleteTweet,
   },
 };
 
-// Set up the mocked constructor
-(MockedTwitterApi as any).mockImplementation(() => mockTwitterApiInstance);
+const mockTwitterApiConstructor = jest.fn(() => mockTwitterApiInstance);
+
+// Mock Twitter-api-v2
+jest.mock('twitter-api-v2', () => ({
+  TwitterApi: mockTwitterApiConstructor,
+}));
+import { TwitterApi } from 'twitter-api-v2';
 
 // Mock Logger
 jest.mock('../../../utils/Logger', () => ({
@@ -39,10 +39,19 @@ jest.mock('../../../utils/Logger', () => ({
 }));
 
 // Now import TwitterService after mocks are set up
-import { TwitterService } from '../TwitterService';
+type TwitterServiceType = typeof import('../TwitterService').TwitterService;
+let TwitterServiceClass: TwitterServiceType;
+const mockFetchResponse: any = {
+  arrayBuffer: jest.fn(async () => new ArrayBuffer(8)),
+  headers: {
+    get: jest.fn(() => 'image/jpeg'),
+  },
+};
+const mockFetch = jest.fn(async () => mockFetchResponse);
+(globalThis as any).fetch = mockFetch;
 
-describe.skip('TwitterService', () => {
-  let service: TwitterService;
+describe('TwitterService', () => {
+  let service: InstanceType<TwitterServiceType>;
   const mockCredentials = {
     apiKey: 'test-twitter-api-key-for-tests',
     apiSecret: 'test-twitter-api-secret-for-tests',
@@ -50,20 +59,25 @@ describe.skip('TwitterService', () => {
     accessSecret: 'test-twitter-access-secret-for-tests',
   };
 
+  beforeAll(async () => {
+    ({ TwitterService: TwitterServiceClass } = await import('../TwitterService'));
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new TwitterService(mockCredentials);
+    mockFetch.mockClear();
+    service = new TwitterServiceClass(mockCredentials);
   });
 
   describe('Constructor', () => {
     it('should initialize with provided credentials', () => {
-      expect(service).toBeInstanceOf(TwitterService);
+      expect(service).toBeInstanceOf(TwitterServiceClass);
       expect(service.platform).toBe('twitter');
     });
 
     it('should throw AuthenticationError when credentials are missing', () => {
-      expect(() => new TwitterService({})).toThrow(AuthenticationError);
-      expect(() => new TwitterService({})).toThrow('Missing Twitter API credentials');
+      expect(() => new TwitterServiceClass({})).toThrow(AuthenticationError);
+      expect(() => new TwitterServiceClass({})).toThrow('Missing Twitter API credentials');
     });
 
     it('should use environment variables when credentials not provided', () => {
@@ -72,8 +86,8 @@ describe.skip('TwitterService', () => {
       process.env['TWITTER_ACCESS_TOKEN'] = 'twitter-env-access-token-for-tests';
       process.env['TWITTER_ACCESS_SECRET'] = 'twitter-env-access-secret-for-tests';
 
-      const envService = new TwitterService();
-      expect(envService).toBeInstanceOf(TwitterService);
+      const envService = new TwitterServiceClass();
+      expect(envService).toBeInstanceOf(TwitterServiceClass);
 
       delete process.env['TWITTER_API_KEY'];
       delete process.env['TWITTER_API_SECRET'];
@@ -271,7 +285,9 @@ describe.skip('TwitterService', () => {
         updatedAt: new Date(),
       };
 
-      await expect(service.schedulePost(content)).rejects.toThrow('Scheduling not implemented');
+      await expect(service.schedulePost(content)).rejects.toThrow(
+        'Twitter API does not support native post scheduling'
+      );
     });
   });
 

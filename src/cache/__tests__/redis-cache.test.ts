@@ -2,6 +2,7 @@
  * Redis Cache Tests
  */
 
+process.env['MOCK_REDIS'] = 'true';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import RedisCacheManager, { getCache, initializeCache } from '../redis-cache';
 
@@ -88,7 +89,7 @@ describe('RedisCacheManager', () => {
       };
 
       await cache.set('test-object', testObject, 60);
-      const value = await cache.get(typeof testObject);
+      const value = await cache.get('test-object');
 
       expect(value).toEqual(testObject);
     });

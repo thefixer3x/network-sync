@@ -9,6 +9,15 @@ import {
 
 describe('Environment Validation', () => {
   let originalEnv: NodeJS.ProcessEnv;
+  const seedRequiredEnv = () => {
+    process.env['CLAUDE_API_KEY'] = 'test-key';
+    process.env['OPENAI_API_KEY'] = 'test-key';
+    process.env['PERPLEXITY_API_KEY'] = 'test-key';
+    process.env['SUPABASE_URL'] = 'https://test.supabase.co';
+    process.env['SUPABASE_ANON_KEY'] = 'test-anon-key';
+    process.env['JWT_SECRET'] = 'x'.repeat(32);
+    process.env['JWT_REFRESH_SECRET'] = 'y'.repeat(32);
+  };
 
   beforeEach(() => {
     // Save original environment
@@ -24,17 +33,13 @@ describe('Environment Validation', () => {
 
   describe('validateEnv', () => {
     it('should pass with all required variables', () => {
-      process.env['CLAUDE_API_KEY'] = 'test-claude-key';
-      process.env['OPENAI_API_KEY'] = 'test-openai-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-perplexity-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-anon-key';
+      seedRequiredEnv();
 
       const result = validateEnv();
 
       expect(result.success).toBe(true);
       expect(result.config).toBeDefined();
-      expect(result.config?.CLAUDE_API_KEY).toBe('test-claude-key');
+      expect(result.config?.CLAUDE_API_KEY).toBe('test-key');
     });
 
     it('should fail when required variables are missing', () => {
@@ -53,16 +58,12 @@ describe('Environment Validation', () => {
 
       expect(result.success).toBe(false);
       const requiredErrors = result.errors?.filter((e) => e.severity === 'required');
-      expect(requiredErrors?.length).toBe(5); // 5 required variables
+      expect(requiredErrors?.length).toBe(7); // 7 required variables
     });
 
     it('should accept valid optional variables', () => {
       // Set required variables
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
+      seedRequiredEnv();
 
       // Set optional variables
       process.env['TWITTER_API_KEY'] = 'twitter-key';
@@ -77,11 +78,7 @@ describe('Environment Validation', () => {
 
     it('should use default values for optional configuration', () => {
       // Set required variables
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
+      seedRequiredEnv();
 
       const result = validateEnv();
 
@@ -93,11 +90,7 @@ describe('Environment Validation', () => {
 
     it('should warn when no social media credentials are configured', () => {
       // Set only required variables
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
+      seedRequiredEnv();
 
       const result = validateEnv();
 
@@ -107,11 +100,8 @@ describe('Environment Validation', () => {
     });
 
     it('should validate URL format for SUPABASE_URL', () => {
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
+      seedRequiredEnv();
       process.env['SUPABASE_URL'] = 'not-a-valid-url';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
 
       const result = validateEnv();
 
@@ -122,11 +112,7 @@ describe('Environment Validation', () => {
     });
 
     it('should transform and validate numeric values', () => {
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
+      seedRequiredEnv();
       process.env['OPENAI_TEMPERATURE'] = '0.8';
       process.env['PORT'] = '4000';
 
@@ -144,11 +130,7 @@ describe('Environment Validation', () => {
     });
 
     it('should return config when validation passes', () => {
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
+      seedRequiredEnv();
 
       const config = validateEnvOrThrow();
 
@@ -174,11 +156,7 @@ describe('Environment Validation', () => {
 
   describe('formatValidationResult', () => {
     it('should format successful validation', () => {
-      process.env['CLAUDE_API_KEY'] = 'test-key';
-      process.env['OPENAI_API_KEY'] = 'test-key';
-      process.env['PERPLEXITY_API_KEY'] = 'test-key';
-      process.env['SUPABASE_URL'] = 'https://test.supabase.co';
-      process.env['SUPABASE_ANON_KEY'] = 'test-key';
+      seedRequiredEnv();
 
       const result = validateEnv();
       const formatted = formatValidationResult(result);

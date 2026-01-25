@@ -2,7 +2,9 @@
  * Example Usage of Multi-Agent Orchestration System
  */
 
-import { orchestrator } from './orchestrator/agent-orchestrator';
+import { getAgentOrchestrator } from './orchestrator/agent-orchestrator';
+
+const orchestrator = getAgentOrchestrator();
 
 type ResearchSummary = {
   summary: string;

@@ -4,8 +4,10 @@ export default {
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
+    '.+/lanonasis-memory-sdk\\.js$': '<rootDir>/src/test-utils/memory-sdk-stub.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^chalk$': '<rootDir>/src/test-utils/chalk-stub.ts',
   },
   transform: {
     '^.+\\.tsx?$': [

@@ -3,21 +3,51 @@
  */
 
 // @ts-nocheck
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { WorkflowEngine, type WorkflowRequest, type WorkflowResult } from '../workflow-engine.js';
+import { describe, it, expect, beforeEach, jest, beforeAll } from '@jest/globals';
 
-// Mock the agents and storage
-jest.mock('../../agents/perplexity-agent.js');
-jest.mock('../../agents/claude-agent.js');
-jest.mock('../../storage/vector-store.js');
-jest.mock('../../examples/memory-integration.js');
+let WorkflowEngine: any;
 
 describe('WorkflowEngine', () => {
-  let engine: WorkflowEngine;
+  let engine: any;
+  let mockPerplexityAgent: any;
+  let mockClaudeAgent: any;
+  let mockVectorStore: any;
+  let mockMemoryStorage: any;
+
+  beforeAll(async () => {
+    process.env['MOCK_MEMORY_SDK'] = 'true';
+    jest.resetModules();
+    ({ WorkflowEngine } = await import('../workflow-engine.js'));
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    engine = new WorkflowEngine();
+    mockPerplexityAgent = {
+      research: jest.fn().mockResolvedValue({
+        research_data: {},
+        summary: '',
+      }),
+    };
+    mockClaudeAgent = {
+      generateContent: jest.fn().mockResolvedValue({
+        content_strategy: {},
+        messaging_framework: {},
+        processed_data: {},
+        insights: {},
+        content_outline: {},
+        key_points: [],
+      }),
+    };
+    mockVectorStore = {};
+    mockMemoryStorage = {
+      storeContent: jest.fn().mockResolvedValue('default-memory-id'),
+    };
+    engine = new WorkflowEngine({
+      perplexityAgent: mockPerplexityAgent,
+      claudeAgent: mockClaudeAgent,
+      vectorStore: mockVectorStore,
+      memoryStorage: mockMemoryStorage,
+    });
   });
 
   describe('constructor', () => {
@@ -29,7 +59,7 @@ describe('WorkflowEngine', () => {
 
   describe('executeWorkflow', () => {
     it('should execute social_campaign workflow successfully', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-workflow-1',
         type: 'social_campaign',
         topic: 'AI automation trends',
@@ -59,7 +89,7 @@ describe('WorkflowEngine', () => {
       (engine as any).claudeAgent.generateContent = mockClaudeGenerate;
 
       // Mock memory storage
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('memory-id-123');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('memory-id-123');
 
       const result = await engine.executeWorkflow(request);
 
@@ -71,7 +101,7 @@ describe('WorkflowEngine', () => {
     }, 60000); // Extended timeout for workflow execution
 
     it('should handle workflow errors gracefully', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-workflow-error',
         type: 'social_campaign',
         topic: 'Test error handling',
@@ -92,7 +122,7 @@ describe('WorkflowEngine', () => {
     }, 60000);
 
     it('should execute content_creation workflow', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-content-1',
         type: 'content_creation',
         topic: 'Product launch announcement',
@@ -108,7 +138,7 @@ describe('WorkflowEngine', () => {
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({
         content: 'Product launch post',
       });
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       const result = await engine.executeWorkflow(request);
 
@@ -117,7 +147,7 @@ describe('WorkflowEngine', () => {
     }, 60000);
 
     it('should execute research_analysis workflow', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-research-1',
         type: 'research_analysis',
         topic: 'Market trends in AI',
@@ -135,7 +165,7 @@ describe('WorkflowEngine', () => {
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({
         content: 'Analysis report',
       });
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       const result = await engine.executeWorkflow(request);
 
@@ -144,7 +174,7 @@ describe('WorkflowEngine', () => {
     }, 60000);
 
     it('should execute competitive_analysis workflow', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-competitive-1',
         type: 'competitive_analysis',
         topic: 'Competitor strategy analysis',
@@ -162,7 +192,7 @@ describe('WorkflowEngine', () => {
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({
         content: 'Competitive analysis',
       });
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       const result = await engine.executeWorkflow(request);
 
@@ -173,7 +203,7 @@ describe('WorkflowEngine', () => {
 
   describe('workflow dependencies', () => {
     it('should execute phases in correct order respecting dependencies', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-deps-1',
         type: 'social_campaign',
         topic: 'Dependency test',
@@ -194,7 +224,7 @@ describe('WorkflowEngine', () => {
         return Promise.resolve({ content: 'Content generated' });
       });
 
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       await engine.executeWorkflow(request);
 
@@ -207,7 +237,7 @@ describe('WorkflowEngine', () => {
 
   describe('workflow results storage', () => {
     it('should store workflow results in memory', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-storage-1',
         type: 'content_creation',
         topic: 'Storage test',
@@ -218,7 +248,7 @@ describe('WorkflowEngine', () => {
       const mockStore = jest.fn().mockResolvedValue('memory-id-456');
       (engine as any).perplexityAgent.research = jest.fn().mockResolvedValue({});
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({});
-      (engine as any).memoryStorage.store = mockStore;
+      (engine as any).memoryStorage.storeContent = mockStore;
 
       await engine.executeWorkflow(request);
 
@@ -229,7 +259,7 @@ describe('WorkflowEngine', () => {
 
   describe('workflow execution tracking', () => {
     it('should track execution time', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-timing-1',
         type: 'content_creation',
         topic: 'Timing test',
@@ -239,7 +269,7 @@ describe('WorkflowEngine', () => {
 
       (engine as any).perplexityAgent.research = jest.fn().mockResolvedValue({});
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({});
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       const result = await engine.executeWorkflow(request);
 
@@ -248,7 +278,7 @@ describe('WorkflowEngine', () => {
     }, 60000);
 
     it('should return completed and failed phases', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-phases-1',
         type: 'social_campaign',
         topic: 'Phase tracking test',
@@ -258,7 +288,7 @@ describe('WorkflowEngine', () => {
 
       (engine as any).perplexityAgent.research = jest.fn().mockResolvedValue({});
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({});
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       const result = await engine.executeWorkflow(request);
 
@@ -270,7 +300,7 @@ describe('WorkflowEngine', () => {
 
   describe('error handling', () => {
     it('should handle agent failures', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-agent-fail-1',
         type: 'content_creation',
         topic: 'Agent failure test',
@@ -289,7 +319,7 @@ describe('WorkflowEngine', () => {
     }, 60000);
 
     it('should handle network errors', async () => {
-      const request: WorkflowRequest = {
+      const request = {
         id: 'test-network-fail-1',
         type: 'content_creation',
         topic: 'Network error test',
@@ -326,7 +356,7 @@ describe('WorkflowEngine', () => {
 
   describe('concurrent workflow execution', () => {
     it('should handle multiple workflows concurrently', async () => {
-      const request1: WorkflowRequest = {
+      const request1 = {
         id: 'concurrent-1',
         type: 'content_creation',
         topic: 'First workflow',
@@ -334,7 +364,7 @@ describe('WorkflowEngine', () => {
         parameters: {},
       };
 
-      const request2: WorkflowRequest = {
+      const request2 = {
         id: 'concurrent-2',
         type: 'content_creation',
         topic: 'Second workflow',
@@ -344,7 +374,7 @@ describe('WorkflowEngine', () => {
 
       (engine as any).perplexityAgent.research = jest.fn().mockResolvedValue({});
       (engine as any).claudeAgent.generateContent = jest.fn().mockResolvedValue({});
-      (engine as any).memoryStorage.store = jest.fn().mockResolvedValue('id');
+      (engine as any).memoryStorage.storeContent = jest.fn().mockResolvedValue('id');
 
       // Execute concurrently
       const [result1, result2] = await Promise.all([

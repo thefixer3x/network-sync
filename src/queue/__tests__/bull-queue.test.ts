@@ -3,13 +3,30 @@
  */
 
 // @ts-nocheck
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { JobType, JobPriority } from '../bull-queue.js';
+import { describe, it, expect, beforeEach, afterEach, jest, beforeAll } from '@jest/globals';
+type BullModule = typeof import('../bull-queue.js');
+let JobType: BullModule['JobType'];
+let JobPriority: BullModule['JobPriority'];
+let BullQueueManager: BullModule['default'];
 
 // Mock Bull library
+const createMockJob = () => ({
+  id: 'job-123',
+  name: 'test-job',
+  data: {},
+  timestamp: Date.now(),
+  attemptsMade: 0,
+  progress: () => 0,
+  getState: jest.fn().mockResolvedValue('completed'),
+  returnvalue: null,
+  failedReason: undefined,
+  remove: jest.fn().mockResolvedValue(undefined),
+  retry: jest.fn().mockResolvedValue(undefined),
+});
+
 jest.mock('bull', () => {
   return jest.fn().mockImplementation(() => ({
-    add: jest.fn().mockResolvedValue({ id: 'job-123' }),
+    add: jest.fn().mockResolvedValue(createMockJob()),
     process: jest.fn(),
     on: jest.fn(),
     getJobs: jest.fn().mockResolvedValue([]),
@@ -20,19 +37,32 @@ jest.mock('bull', () => {
       failed: 0,
       delayed: 0,
     }),
+    getWaitingCount: jest.fn().mockResolvedValue(0),
+    getActiveCount: jest.fn().mockResolvedValue(0),
+    getCompletedCount: jest.fn().mockResolvedValue(0),
+    getFailedCount: jest.fn().mockResolvedValue(0),
+    getDelayedCount: jest.fn().mockResolvedValue(0),
+    isPaused: jest.fn().mockResolvedValue(false),
     pause: jest.fn().mockResolvedValue(undefined),
     resume: jest.fn().mockResolvedValue(undefined),
     close: jest.fn().mockResolvedValue(undefined),
     clean: jest.fn().mockResolvedValue(undefined),
-    isPaused: jest.fn().mockResolvedValue(false),
+    empty: jest.fn().mockResolvedValue(undefined),
+    getJob: jest.fn().mockResolvedValue(createMockJob()),
   }));
 });
 
 jest.mock('@/utils/Logger');
 
 describe('Bull Queue Manager', () => {
-  let BullQueueManager: any;
   let manager: any;
+
+  beforeAll(async () => {
+    const module = await import('../bull-queue.js');
+    JobType = module.JobType;
+    JobPriority = module.JobPriority;
+    BullQueueManager = module.default;
+  });
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -124,7 +154,7 @@ describe('Bull Queue Manager', () => {
         content: 'Test post',
       };
 
-      const job = await manager.addJob('content', JobType.POST_CONTENT, jobData);
+      const job = await manager.addJob(JobType.POST_CONTENT, jobData);
 
       expect(job).toBeDefined();
       expect(job.id).toBe('job-123');
@@ -133,12 +163,9 @@ describe('Bull Queue Manager', () => {
     it('should add job with priority', async () => {
       const jobData = { urgent: true };
 
-      const job = await manager.addJob(
-        'content',
-        JobType.GENERATE_CONTENT,
-        jobData,
-        { priority: JobPriority.HIGH },
-      );
+      const job = await manager.addJob(JobType.GENERATE_CONTENT, jobData, {
+        priority: JobPriority.HIGH,
+      });
 
       expect(job).toBeDefined();
     });
@@ -146,12 +173,9 @@ describe('Bull Queue Manager', () => {
     it('should add job with delay', async () => {
       const jobData = { scheduledFor: Date.now() + 60000 };
 
-      const job = await manager.addJob(
-        'content',
-        JobType.SCHEDULE_POST,
-        jobData,
-        { delay: 60000 },
-      );
+      const job = await manager.addJob(JobType.SCHEDULE_POST, jobData, {
+        delay: 60000,
+      });
 
       expect(job).toBeDefined();
     });
@@ -159,12 +183,9 @@ describe('Bull Queue Manager', () => {
     it('should add job with custom attempts', async () => {
       const jobData = { retryable: true };
 
-      const job = await manager.addJob(
-        'ai',
-        JobType.ANALYZE_TRENDS,
-        jobData,
-        { attempts: 5 },
-      );
+      const job = await manager.addJob(JobType.ANALYZE_TRENDS, jobData, {
+        attempts: 5,
+      });
 
       expect(job).toBeDefined();
     });
@@ -257,7 +278,7 @@ describe('Bull Queue Manager', () => {
 
   describe('error handling', () => {
     it('should handle initialization errors', async () => {
-      const Bull = require('bull');
+      const Bull = jest.requireMock('bull');
       Bull.mockImplementationOnce(() => {
         throw new Error('Redis connection failed');
       });
@@ -267,12 +288,10 @@ describe('Bull Queue Manager', () => {
       await expect(newManager.initialize()).rejects.toThrow();
     });
 
-    it('should handle invalid queue name', async () => {
-      await manager.initialize();
-
-      await expect(
-        manager.addJob('invalid-queue', JobType.POST_CONTENT, {}),
-      ).rejects.toThrow();
+    it('should error when not initialized', async () => {
+      await expect(manager.addJob(JobType.POST_CONTENT, {})).rejects.toThrow(
+        'Queue manager not initialized',
+      );
     });
   });
 
@@ -284,17 +303,17 @@ describe('Bull Queue Manager', () => {
     it('should register job processor', async () => {
       const processor = jest.fn().mockResolvedValue({ success: true });
 
-      await manager.processQueue('content', JobType.POST_CONTENT, processor);
+      await manager.processJobs(JobType.POST_CONTENT, processor);
 
-      expect(manager).toBeDefined();
+      expect(processor).not.toHaveBeenCalled();
     });
 
     it('should process job with concurrency', async () => {
       const processor = jest.fn().mockResolvedValue({ success: true });
 
-      await manager.processQueue('ai', JobType.ANALYZE_TRENDS, processor, 5);
+      await manager.processJobs(JobType.ANALYZE_TRENDS, processor, 5);
 
-      expect(manager).toBeDefined();
+      expect(processor).not.toHaveBeenCalled();
     });
   });
 
@@ -305,9 +324,7 @@ describe('Bull Queue Manager', () => {
 
     it('should get job status', async () => {
       // Add a job first
-      const job = await manager.addJob('content', JobType.GENERATE_CONTENT, {
-        test: true,
-      });
+      const job = await manager.addJob(JobType.GENERATE_CONTENT, { test: true });
 
       const status = await manager.getJobStatus('content', job.id);
 
@@ -315,6 +332,10 @@ describe('Bull Queue Manager', () => {
     });
 
     it('should return null for non-existent job', async () => {
+      const Bull = jest.requireMock('bull');
+      const mockQueue = Bull.mock.results[0].value;
+      mockQueue.getJob.mockResolvedValueOnce(null);
+
       const status = await manager.getJobStatus('content', 'non-existent-id');
 
       expect(status).toBeNull();
@@ -333,9 +354,7 @@ describe('Bull Queue Manager', () => {
         { type: JobType.COLLECT_ANALYTICS, data: { id: 3 } },
       ];
 
-      const results = await Promise.all(
-        jobs.map(job => manager.addJob('content', job.type, job.data)),
-      );
+      const results = await Promise.all(jobs.map(job => manager.addJob(job.type, job.data)));
 
       expect(results).toHaveLength(3);
       results.forEach(result => {
@@ -350,27 +369,19 @@ describe('Bull Queue Manager', () => {
     });
 
     it('should check queue health', async () => {
-      const health = await manager.getQueueHealth('content');
+      const healthy = await manager.healthCheck();
 
-      expect(health).toBeDefined();
-      expect(typeof health.healthy).toBe('boolean');
+      expect(typeof healthy).toBe('boolean');
     });
 
     it('should detect unhealthy queue', async () => {
-      // Mock high failure rate
-      const Bull = require('bull');
+      const Bull = jest.requireMock('bull');
       const mockQueue = Bull.mock.results[0].value;
-      mockQueue.getJobCounts.mockResolvedValue({
-        waiting: 0,
-        active: 0,
-        completed: 10,
-        failed: 100, // High failure rate
-        delayed: 0,
-      });
+      mockQueue.getJobCounts.mockRejectedValueOnce(new Error('Redis unavailable'));
 
-      const health = await manager.getQueueHealth('content');
+      const healthy = await manager.healthCheck();
 
-      expect(health).toBeDefined();
+      expect(healthy).toBe(false);
     });
   });
 });

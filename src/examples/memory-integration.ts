@@ -7,13 +7,59 @@
 import MemoryClient, { MultiModalMemoryClient } from '../../lib/memory-sdk/lanonasis-memory-sdk.js';
 import { VectorStore } from '../storage/vector-store.js';
 
-// Initialize both systems
-const memory = new MultiModalMemoryClient({
-  apiUrl: 'https://api.lanonasis.com',
-  apiKey: process.env['LANONASIS_API_KEY'] || 'your-api-key',
-});
+const useMockMemory = process.env['MOCK_MEMORY_SDK'] === 'true';
 
-const vectorStore = new VectorStore();
+const memory = useMockMemory
+  ? ({
+      async createMemory() {
+        return { data: { id: `memory-${Date.now()}` } };
+      },
+      async searchMemories() {
+        return { data: { results: [] } };
+      },
+      async createImageMemory() {
+        return { data: { id: `image-${Date.now()}` } };
+      },
+      async createAudioMemory() {
+        return { data: { id: `audio-${Date.now()}` } };
+      },
+      async createDocumentMemory() {
+        return { data: { id: `document-${Date.now()}` } };
+      },
+      async getMultiModalContext() {
+        return {
+          text: 'mock-context',
+          media: [],
+        };
+      },
+      async getEngagementPatterns() {
+        return { trends: [] };
+      },
+      async summarizeDiscussion() {
+        return 'mock-summary';
+      },
+    } as unknown as MultiModalMemoryClient)
+  : new MultiModalMemoryClient({
+      apiUrl: 'https://api.lanonasis.com',
+      apiKey: process.env['LANONASIS_API_KEY'] || 'your-api-key',
+    });
+
+const vectorStore = useMockMemory
+  ? ({
+      async store() {
+        return `vector-${Date.now()}`;
+      },
+      async searchSimilar() {
+        return [];
+      },
+      async retrieveRelevant() {
+        return [];
+      },
+      async findTrendingTopics() {
+        return [];
+      },
+    } as unknown as VectorStore)
+  : new VectorStore();
 
 /**
  * Enhanced Social Media Content Storage

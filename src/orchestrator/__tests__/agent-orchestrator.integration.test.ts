@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, jest } from '@jest/globals';
 import { AgentOrchestrator, type AgentTask } from '../agent-orchestrator';
+import { initializeConnectionPool, getConnectionPool } from '../../database/connection-pool';
 
 /**
  * Integration Tests for Agent Orchestrator
@@ -24,7 +25,7 @@ describe('AgentOrchestrator Integration Tests', () => {
   let orchestrator: AgentOrchestrator;
   let originalEnv: NodeJS.ProcessEnv;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Save original environment
     originalEnv = { ...process.env };
 
@@ -35,11 +36,14 @@ describe('AgentOrchestrator Integration Tests', () => {
     process.env['SUPABASE_URL'] = 'https://test.supabase.co';
     process.env['SUPABASE_ANON_KEY'] = 'test-anon-key';
 
+    await initializeConnectionPool();
+
     // Create fresh orchestrator instance
     orchestrator = new AgentOrchestrator();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await getConnectionPool().shutdown();
     // Restore environment
     process.env = originalEnv;
   });

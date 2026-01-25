@@ -89,6 +89,9 @@ export class AutomationEngine {
       return;
     }
 
+    this.isRunning = true;
+    let startedSuccessfully = false;
+
     try {
       // Load configuration
       this.config = await this.loadConfiguration(configId);
@@ -98,7 +101,6 @@ export class AutomationEngine {
         return;
       }
 
-      this.isRunning = true;
       this.logger.info('Starting automation engine...');
 
       // Schedule core automation tasks
@@ -118,9 +120,14 @@ export class AutomationEngine {
       await this.scheduleAnalyticsCollection();
 
       this.logger.info('Automation engine started successfully');
+      startedSuccessfully = true;
     } catch (error) {
       this.logger.error('Failed to start automation engine:', error);
       throw error;
+    } finally {
+      if (!startedSuccessfully) {
+        this.isRunning = false;
+      }
     }
   }
 

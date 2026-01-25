@@ -71,7 +71,7 @@ describe('LinkedInService', () => {
         'https://api.linkedin.com/v2/me',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer test-linkedin-token',
+            Authorization: `Bearer ${mockCredentials.accessToken}`,
           }),
         })
       );
@@ -117,12 +117,12 @@ describe('LinkedInService', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'https://api.linkedin.com/v2/ugcPosts',
         expect.objectContaining({
-          author: 'urn:li:person:12345',
+          author: 'urn:li:person:linkedin-person-id-for-tests',
           lifecycleState: 'PUBLISHED',
         }),
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer test-linkedin-token',
+            Authorization: `Bearer ${mockCredentials.accessToken}`,
           }),
         })
       );
@@ -227,7 +227,9 @@ describe('LinkedInService', () => {
         updatedAt: new Date(),
       };
 
-      await expect(service.schedulePost(content)).rejects.toThrow('Scheduling not implemented');
+      await expect(service.schedulePost(content)).rejects.toThrow(
+        'LinkedIn API does not support native post scheduling'
+      );
     });
   });
 

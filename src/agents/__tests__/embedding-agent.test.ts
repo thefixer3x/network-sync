@@ -1,28 +1,15 @@
 import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
-
-// Mock OpenAI module BEFORE importing EmbeddingAgent
-const mockCreate = jest.fn();
-jest.mock('openai', () => {
-  return {
-    default: class MockOpenAI {
-      embeddings = {
-        create: mockCreate,
-      };
-    },
-  };
-});
-
-// Mock Logger
-jest.mock('@/utils/Logger', () => ({
-  Logger: class MockLogger {
-    warn = jest.fn();
-    error = jest.fn();
-    info = jest.fn();
-  },
-}));
-
-// Now import after mocks are set up
+import type OpenAI from 'openai';
 import { EmbeddingAgent } from '../embedding-agent';
+
+const mockCreate = jest.fn();
+
+const buildMockClient = (): OpenAI =>
+  ({
+    embeddings: {
+      create: mockCreate,
+    },
+  }) as unknown as OpenAI;
 
 describe('EmbeddingAgent', () => {
   let agent: EmbeddingAgent;
@@ -45,13 +32,17 @@ describe('EmbeddingAgent', () => {
   describe('Constructor', () => {
     it('should initialize with OpenAI client when API key is present', () => {
       process.env['OPENAI_API_KEY'] = 'test-api-key';
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
       expect(agent).toBeInstanceOf(EmbeddingAgent);
     });
 
     it('should initialize without OpenAI client when API key is missing', () => {
       delete process.env['OPENAI_API_KEY'];
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
       expect(agent).toBeInstanceOf(EmbeddingAgent);
     });
   });
@@ -75,7 +66,9 @@ describe('EmbeddingAgent', () => {
         ],
       });
 
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
 
       const result = await agent.createEmbeddings({
         texts: ['test text 1', 'test text 2'],
@@ -105,7 +98,9 @@ describe('EmbeddingAgent', () => {
         ],
       });
 
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
 
       await agent.createEmbeddings({
         texts: ['test text'],
@@ -128,7 +123,9 @@ describe('EmbeddingAgent', () => {
         ],
       });
 
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
 
       const metadata = [{ source: 'test', timestamp: Date.now() }];
       const result = await agent.createEmbeddings({
@@ -148,7 +145,9 @@ describe('EmbeddingAgent', () => {
         ],
       });
 
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
 
       const result = await agent.createEmbeddings({
         texts: ['text1', 'text2', 'text3'],
@@ -164,7 +163,9 @@ describe('EmbeddingAgent', () => {
   describe('createEmbeddings with mock fallback', () => {
     beforeEach(() => {
       delete process.env['OPENAI_API_KEY'];
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
     });
 
     it('should generate mock embeddings when API key is missing', async () => {
@@ -219,7 +220,9 @@ describe('EmbeddingAgent', () => {
 
       (mockCreate as any).mockRejectedValue(new Error('API rate limit exceeded'));
 
-      agent = new EmbeddingAgent();
+      agent = new EmbeddingAgent({
+        openAIClientFactory: () => buildMockClient(),
+      });
 
       await expect(agent.createEmbeddings({ texts: ['test'] })).rejects.toThrow(
         'API rate limit exceeded'

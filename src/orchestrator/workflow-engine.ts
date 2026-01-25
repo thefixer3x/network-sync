@@ -40,6 +40,13 @@ export interface WorkflowResult {
   error?: string;
 }
 
+type WorkflowEngineDependencies = {
+  perplexityAgent?: PerplexityAgent;
+  claudeAgent?: ClaudeAgent;
+  vectorStore?: VectorStore;
+  memoryStorage?: EnhancedContentStorage;
+};
+
 export class WorkflowEngine {
   private perplexityAgent: PerplexityAgent;
   private claudeAgent: ClaudeAgent;
@@ -186,11 +193,11 @@ export class WorkflowEngine {
     ],
   };
 
-  constructor() {
-    this.perplexityAgent = new PerplexityAgent();
-    this.claudeAgent = new ClaudeAgent();
-    this.vectorStore = new VectorStore();
-    this.memoryStorage = new EnhancedContentStorage();
+  constructor(deps: WorkflowEngineDependencies = {}) {
+    this.perplexityAgent = deps.perplexityAgent ?? new PerplexityAgent();
+    this.claudeAgent = deps.claudeAgent ?? new ClaudeAgent();
+    this.vectorStore = deps.vectorStore ?? new VectorStore();
+    this.memoryStorage = deps.memoryStorage ?? new EnhancedContentStorage();
   }
 
   /**

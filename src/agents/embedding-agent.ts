@@ -16,18 +16,24 @@ interface EmbeddingParams {
   metadata?: Array<Record<string, unknown> | undefined>;
 }
 
+type EmbeddingAgentOptions = {
+  openAIClientFactory?: (config: { apiKey: string }) => OpenAI;
+};
+
 export class EmbeddingAgent {
   private readonly logger = new Logger('EmbeddingAgent');
   private readonly client: OpenAI | null;
 
-  constructor() {
+  constructor(options: EmbeddingAgentOptions = {}) {
     const apiKey = process.env['OPENAI_API_KEY'];
+    const clientFactory =
+      options.openAIClientFactory ?? ((config: { apiKey: string }) => new OpenAI(config));
 
     if (!apiKey) {
       this.logger.warn('OPENAI_API_KEY is not set. EmbeddingAgent will generate mock embeddings.');
       this.client = null;
     } else {
-      this.client = new OpenAI({ apiKey });
+      this.client = clientFactory({ apiKey });
     }
   }
 

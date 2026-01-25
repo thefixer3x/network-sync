@@ -1,21 +1,38 @@
-import { describe, expect, it, beforeEach } from '@jest/globals';
-import * as jwt from 'jsonwebtoken';
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  generateTokenPair,
-  verifyAccessToken,
-  verifyRefreshToken,
-  decodeToken,
-  isTokenExpired,
-  getTokenExpiration,
-  refreshAccessToken,
-  extractTokenFromHeader,
-  type JWTPayload,
-} from '../jwt-manager';
+import { describe, expect, it, beforeEach, beforeAll } from '@jest/globals';
+import jwt from 'jsonwebtoken';
+import type { JWTPayload } from '../jwt-manager';
+type JwtModule = typeof import('../jwt-manager');
+let generateAccessToken: JwtModule['generateAccessToken'];
+let generateRefreshToken: JwtModule['generateRefreshToken'];
+let generateTokenPair: JwtModule['generateTokenPair'];
+let verifyAccessToken: JwtModule['verifyAccessToken'];
+let verifyRefreshToken: JwtModule['verifyRefreshToken'];
+let decodeToken: JwtModule['decodeToken'];
+let isTokenExpired: JwtModule['isTokenExpired'];
+let getTokenExpiration: JwtModule['getTokenExpiration'];
+let refreshAccessToken: JwtModule['refreshAccessToken'];
+let extractTokenFromHeader: JwtModule['extractTokenFromHeader'];
 
 describe('JWT Manager', () => {
   let testPayload: JWTPayload;
+
+  beforeAll(async () => {
+    process.env['JWT_SECRET'] = process.env['JWT_SECRET'] || 'test-secret-test-secret-test-secret!!';
+    process.env['JWT_REFRESH_SECRET'] =
+      process.env['JWT_REFRESH_SECRET'] || 'refresh-secret-refresh-secret!!.!!';
+    ({
+      generateAccessToken,
+      generateRefreshToken,
+      generateTokenPair,
+      verifyAccessToken,
+      verifyRefreshToken,
+      decodeToken,
+      isTokenExpired,
+      getTokenExpiration,
+      refreshAccessToken,
+      extractTokenFromHeader,
+    } = await import('../jwt-manager'));
+  });
 
   beforeEach(() => {
     // Set up test environment variables
@@ -96,7 +113,7 @@ describe('JWT Manager', () => {
       expect(() => verifyRefreshToken(invalidToken)).toThrow('Invalid refresh token');
     });
 
-    it('should throw error for expired access token', () => {
+    it('should throw error for expired access token', async () => {
       // Generate token with very short expiration
       const secret = process.env['JWT_SECRET'] as string;
       const expiredToken = jwt.sign(testPayload, secret, {
@@ -104,9 +121,8 @@ describe('JWT Manager', () => {
       });
 
       // Wait for token to expire
-      setTimeout(() => {
-        expect(() => verifyAccessToken(expiredToken)).toThrow('Token expired');
-      }, 100);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(() => verifyAccessToken(expiredToken)).toThrow('Token expired');
     });
 
     it('should not verify access token with refresh secret', () => {

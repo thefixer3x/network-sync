@@ -69,7 +69,7 @@ describe('FacebookService', () => {
       expect(mockedAxios.get).toHaveBeenCalledWith(
         expect.stringContaining('/me'),
         expect.objectContaining({
-          params: { access_token: 'test-facebook-token' },
+          params: { access_token: mockCredentials.accessToken },
         })
       );
     });
@@ -117,7 +117,7 @@ describe('FacebookService', () => {
         expect.stringContaining('/posts'),
         expect.objectContaining({
           message: 'Test Facebook post',
-          access_token: 'test-facebook-token',
+          access_token: mockCredentials.accessToken,
         })
       );
     });
@@ -146,7 +146,7 @@ describe('FacebookService', () => {
         content: '',
       };
 
-      await expect(service.post(emptyContent)).rejects.toThrow();
+      await expect(service.post(emptyContent)).rejects.toThrow('Facebook content cannot be empty');
     });
   });
 
@@ -182,7 +182,7 @@ describe('FacebookService', () => {
   });
 
   describe('schedulePost', () => {
-    it('should throw error as scheduling is not implemented', async () => {
+    it('should schedule a post when scheduledTime is provided', async () => {
       const content: Content = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         content: 'Scheduled post',
@@ -197,7 +197,20 @@ describe('FacebookService', () => {
         updatedAt: new Date(),
       };
 
-      await expect(service.schedulePost(content)).rejects.toThrow('Scheduling not implemented');
+      mockedAxios.post.mockResolvedValue({
+        data: { id: 'scheduled_post_123' },
+      });
+
+      const scheduledId = await service.schedulePost(content);
+
+      expect(scheduledId).toBe('scheduled_post_123');
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/posts'),
+        expect.objectContaining({
+          scheduled_publish_time: expect.any(Number),
+          access_token: mockCredentials.accessToken,
+        })
+      );
     });
   });
 });

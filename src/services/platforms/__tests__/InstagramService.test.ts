@@ -23,7 +23,7 @@ describe('InstagramService', () => {
   let service: InstagramService;
   const mockCredentials = {
     accessToken: 'test-instagram-token-for-testing',
-    accountId: 'test-instagram-account-id-for-testing',
+    instagramAccountId: 'test-instagram-account-id-for-testing',
   };
 
   beforeEach(() => {
@@ -37,20 +37,20 @@ describe('InstagramService', () => {
       expect(service.platform).toBe('instagram');
     });
 
-    it('should throw AuthenticationError when access token is missing', () => {
+    it('should throw AuthenticationError when credentials are missing', () => {
       expect(() => new InstagramService({})).toThrow(AuthenticationError);
-      expect(() => new InstagramService({})).toThrow('Missing Instagram access token');
+      expect(() => new InstagramService({})).toThrow('Missing Instagram credentials');
     });
 
     it('should use environment variables when credentials not provided', () => {
       process.env['INSTAGRAM_ACCESS_TOKEN'] = 'instagram-env-access-token-for-tests';
-      process.env['INSTAGRAM_ACCOUNT_ID'] = 'instagram-env-account-id-for-tests';
+      process.env['INSTAGRAM_BUSINESS_ACCOUNT_ID'] = 'instagram-env-account-id-for-tests';
 
       const envService = new InstagramService();
       expect(envService).toBeInstanceOf(InstagramService);
 
       delete process.env['INSTAGRAM_ACCESS_TOKEN'];
-      delete process.env['INSTAGRAM_ACCOUNT_ID'];
+      delete process.env['INSTAGRAM_BUSINESS_ACCOUNT_ID'];
     });
   });
 
@@ -197,7 +197,9 @@ describe('InstagramService', () => {
         updatedAt: new Date(),
       };
 
-      await expect(service.schedulePost(content)).rejects.toThrow('Scheduling not implemented');
+      await expect(service.schedulePost(content)).rejects.toThrow(
+        'Instagram API does not support native post scheduling'
+      );
     });
   });
 

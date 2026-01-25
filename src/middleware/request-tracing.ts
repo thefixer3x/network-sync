@@ -195,6 +195,7 @@ export function errorTracingMiddleware(
 ): void {
   const requestId = req.requestId || 'unknown';
   const duration = Date.now() - (req.startTime ?? Date.now());
+  const statusCode = res.statusCode >= 400 ? res.statusCode : 500;
 
   // Log error with trace context
   const safePath = sanitizeForLog(req.path, 200);
@@ -212,7 +213,7 @@ export function errorTracingMiddleware(
     requestId,
     endpoint: req.path,
     method: req.method,
-    statusCode: res.statusCode || 500,
+    statusCode,
     duration,
     timestamp: new Date(),
     ...(req.traceContext?.userId ? { userId: req.traceContext.userId } : {}),
@@ -227,7 +228,7 @@ export function errorTracingMiddleware(
   }
 
   // Send error response
-  res.status(res.statusCode || 500).json({
+  res.status(statusCode).json({
     error: 'Internal Server Error',
     message: process.env['NODE_ENV'] === 'production'
       ? 'An error occurred'

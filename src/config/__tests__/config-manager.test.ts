@@ -26,6 +26,8 @@ describe('ConfigManager', () => {
     process.env['PERPLEXITY_API_KEY'] = 'test-perplexity-key';
     process.env['SUPABASE_URL'] = 'https://test.supabase.co';
     process.env['SUPABASE_ANON_KEY'] = 'test-anon-key';
+    process.env['JWT_SECRET'] = 'test-jwt-secret-test-jwt-secret-123456';
+    process.env['JWT_REFRESH_SECRET'] = 'test-jwt-refresh-secret-1234567890';
 
     // Get fresh instance and reset
     configManager = ConfigManager.getInstance();

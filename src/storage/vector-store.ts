@@ -63,13 +63,20 @@ export class VectorStore {
 
   constructor() {
     try {
+      let clientAcquired = false;
       // Prefer admin client to avoid RLS failures; fall back to anon client if unavailable
       try {
         this.supabase = getSupabaseAdminClient();
+        clientAcquired = true;
         logger.info('VectorStore initialized with admin client, connection pool, and caching');
       } catch {
         this.supabase = getSupabaseClient();
+        clientAcquired = true;
         logger.info('VectorStore initialized with anon client, connection pool, and caching');
+      } finally {
+        if (clientAcquired) {
+          releaseConnection();
+        }
       }
 
       // Note: Database schema must be initialized via migrations

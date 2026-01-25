@@ -88,12 +88,13 @@ function isRetryableError(error: unknown): boolean {
       return retryableError.retryable;
     }
     // Network errors are typically retryable
+    const message = error.message.toLowerCase();
     return (
-      error.message.includes('fetch') ||
-      error.message.includes('network') ||
-      error.message.includes('timeout') ||
-      error.message.includes('ECONNREFUSED') ||
-      error.message.includes('ETIMEDOUT')
+      message.includes('fetch') ||
+      message.includes('network') ||
+      message.includes('timeout') ||
+      message.includes('econnrefused') ||
+      message.includes('etimedout')
     );
   }
   return false;
@@ -192,12 +193,23 @@ function delay(ms: number): Promise<void> {
 /**
  * Creates a timeout promise that rejects after specified duration
  */
-function createTimeoutPromise(ms: number): Promise<never> {
-  return new Promise((_, reject) => {
-    setTimeout(() => {
+function createTimeoutController(ms: number): { promise: Promise<never>; cancel: () => void } {
+  let timeoutId: NodeJS.Timeout | undefined;
+
+  const promise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
       reject(createRetryableError(`Request timeout after ${ms}ms`, true));
     }, ms);
   });
+
+  const cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+  };
+
+  return { promise, cancel };
 }
 
 /**
@@ -219,11 +231,14 @@ export class HttpClient {
     timeout: number,
   ): Promise<Response> {
     const fetchPromise = fetch(url, options);
-    const timeoutPromise = createTimeoutPromise(timeout);
+    const timeoutController = createTimeoutController(timeout);
 
     try {
-      return await Promise.race([fetchPromise, timeoutPromise]);
+      const result = (await Promise.race([fetchPromise, timeoutController.promise])) as Response;
+      timeoutController.cancel();
+      return result;
     } catch (error) {
+      timeoutController.cancel();
       // If timeout, try to abort the fetch (if AbortController was used)
       throw error;
     }

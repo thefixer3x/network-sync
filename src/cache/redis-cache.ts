@@ -9,6 +9,7 @@ import { createClient, RedisClientType } from 'redis';
 import { Logger } from '@/utils/Logger';
 
 const logger = new Logger('RedisCache');
+const useMockRedis = process.env['MOCK_REDIS'] === 'true';
 
 /**
  * Cache configuration
@@ -68,6 +69,7 @@ class RedisCacheManager {
   private client: RedisClientType | null = null;
   private config: Required<CacheConfig>;
   private isConnected = false;
+  private mockStore = new Map<string, CacheEntry>();
   private stats: CacheStats = {
     hits: 0,
     misses: 0,
@@ -107,6 +109,12 @@ class RedisCacheManager {
         ...DEFAULT_CONFIG,
         ...config,
       };
+
+      if (useMockRedis) {
+        this.isConnected = true;
+        logger.info('Redis cache mock mode enabled');
+        return;
+      }
 
       logger.info('Connecting to Redis cache', {
         host: this.config.host,
@@ -175,6 +183,11 @@ class RedisCacheManager {
    */
   public async disconnect(): Promise<void> {
     try {
+      if (useMockRedis) {
+        this.mockStore.clear();
+        this.isConnected = false;
+        return;
+      }
       if (this.client && this.isConnected) {
         await this.client.quit();
         this.client = null;
@@ -201,11 +214,42 @@ class RedisCacheManager {
     return `${this.config.keyPrefix}${key}`;
   }
 
+  private getMockEntry(fullKey: string): CacheEntry | undefined {
+    const entry = this.mockStore.get(fullKey);
+    if (!entry) {
+      return undefined;
+    }
+    if (entry.expiresAt && entry.expiresAt <= Date.now()) {
+      this.mockStore.delete(fullKey);
+      return undefined;
+    }
+    return entry;
+  }
+
+  private patternToRegex(pattern: string): RegExp {
+    const escaped = pattern.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\*/g, '.*');
+    return new RegExp(`^${this.config.keyPrefix}${escaped}$`);
+  }
+
   /**
    * Get value from cache
    */
   public async get<T = any>(key: string): Promise<T | null> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        const entry = this.getMockEntry(fullKey);
+        if (!entry) {
+          this.stats.misses++;
+          this.updateHitRate();
+          return null;
+        }
+        entry.hits++;
+        this.stats.hits++;
+        this.updateHitRate();
+        return entry.value as T;
+      }
+
       if (!this.client || !this.isConnected) {
         logger.warn('Redis cache not connected, skipping get');
         this.stats.misses++;
@@ -243,6 +287,18 @@ class RedisCacheManager {
     ttl: number = this.config.defaultTTL
   ): Promise<boolean> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        this.mockStore.set(fullKey, {
+          value,
+          cachedAt: Date.now(),
+          expiresAt: ttl > 0 ? Date.now() + ttl * 1000 : null,
+          hits: 0,
+        });
+        this.stats.sets++;
+        return true;
+      }
+
       if (!this.client || !this.isConnected) {
         logger.warn('Redis cache not connected, skipping set');
         return false;
@@ -273,6 +329,15 @@ class RedisCacheManager {
    */
   public async delete(key: string): Promise<boolean> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        const deleted = this.mockStore.delete(fullKey);
+        if (deleted) {
+          this.stats.deletes++;
+        }
+        return deleted;
+      }
+
       if (!this.client || !this.isConnected) {
         logger.warn('Redis cache not connected, skipping delete');
         return false;
@@ -297,6 +362,11 @@ class RedisCacheManager {
    */
   public async exists(key: string): Promise<boolean> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        return this.getMockEntry(fullKey) !== undefined;
+      }
+
       if (!this.client || !this.isConnected) {
         return false;
       }
@@ -317,6 +387,19 @@ class RedisCacheManager {
    */
   public async mget<T = any>(keys: string[]): Promise<(T | null)[]> {
     try {
+      if (useMockRedis) {
+        return keys.map((key) => {
+          const entry = this.getMockEntry(this.buildKey(key));
+          if (!entry) {
+            this.stats.misses++;
+            return null;
+          }
+          entry.hits++;
+          this.stats.hits++;
+          return entry.value as T;
+        });
+      }
+
       if (!this.client || !this.isConnected) {
         return keys.map(() => null);
       }
@@ -351,6 +434,20 @@ class RedisCacheManager {
    */
   public async mset(entries: Record<string, any>, ttl?: number): Promise<boolean> {
     try {
+      if (useMockRedis) {
+        const expireSeconds = ttl ?? this.config.defaultTTL;
+        Object.entries(entries).forEach(([key, value]) => {
+          this.mockStore.set(this.buildKey(key), {
+            value,
+            cachedAt: Date.now(),
+            expiresAt: expireSeconds > 0 ? Date.now() + expireSeconds * 1000 : null,
+            hits: 0,
+          });
+          this.stats.sets++;
+        });
+        return true;
+      }
+
       if (!this.client || !this.isConnected) {
         return false;
       }
@@ -385,6 +482,18 @@ class RedisCacheManager {
    */
   public async mdel(keys: string[]): Promise<number> {
     try {
+      if (useMockRedis) {
+        let deleted = 0;
+        keys.forEach((key) => {
+          const fullKey = this.buildKey(key);
+          if (this.mockStore.delete(fullKey)) {
+            deleted++;
+          }
+        });
+        this.stats.deletes += deleted;
+        return deleted;
+      }
+
       if (!this.client || !this.isConnected) {
         return 0;
       }
@@ -408,6 +517,19 @@ class RedisCacheManager {
    */
   public async clear(pattern: string = '*'): Promise<number> {
     try {
+      if (useMockRedis) {
+        const regex = this.patternToRegex(pattern);
+        let deleted = 0;
+        for (const key of Array.from(this.mockStore.keys())) {
+          if (regex.test(key)) {
+            this.mockStore.delete(key);
+            deleted++;
+          }
+        }
+        this.stats.deletes += deleted;
+        return deleted;
+      }
+
       if (!this.client || !this.isConnected) {
         return 0;
       }
@@ -440,6 +562,14 @@ class RedisCacheManager {
    */
   public async ttl(key: string): Promise<number> {
     try {
+      if (useMockRedis) {
+        const entry = this.getMockEntry(this.buildKey(key));
+        if (!entry || entry.expiresAt === null) {
+          return -1;
+        }
+        return Math.max(-1, Math.ceil((entry.expiresAt - Date.now()) / 1000));
+      }
+
       if (!this.client || !this.isConnected) {
         return -1;
       }
@@ -457,6 +587,17 @@ class RedisCacheManager {
    */
   public async expire(key: string, ttl: number): Promise<boolean> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        const entry = this.getMockEntry(fullKey);
+        if (!entry) {
+          return false;
+        }
+        entry.expiresAt = ttl > 0 ? Date.now() + ttl * 1000 : null;
+        this.mockStore.set(fullKey, entry);
+        return true;
+      }
+
       if (!this.client || !this.isConnected) {
         return false;
       }
@@ -478,6 +619,20 @@ class RedisCacheManager {
    */
   public async incr(key: string, amount: number = 1): Promise<number> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        const entry = this.getMockEntry(fullKey);
+        const current = entry ? Number(entry.value) : 0;
+        const updated = current + amount;
+        this.mockStore.set(fullKey, {
+          value: updated,
+          cachedAt: Date.now(),
+          expiresAt: entry?.expiresAt ?? null,
+          hits: entry?.hits ?? 0,
+        });
+        return updated;
+      }
+
       if (!this.client || !this.isConnected) {
         return 0;
       }
@@ -499,6 +654,20 @@ class RedisCacheManager {
    */
   public async decr(key: string, amount: number = 1): Promise<number> {
     try {
+      if (useMockRedis) {
+        const fullKey = this.buildKey(key);
+        const entry = this.getMockEntry(fullKey);
+        const current = entry ? Number(entry.value) : 0;
+        const updated = current - amount;
+        this.mockStore.set(fullKey, {
+          value: updated,
+          cachedAt: Date.now(),
+          expiresAt: entry?.expiresAt ?? null,
+          hits: entry?.hits ?? 0,
+        });
+        return updated;
+      }
+
       if (!this.client || !this.isConnected) {
         return 0;
       }
@@ -550,6 +719,10 @@ class RedisCacheManager {
    */
   public async healthCheck(): Promise<boolean> {
     try {
+      if (useMockRedis) {
+        return this.isConnected;
+      }
+
       if (!this.client || !this.isConnected) {
         return false;
       }
@@ -567,6 +740,13 @@ class RedisCacheManager {
    */
   public async getInfo(): Promise<any> {
     try {
+      if (useMockRedis) {
+        return {
+          mode: 'mock',
+          size: this.mockStore.size,
+        };
+      }
+
       if (!this.client || !this.isConnected) {
         return null;
       }

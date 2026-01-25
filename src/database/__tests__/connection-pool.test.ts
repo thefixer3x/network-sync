@@ -2,7 +2,7 @@
  * Connection Pool Tests
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
 import ConnectionPoolManager, {
   getConnectionPool,
   getSupabaseClient,
@@ -24,6 +24,15 @@ describe('ConnectionPoolManager', () => {
   beforeEach(() => {
     // Reset metrics before each test
     const pool = getConnectionPool();
+    pool.resetMetrics();
+  });
+
+  afterEach(async () => {
+    // Ensure pool is torn down between tests to avoid leaked handles
+    const pool = getConnectionPool();
+    // Reset active counter to avoid long waits in shutdown during tests
+    (pool as any).activeConnections = 0;
+    await pool.shutdown();
     pool.resetMetrics();
   });
 

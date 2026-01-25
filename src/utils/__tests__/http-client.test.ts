@@ -6,14 +6,14 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { HttpClient, createHttpClient } from '../http-client.js';
 
-// Mock fetch globally
-global.fetch = jest.fn() as any;
+const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+global.fetch = fetchMock;
 
 describe('HttpClient', () => {
   let client: HttpClient;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    fetchMock.mockReset();
     client = new HttpClient({
       timeout: 1000,
       maxRetries: 2,
@@ -45,7 +45,7 @@ describe('HttpClient', () => {
         json: async () => ({ data: 'test' }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
+      fetchMock.mockResolvedValueOnce(mockResponse);
 
       const response = await client.fetch('https://api.example.com/test');
       expect(response.ok).toBe(true);
@@ -60,9 +60,7 @@ describe('HttpClient', () => {
         json: async () => ({ data: 'test' }),
       };
 
-      (global.fetch as jest.Mock)
-        .mockRejectedValueOnce(mockError)
-        .mockResolvedValueOnce(mockSuccess);
+      fetchMock.mockRejectedValueOnce(mockError).mockResolvedValueOnce(mockSuccess);
 
       const response = await client.fetch('https://api.example.com/test');
       expect(response.ok).toBe(true);
@@ -81,9 +79,7 @@ describe('HttpClient', () => {
         json: async () => ({ data: 'test' }),
       };
 
-      (global.fetch as jest.Mock)
-        .mockResolvedValueOnce(mock503)
-        .mockResolvedValueOnce(mockSuccess);
+      fetchMock.mockResolvedValueOnce(mock503).mockResolvedValueOnce(mockSuccess);
 
       const response = await client.fetch('https://api.example.com/test');
       expect(response.ok).toBe(true);
@@ -97,7 +93,7 @@ describe('HttpClient', () => {
         statusText: 'Bad Request',
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mock400);
+      fetchMock.mockResolvedValueOnce(mock400);
 
       const response = await client.fetch('https://api.example.com/test');
       expect(response.ok).toBe(false);
@@ -107,7 +103,7 @@ describe('HttpClient', () => {
     it('should fail after max retries', async () => {
       const mockError = new Error('Network error');
 
-      (global.fetch as jest.Mock).mockRejectedValue(mockError);
+      fetchMock.mockRejectedValue(mockError);
 
       await expect(
         client.fetch('https://api.example.com/test'),
@@ -126,7 +122,7 @@ describe('HttpClient', () => {
         json: async () => ({ data: 'test' }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
+      fetchMock.mockResolvedValueOnce(mockResponse);
 
       const response = await client.get('https://api.example.com/test');
       expect(response.ok).toBe(true);
@@ -145,7 +141,7 @@ describe('HttpClient', () => {
         json: async () => ({ id: 1 }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockResponse);
+      fetchMock.mockResolvedValueOnce(mockResponse);
 
       const response = await client.post('https://api.example.com/test', {
         name: 'test',
@@ -168,7 +164,7 @@ describe('HttpClient', () => {
   describe('Circuit Breaker', () => {
     it('should open circuit after threshold failures', async () => {
       const mockError = new Error('Service unavailable');
-      (global.fetch as jest.Mock).mockRejectedValue(mockError);
+      fetchMock.mockRejectedValue(mockError);
 
       // Fail 3 times to open circuit
       for (let i = 0; i < 3; i++) {
@@ -206,7 +202,7 @@ describe('HttpClient', () => {
         status: 200,
         json: async () => ({ data: 'test' }),
       };
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockSuccess);
+      fetchMock.mockResolvedValueOnce(mockSuccess);
 
       // Should work after reset
       const response = await client.fetch('https://api.example.com/test');
