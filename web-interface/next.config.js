@@ -11,6 +11,10 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  allowedDevOrigins: process.env.REPLIT_DEV_DOMAIN
+    ? [process.env.REPLIT_DEV_DOMAIN]
+    : ['*.replit.dev', '*.kirk.replit.dev'],
+
   async headers() {
     return [
       {
@@ -23,11 +27,6 @@ const nextConfig = {
         ],
       },
     ];
-  },
-
-  webpack: (config) => {
-    config.output.uniqueName = 'social-media-orchestrator';
-    return config;
   },
 };
 
