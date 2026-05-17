@@ -1,7 +1,5 @@
 {
-  "framework": "nextjs",
-  "rootDirectory": "web-interface",
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "outputDirectory": ".next"
+  "buildCommand": "cd web-interface && npm install && npm run build",
+  "outputDirectory": "web-interface/.next",
+  "installCommand": "cd web-interface && npm install"
 }
