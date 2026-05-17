@@ -409,101 +409,11 @@ class BackupService {
   }
 
   public async restoreFromBackup(recoveryPointId: string, options?: { targetTimestamp?: number }): Promise<RestoreJob> {
-    const recoveryPoint = this.recoveryPoints.get(recoveryPointId);
-    if (!recoveryPoint) {
-      throw new Error(`Recovery point not found: ${recoveryPointId}`);
-    }
-
-    const restoreJob: RestoreJob = {
-      id: this.generateId(),
-      recoveryPointId,
-      status: 'running',
-      startTime: Date.now(),
-      metadata: {
-        recoveryPointTimestamp: recoveryPoint.timestamp,
-      },
-    };
-
-    // Conditionally add optional properties
-    if (options?.targetTimestamp) {
-      restoreJob.targetTimestamp = options.targetTimestamp;
-    }
-
-    this.restoreJobs.set(restoreJob.id, restoreJob);
-    logger.info(`Starting restore job: ${restoreJob.id}`);
-
-    try {
-      // Verify backup before restoring
-      restoreJob.status = 'validating';
-      this.restoreJobs.set(restoreJob.id, restoreJob);
-
-      const verified = await this.verifyBackup(recoveryPoint.backupJobId);
-      if (!verified) {
-        throw new Error('Backup verification failed');
-      }
-
-      // Perform restore
-      restoreJob.status = 'running';
-      this.restoreJobs.set(restoreJob.id, restoreJob);
-
-      await this.performRestore(recoveryPoint, options);
-
-      restoreJob.status = 'completed';
-      restoreJob.endTime = Date.now();
-      this.restoreJobs.set(restoreJob.id, restoreJob);
-
-      logger.info(`Restore completed: ${restoreJob.id}`);
-      return restoreJob;
-    } catch (error) {
-      restoreJob.status = 'failed';
-      restoreJob.endTime = Date.now();
-      restoreJob.errorMessage = error instanceof Error ? error.message : String(error);
-      this.restoreJobs.set(restoreJob.id, restoreJob);
-      logger.error(`Restore failed: ${restoreJob.id}`, error);
-      throw error;
-    }
+    throw new Error('Restore not yet implemented');
   }
 
-  private async performRestore(recoveryPoint: RecoveryPoint, options?: { targetTimestamp?: number }): Promise<void> {
-    const backupFile = recoveryPoint.location;
-
-    if (!fs.existsSync(backupFile)) {
-      throw new Error(`Backup file not found: ${backupFile}`);
-    }
-
-    // Decompress if needed
-    let sqlFile = backupFile;
-    if (backupFile.endsWith('.gz')) {
-      sqlFile = backupFile.replace('.gz', '');
-      try {
-        await execAsync(`gunzip -c "${backupFile}" > "${sqlFile}"`);
-        logger.info(`Decompressed backup: ${sqlFile}`);
-      } catch (error) {
-        logger.error('Decompression failed', error);
-        throw error;
-      }
-    }
-
-    // Restore PostgreSQL
-    const dbUrl = process.env['DATABASE_URL'] || '';
-    try {
-      const { stdout, stderr } = await execAsync(
-        `psql "${dbUrl}" -f "${sqlFile}"`
-      );
-      if (stderr) {
-        logger.warn(`psql stderr: ${stderr}`);
-      }
-      logger.info(`PostgreSQL restored from: ${sqlFile}`);
-    } catch (error) {
-      logger.error('PostgreSQL restore failed', error);
-      throw error;
-    } finally {
-      // Clean up decompressed file if it was created
-      if (sqlFile !== backupFile && fs.existsSync(sqlFile)) {
-        fs.unlinkSync(sqlFile);
-      }
-    }
-  }
+  // TODO: P3.W2 - Implement secure restore with parameterized queries
+  // private async performRestore(recoveryPoint: RecoveryPoint, options?: { targetTimestamp?: number }): Promise<void> {
 
   public getBackupMetrics(): BackupMetrics {
     const jobs = Array.from(this.jobs.values());

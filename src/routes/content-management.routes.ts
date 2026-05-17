@@ -64,9 +64,9 @@ router.post('/content', async (req: Request, res: Response) => {
  */
 router.get('/content', (req: Request, res: Response) => {
   try {
-    const status = req.query['status'] as ContentStatus | undefined;
-    const platform = req.query['platform'] as string | undefined;
-    const workflowId = req.query['workflowId'] as string | undefined;
+    const status = req.query['status'] as ContentStatus | undefined; // TODO(P1.W1): use getQuery()
+    const platform = req.query['platform'] as string | undefined; // TODO(P1.W1): use getQuery()
+    const workflowId = req.query['workflowId'] as string | undefined; // TODO(P1.W1): use getQuery()
 
     const filters: {
       status?: ContentStatus;
@@ -288,8 +288,8 @@ router.post('/templates', (req: Request, res: Response) => {
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const platform = req.query['platform'] as string | undefined;
-    const category = req.query['category'] as string | undefined;
+    const platform = req.query['platform'] as string | undefined; // TODO(P1.W1): use getQuery()
+    const category = req.query['category'] as string | undefined; // TODO(P1.W1): use getQuery()
 
     const filters: {
       platform?: string;

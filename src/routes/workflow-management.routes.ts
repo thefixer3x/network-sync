@@ -315,7 +315,7 @@ router.post('/templates', (req: Request, res: Response) => {
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const category = req.query['category'] as string | undefined;
+    const category = req.query['category'] as string | undefined; // TODO(P1.W1): use getQuery()
     const templates = workflowManager.listTemplates(category);
 
     res.json({

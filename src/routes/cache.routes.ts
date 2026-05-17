@@ -63,7 +63,7 @@ router.get('/health', async (req: Request, res: Response) => {
  */
 router.get('/invalidations', (req: Request, res: Response) => {
   try {
-    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 50;
+    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 50; // TODO(P1.W1): use getQueryInt()
     const history = getCacheInvalidationHistory(limit);
 
     res.json({

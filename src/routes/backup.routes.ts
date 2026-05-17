@@ -1,20 +1,14 @@
 import { Router, Request, Response } from 'express';
+import { getQueryInt } from '@/utils/http-query';
 import { backupService, BackupConfig } from '@/services/backup';
 import { Logger } from '@/utils/Logger';
+import { authenticate } from '@/middleware/auth';
 
-// Simple authenticate middleware (in production, use a real auth middleware)
 interface AuthRequest extends Request {
   user?: { id: string };
 }
 
 const logger = new Logger('BackupRoutes');
-
-// Simple authentication middleware
-const authenticate = (req: AuthRequest, res: Response, next: Function) => {
-  // In production, implement real authentication
-  req.user = { id: 'admin' };
-  next();
-};
 
 const router = Router();
 
@@ -206,7 +200,7 @@ router.post('/create/:configId', authenticate, async (req: AuthRequest, res: Res
  */
 router.get('/jobs', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100;
+    const limit = getQueryInt(req, 'limit', 100); // TODO(P1.W1): use getQuery()
     const jobs = backupService.getAllBackupJobs(limit);
     res.json({ jobs });
   } catch (error) {
@@ -343,7 +337,7 @@ router.post('/restore/:recoveryPointId', authenticate, async (req: AuthRequest, 
  */
 router.get('/restore/jobs', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 50;
+    const limit = getQueryInt(req, 'limit', 50); // TODO(P1.W1): use getQuery()
     const jobs = backupService.getAllRestoreJobs(limit);
     res.json({ jobs });
   } catch (error) {

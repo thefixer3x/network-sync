@@ -109,7 +109,7 @@ router.get('/workflow/:workflowId', async (req: Request, res: Response) => {
  */
 router.get('/analytics', async (req: Request, res: Response) => {
   try {
-    const period = (req.query['period'] as 'day' | 'week' | 'month') || 'day';
+    const period = (req.query['period'] as 'day' | 'week' | 'month') || 'day'; // TODO(P1.W1): use getQuery()
     const analytics = await aiCostTracker.getAnalytics(period);
     const recommendations = aiCostTracker.getOptimizationRecommendations(analytics);
 

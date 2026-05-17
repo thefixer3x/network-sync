@@ -87,12 +87,12 @@ router.get(
   requirePermission(Permission.ADMIN_SECURITY),
   (req: Request, res: Response): void => {
     try {
-      const userId = req.query['userId'] as string | undefined;
-      const action = req.query['action'] as AuditAction | undefined;
-      const resourceType = req.query['resourceType'] as string | undefined;
-      const startDate = req.query['startDate'] ? parseInt(req.query['startDate'] as string) : undefined;
-      const endDate = req.query['endDate'] ? parseInt(req.query['endDate'] as string) : undefined;
-      const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100;
+      const userId = req.query['userId'] as string | undefined; // TODO(P1.W1): use getQuery()
+      const action = req.query['action'] as AuditAction | undefined; // TODO(P1.W1): use getQuery()
+      const resourceType = req.query['resourceType'] as string | undefined; // TODO(P1.W1): use getQuery()
+      const startDate = req.query['startDate'] ? parseInt(req.query['startDate'] as string) : undefined; // TODO(P1.W1): use getQueryInt()
+      const endDate = req.query['endDate'] ? parseInt(req.query['endDate'] as string) : undefined; // TODO(P1.W1): use getQueryInt()
+      const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100; // TODO(P1.W1): use getQueryInt()
 
       // Build filters object conditionally
       const filters: {
@@ -292,9 +292,9 @@ router.get(
   requirePermission(Permission.ADMIN_SECURITY),
   (req: Request, res: Response): void => {
     try {
-      const userId = req.query['userId'] as string | undefined;
-      const requestType = req.query['requestType'] as GDPRRequestType | undefined;
-      const status = req.query['status'] as string | undefined;
+      const userId = req.query['userId'] as string | undefined; // TODO(P1.W1): use getQuery()
+      const requestType = req.query['requestType'] as GDPRRequestType | undefined; // TODO(P1.W1): use getQuery()
+      const status = req.query['status'] as string | undefined; // TODO(P1.W1): use getQuery()
 
       // Build filters object conditionally
       const filters: {

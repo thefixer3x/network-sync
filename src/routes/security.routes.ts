@@ -336,13 +336,13 @@ router.get(
   requirePermission(Permission.ADMIN_SECURITY),
   (req: Request, res: Response): void => {
     try {
-      const type = req.query['type'] as SecurityEventType | undefined;
-      const severity = req.query['severity'] as SecuritySeverity | undefined;
-      const userId = req.query['userId'] as string | undefined;
-      const ipAddress = req.query['ipAddress'] as string | undefined;
-      const startTime = req.query['startTime'] ? parseInt(req.query['startTime'] as string) : undefined;
-      const endTime = req.query['endTime'] ? parseInt(req.query['endTime'] as string) : undefined;
-      const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100;
+      const type = req.query['type'] as SecurityEventType | undefined; // TODO(P1.W1): use getQuery()
+      const severity = req.query['severity'] as SecuritySeverity | undefined; // TODO(P1.W1): use getQuery()
+      const userId = req.query['userId'] as string | undefined; // TODO(P1.W1): use getQuery()
+      const ipAddress = req.query['ipAddress'] as string | undefined; // TODO(P1.W1): use getQuery()
+      const startTime = req.query['startTime'] ? parseInt(req.query['startTime'] as string) : undefined; // TODO(P1.W1): use getQueryInt()
+      const endTime = req.query['endTime'] ? parseInt(req.query['endTime'] as string) : undefined; // TODO(P1.W1): use getQueryInt()
+      const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100; // TODO(P1.W1): use getQueryInt()
 
       // Build filters object conditionally
       const filters: {

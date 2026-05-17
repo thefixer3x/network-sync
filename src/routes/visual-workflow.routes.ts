@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import { Logger } from '@/utils/Logger';
+import { authenticate } from '@/middleware/auth';
 import { visualWorkflowExecutor } from '@/services/visual-workflow-executor';
 import {
   VisualWorkflow,
@@ -15,23 +16,16 @@ import {
   WorkflowTemplate,
 } from '@/types/visual-workflow';
 
+interface AuthRequest extends Request {
+  user?: { id: string; name: string };
+}
+
 const logger = new Logger('VisualWorkflowRoutes');
 const router = Router();
 
 // In-memory storage (replace with database in production)
 const workflows: Map<string, VisualWorkflow> = new Map();
 const templates: Map<string, WorkflowTemplate> = new Map();
-
-// Simple auth middleware (replace with real auth)
-interface AuthRequest extends Request {
-  user?: { id: string; name: string };
-}
-
-const authenticate = (req: AuthRequest, res: Response, next: Function) => {
-  // In production, implement real authentication
-  req.user = { id: 'user_123', name: 'Test User' };
-  next();
-};
 
 // =============================================================================
 // WORKFLOW CRUD

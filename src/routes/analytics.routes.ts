@@ -5,6 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { getQuery, getQueryInt } from '@/utils/http-query';
 import {
   analyticsService,
   EventType,
@@ -110,11 +111,11 @@ router.post('/metrics', (req: Request, res: Response) => {
  */
 router.get('/timeseries', (req: Request, res: Response) => {
   try {
-    const metric = req.query['metric'] as string;
-    const granularity = (req.query['granularity'] as TimeGranularity) || TimeGranularity.HOUR;
-    const startTime = parseInt(req.query['startTime'] as string);
-    const endTime = parseInt(req.query['endTime'] as string);
-    const dimensionsStr = req.query['dimensions'] as string | undefined;
+    const metric = String(req.query['metric'] ?? ''); // TODO(P1.W1): use getQuery()
+    const granularity = (req.query['granularity'] as TimeGranularity) || TimeGranularity.HOUR; // TODO(P1.W1): use getQuery()
+    const startTime = parseInt(String(req.query['startTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
+    const endTime = parseInt(String(req.query['endTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
+    const dimensionsStr = req.query['dimensions'] as string | undefined; // TODO(P1.W1): use getQuery()
 
     if (!metric || !startTime || !endTime) {
       res.status(400).json({
@@ -164,10 +165,10 @@ router.get('/timeseries', (req: Request, res: Response) => {
  */
 router.get('/aggregation', (req: Request, res: Response) => {
   try {
-    const metric = req.query['metric'] as string;
-    const startTime = parseInt(req.query['startTime'] as string);
-    const endTime = parseInt(req.query['endTime'] as string);
-    const dimensionsStr = req.query['dimensions'] as string | undefined;
+    const metric = String(req.query['metric'] ?? ''); // TODO(P1.W1): use getQuery()
+    const startTime = parseInt(String(req.query['startTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
+    const endTime = parseInt(String(req.query['endTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
+    const dimensionsStr = req.query['dimensions'] as string | undefined; // TODO(P1.W1): use getQuery()
 
     if (!metric || !startTime || !endTime) {
       res.status(400).json({
@@ -327,7 +328,7 @@ router.get('/statistics', (_req: Request, res: Response) => {
  */
 router.delete('/data', (req: Request, res: Response) => {
   try {
-    const olderThan = parseInt(req.query['olderThan'] as string) || 7 * 24 * 60 * 60 * 1000; // 7 days default
+    const olderThan = parseInt(String(req.query['olderThan'] ?? '')) || 7 * 24 * 60 * 60 * 1000; // TODO(P1.W1): use getQueryInt() — 7 days default
 
     analyticsService.clearOldData(olderThan);
 
