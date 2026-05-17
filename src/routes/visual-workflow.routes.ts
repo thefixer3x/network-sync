@@ -63,7 +63,8 @@ router.get('/', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.get('/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -174,7 +175,8 @@ router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.patch('/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -219,7 +221,8 @@ router.patch('/:id', authenticate, (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    workflows.set(id, updatedWorkflow);
+    // TODO(P1.W1): use getQuery() helper
+    workflows.set(id as string, updatedWorkflow);
 
     logger.info(`Visual workflow updated: ${id} by user ${req.user?.id}`);
 
@@ -241,7 +244,8 @@ router.patch('/:id', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.delete('/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -253,7 +257,8 @@ router.delete('/:id', authenticate, (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    workflows.delete(id);
+    // TODO(P1.W1): use getQuery() helper
+    workflows.delete(id as string);
 
     logger.info(`Visual workflow deleted: ${id} by user ${req.user?.id}`);
 
@@ -275,7 +280,8 @@ router.delete('/:id', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.post('/:id/execute', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -344,7 +350,8 @@ router.post('/:id/execute', authenticate, async (req: AuthRequest, res: Response
  */
 router.get('/:id/executions/:executionId', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const executionId = req.params['executionId'];
+    // TODO(P1.W1): use getQuery() helper
+    const executionId = req.params['executionId'] as string;
     if (!executionId) {
       res.status(400).json({ error: 'Execution ID required' });
       return;
@@ -356,7 +363,8 @@ router.get('/:id/executions/:executionId', authenticate, (req: AuthRequest, res:
       return;
     }
 
-    const logs = visualWorkflowExecutor.getExecutionLogs(executionId);
+    // TODO(P1.W1): use getQuery() helper
+    const logs = visualWorkflowExecutor.getExecutionLogs(executionId as string);
 
     res.json({ execution, logs });
   } catch (error) {
@@ -422,7 +430,8 @@ router.get('/templates/all', (req: Request, res: Response): void => {
  */
 router.post('/:id/template', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;

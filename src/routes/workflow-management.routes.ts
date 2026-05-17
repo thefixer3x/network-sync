@@ -64,7 +64,8 @@ router.get('/:workflowId/versions', (req: Request, res: Response) => {
       return;
     }
 
-    const versions = workflowManager.listWorkflowVersions(workflowId);
+    // TODO(P1.W1): use getQuery() helper
+    const versions = workflowManager.listWorkflowVersions(workflowId as string);
 
     res.json({
       workflowId,
@@ -99,8 +100,10 @@ router.get('/:workflowId/versions/:version', (req: Request, res: Response) => {
       return;
     }
 
-    const version = versionStr === 'active' ? undefined : parseInt(versionStr || '');
-    const workflowVersion = workflowManager.getWorkflowVersion(workflowId, version);
+    // TODO(P1.W1): use getQuery() helper
+    const version = versionStr === 'active' ? undefined : parseInt(versionStr as string || '');
+    // TODO(P1.W1): use getQuery() helper
+    const workflowVersion = workflowManager.getWorkflowVersion(workflowId as string, version);
 
     if (!workflowVersion) {
       res.status(404).json({
@@ -142,7 +145,8 @@ router.post('/:workflowId/rollback', async (req: Request, res: Response) => {
       return;
     }
 
-    const version = await workflowManager.rollbackWorkflow(workflowId, targetVersion, reason);
+    // TODO(P1.W1): use getQuery() helper
+    const version = await workflowManager.rollbackWorkflow(workflowId as string, targetVersion, reason);
 
     res.json({
       message: 'Workflow rolled back successfully',
@@ -178,7 +182,8 @@ router.post('/:workflowId/execute', async (req: Request, res: Response) => {
       return;
     }
 
-    const context = await workflowManager.executeWorkflow(workflowId, inputs || {}, version);
+    // TODO(P1.W1): use getQuery() helper
+    const context = await workflowManager.executeWorkflow(workflowId as string, inputs || {}, version);
 
     res.json({
       message: 'Workflow execution started',
@@ -213,7 +218,8 @@ router.get('/executions/:executionId', (req: Request, res: Response) => {
       return;
     }
 
-    const context = workflowManager.getExecutionStatus(executionId);
+    // TODO(P1.W1): use getQuery() helper
+    const context = workflowManager.getExecutionStatus(executionId as string);
 
     if (!context) {
       res.status(404).json({
@@ -260,7 +266,8 @@ router.post('/executions/:executionId/cancel', async (req: Request, res: Respons
       return;
     }
 
-    await workflowManager.cancelExecution(executionId);
+    // TODO(P1.W1): use getQuery() helper
+    await workflowManager.cancelExecution(executionId as string);
 
     res.json({
       message: 'Workflow execution cancelled',
@@ -348,7 +355,8 @@ router.get('/templates/:templateId', (req: Request, res: Response) => {
       return;
     }
 
-    const template = workflowManager.getTemplate(templateId);
+    // TODO(P1.W1): use getQuery() helper
+    const template = workflowManager.getTemplate(templateId as string);
 
     if (!template) {
       res.status(404).json({
@@ -389,8 +397,9 @@ router.post('/templates/:templateId/create', async (req: Request, res: Response)
       return;
     }
 
+    // TODO(P1.W1): use getQuery() helper
     const version = await workflowManager.createFromTemplate(
-      templateId,
+      templateId as string,
       parameters || {},
       workflowId
     );

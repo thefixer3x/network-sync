@@ -211,7 +211,8 @@ router.get('/consent/:userId', authenticate, (req: AuthRequest, res: Response): 
       return;
     }
 
-    const consents = complianceService.getUserConsents(userId);
+    // TODO(P1.W1): use getQuery() helper
+    const consents = complianceService.getUserConsents(userId as string);
 
     res.status(200).json({
       userId,
@@ -367,8 +368,9 @@ router.post(
         return;
       }
 
+      // TODO(P1.W1): use getQuery() helper
       const request = complianceService.processGDPRRequest(
-        requestId,
+        requestId as string,
         req.user.id,
         action,
         data
@@ -434,7 +436,8 @@ router.get('/data/:userId', authenticate, (req: AuthRequest, res: Response): voi
       return;
     }
 
-    const userData = complianceService.getUserData(userId);
+    // TODO(P1.W1): use getQuery() helper
+    const userData = complianceService.getUserData(userId as string);
 
     if (!userData) {
       res.status(404).json({
@@ -488,7 +491,8 @@ router.get('/export/:userId', authenticate, (req: AuthRequest, res: Response): v
       return;
     }
 
-    const exportData = complianceService.exportUserData(userId);
+    // TODO(P1.W1): use getQuery() helper
+    const exportData = complianceService.exportUserData(userId as string);
 
     if (!exportData) {
       res.status(404).json({
