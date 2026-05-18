@@ -45,7 +45,7 @@
     "commander": "^14.0.2",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
     "express-rate-limit": "^8.2.1",
     "googleapis": "^166.0.0",
