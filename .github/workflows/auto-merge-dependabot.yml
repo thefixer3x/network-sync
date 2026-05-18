@@ -62,6 +62,19 @@ jobs:
 
           echo "auto-merge=$AUTO_MERGE" >> $GITHUB_OUTPUT
 
+      - name: Wait for CI checks to pass
+        if: steps.check-automerge.outputs.auto-merge == 'true'
+        run: |
+          echo "Waiting for CI checks to complete before approving..."
+          # Poll until all checks on this PR complete (max 15 minutes)
+          timeout 900 gh pr checks "$PR_URL" --watch --interval 30 || {
+            echo "❌ CI checks did not complete or failed — skipping auto-merge"
+            exit 1
+          }
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Approve PR
         if: steps.check-automerge.outputs.auto-merge == 'true'
         run: |
@@ -73,7 +86,7 @@ jobs:
       - name: Enable auto-merge for PR
         if: steps.check-automerge.outputs.auto-merge == 'true'
         run: |
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

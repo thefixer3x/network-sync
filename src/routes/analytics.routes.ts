@@ -266,7 +266,8 @@ router.post('/funnel', (req: Request, res: Response) => {
  */
 router.get('/users/:userId', (req: Request, res: Response) => {
   try {
-    const userId = req.params['userId'];
+    // TODO(P1.W1): use getQuery() helper
+    const userId = req.params['userId'] as string;
 
     if (!userId) {
       res.status(400).json({

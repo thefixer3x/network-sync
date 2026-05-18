@@ -121,10 +121,11 @@ router.post('/invalidate', async (req: Request, res: Response): Promise<void> =>
  */
 router.post('/invalidate/workflow/:workflowId?', async (req: Request, res: Response) => {
   try {
+    // TODO(P1.W1): use getQuery() helper
     const { workflowId } = req.params;
     const { reason = 'manual' } = req.body;
 
-    const affectedKeys = await cacheManager.invalidateWorkflow(workflowId, reason);
+    const affectedKeys = await cacheManager.invalidateWorkflow(workflowId as string | undefined, reason);
 
     res.json({
       message: 'Workflow cache invalidated',
@@ -147,10 +148,11 @@ router.post('/invalidate/workflow/:workflowId?', async (req: Request, res: Respo
  */
 router.post('/invalidate/content/:contentId?', async (req: Request, res: Response) => {
   try {
+    // TODO(P1.W1): use getQuery() helper
     const { contentId } = req.params;
     const { reason = 'manual' } = req.body;
 
-    const affectedKeys = await cacheManager.invalidateContent(contentId, reason);
+    const affectedKeys = await cacheManager.invalidateContent(contentId as string | undefined, reason);
 
     res.json({
       message: 'Content cache invalidated',
@@ -173,7 +175,8 @@ router.post('/invalidate/content/:contentId?', async (req: Request, res: Respons
  */
 router.post('/invalidate/user/:userId', async (req: Request, res: Response) => {
   try {
-    const userId = req.params['userId'];
+    // TODO(P1.W1): use getQuery() helper
+    const userId = req.params['userId'] as string;
     if (!userId) {
       res.status(400).json({
         error: 'userId is required',

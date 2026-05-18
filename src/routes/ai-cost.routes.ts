@@ -55,7 +55,8 @@ router.get('/current', async (req: Request, res: Response) => {
  */
 router.get('/user/:userId', async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    // TODO(P1.W1): use getQuery() helper
+    const userId = req.params['userId'] as string;
     const cost = await aiCostTracker.getCost('day', userId);
 
     res.json({
@@ -82,7 +83,8 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
  */
 router.get('/workflow/:workflowId', async (req: Request, res: Response) => {
   try {
-    const { workflowId } = req.params;
+    // TODO(P1.W1): use getQuery() helper
+    const workflowId = req.params['workflowId'] as string;
     const cost = await aiCostTracker.getCost('day', undefined, workflowId);
 
     res.json({

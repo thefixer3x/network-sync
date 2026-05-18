@@ -99,7 +99,8 @@ router.get('/content', (req: Request, res: Response) => {
  */
 router.get('/content/:contentId', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     if (!contentId) {
       res.status(400).json({
         error: 'Content ID is required',
@@ -108,7 +109,8 @@ router.get('/content/:contentId', (req: Request, res: Response) => {
       return;
     }
 
-    const content = contentManagementService.getContent(contentId);
+    // TODO(P1.W1): use getQuery() helper
+    const content = contentManagementService.getContent(contentId as string);
 
     if (!content) {
       res.status(404).json({
@@ -138,7 +140,8 @@ router.get('/content/:contentId', (req: Request, res: Response) => {
  */
 router.put('/content/:contentId', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const { content, status, scheduledFor, metadata, changelog, updatedBy } = req.body;
 
     if (!contentId) {
@@ -149,8 +152,9 @@ router.put('/content/:contentId', async (req: Request, res: Response) => {
       return;
     }
 
+    // TODO(P1.W1): use getQuery() helper
     const updated = await contentManagementService.updateContent(
-      contentId,
+      contentId as string,
       { content, status, scheduledFor, metadata },
       changelog,
       updatedBy
@@ -177,7 +181,8 @@ router.put('/content/:contentId', async (req: Request, res: Response) => {
  */
 router.get('/content/:contentId/versions', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     if (!contentId) {
       res.status(400).json({
         error: 'Content ID is required',
@@ -186,7 +191,8 @@ router.get('/content/:contentId/versions', (req: Request, res: Response) => {
       return;
     }
 
-    const versions = contentManagementService.getVersionHistory(contentId);
+    // TODO(P1.W1): use getQuery() helper
+    const versions = contentManagementService.getVersionHistory(contentId as string);
 
     res.json({
       contentId,
@@ -211,7 +217,8 @@ router.get('/content/:contentId/versions', (req: Request, res: Response) => {
  */
 router.post('/content/:contentId/rollback', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const { version, reason } = req.body;
 
     if (!contentId || version === undefined) {
@@ -222,7 +229,8 @@ router.post('/content/:contentId/rollback', async (req: Request, res: Response) 
       return;
     }
 
-    const content = await contentManagementService.rollbackToVersion(contentId, version, reason);
+    // TODO(P1.W1): use getQuery() helper
+    const content = await contentManagementService.rollbackToVersion(contentId as string, version, reason);
 
     res.json({
       message: 'Content rolled back successfully',
@@ -320,7 +328,8 @@ router.get('/templates', (req: Request, res: Response) => {
  */
 router.get('/templates/:templateId', (req: Request, res: Response) => {
   try {
-    const templateId = req.params['templateId'];
+    // TODO(P1.W1): use getQuery() helper
+    const templateId = req.params['templateId'] as string;
     if (!templateId) {
       res.status(400).json({
         error: 'Template ID is required',
@@ -329,7 +338,8 @@ router.get('/templates/:templateId', (req: Request, res: Response) => {
       return;
     }
 
-    const template = contentManagementService.getTemplate(templateId);
+    // TODO(P1.W1): use getQuery() helper
+    const template = contentManagementService.getTemplate(templateId as string);
 
     if (!template) {
       res.status(404).json({
@@ -359,7 +369,8 @@ router.get('/templates/:templateId', (req: Request, res: Response) => {
  */
 router.post('/templates/:templateId/create', async (req: Request, res: Response) => {
   try {
-    const templateId = req.params['templateId'];
+    // TODO(P1.W1): use getQuery() helper
+    const templateId = req.params['templateId'] as string;
     const { variables, platform, workflowId, createdBy } = req.body;
 
     if (!templateId || !variables) {
@@ -370,7 +381,8 @@ router.post('/templates/:templateId/create', async (req: Request, res: Response)
       return;
     }
 
-    const content = await contentManagementService.createFromTemplate(templateId, variables, {
+    // TODO(P1.W1): use getQuery() helper
+    const content = await contentManagementService.createFromTemplate(templateId as string, variables, {
       platform,
       workflowId,
       createdBy,
@@ -398,7 +410,8 @@ router.post('/templates/:templateId/create', async (req: Request, res: Response)
  */
 router.post('/content/:contentId/variations', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const { name, content, weight } = req.body;
 
     if (!contentId || !name || !content) {
@@ -409,7 +422,8 @@ router.post('/content/:contentId/variations', (req: Request, res: Response) => {
       return;
     }
 
-    const variation = contentManagementService.createVariation(contentId, {
+    // TODO(P1.W1): use getQuery() helper
+    const variation = contentManagementService.createVariation(contentId as string, {
       name,
       content,
       weight: weight || 50,
@@ -436,8 +450,9 @@ router.post('/content/:contentId/variations', (req: Request, res: Response) => {
  */
 router.put('/content/:contentId/variations/:variationId/performance', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
-    const variationId = req.params['variationId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
+    const variationId = req.params['variationId'] as string;
     const metrics = req.body;
 
     if (!contentId || !variationId) {
@@ -448,7 +463,8 @@ router.put('/content/:contentId/variations/:variationId/performance', (req: Requ
       return;
     }
 
-    contentManagementService.updateVariationPerformance(contentId, variationId, metrics);
+    // TODO(P1.W1): use getQuery() helper
+    contentManagementService.updateVariationPerformance(contentId as string, variationId as string, metrics);
 
     res.json({
       message: 'Variation performance updated',
@@ -472,7 +488,8 @@ router.put('/content/:contentId/variations/:variationId/performance', (req: Requ
  */
 router.get('/content/:contentId/best-variation', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     if (!contentId) {
       res.status(400).json({
         error: 'Content ID is required',
@@ -481,7 +498,8 @@ router.get('/content/:contentId/best-variation', (req: Request, res: Response) =
       return;
     }
 
-    const bestVariation = contentManagementService.getBestVariation(contentId);
+    // TODO(P1.W1): use getQuery() helper
+    const bestVariation = contentManagementService.getBestVariation(contentId as string);
 
     if (!bestVariation) {
       res.status(404).json({
@@ -512,7 +530,8 @@ router.get('/content/:contentId/best-variation', (req: Request, res: Response) =
  */
 router.post('/content/:contentId/approval', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const { requestedBy, approvers, requiredApprovals, notes } = req.body;
 
     if (!contentId || !requestedBy || !approvers || !requiredApprovals) {
@@ -523,7 +542,8 @@ router.post('/content/:contentId/approval', async (req: Request, res: Response) 
       return;
     }
 
-    const request = await contentManagementService.createApprovalRequest(contentId, {
+    // TODO(P1.W1): use getQuery() helper
+    const request = await contentManagementService.createApprovalRequest(contentId as string, {
       requestedBy,
       approvers,
       requiredApprovals,
@@ -551,7 +571,8 @@ router.post('/content/:contentId/approval', async (req: Request, res: Response) 
  */
 router.post('/content/:contentId/approval/process', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const { userId, decision, comment } = req.body;
 
     if (!contentId || !userId || !decision) {
@@ -574,8 +595,9 @@ router.post('/content/:contentId/approval/process', async (req: Request, res: Re
       return;
     }
 
+    // TODO(P1.W1): use getQuery() helper
     const request = await contentManagementService.processApproval(
-      contentId,
+      contentId as string,
       userId,
       decision,
       comment
@@ -602,7 +624,8 @@ router.post('/content/:contentId/approval/process', async (req: Request, res: Re
  */
 router.post('/content/:contentId/media', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const media = req.body;
 
     if (!contentId || !media.type || !media.url || !media.filename) {
@@ -613,7 +636,8 @@ router.post('/content/:contentId/media', (req: Request, res: Response) => {
       return;
     }
 
-    const attachment = contentManagementService.addMedia(contentId, media);
+    // TODO(P1.W1): use getQuery() helper
+    const attachment = contentManagementService.addMedia(contentId as string, media);
 
     res.status(201).json({
       message: 'Media attachment added',
@@ -636,7 +660,8 @@ router.post('/content/:contentId/media', (req: Request, res: Response) => {
  */
 router.put('/content/:contentId/analytics', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contentId = req.params['contentId'] as string;
     const analytics = req.body;
 
     if (!contentId) {
@@ -647,7 +672,8 @@ router.put('/content/:contentId/analytics', (req: Request, res: Response) => {
       return;
     }
 
-    contentManagementService.updateAnalytics(contentId, analytics);
+    // TODO(P1.W1): use getQuery() helper
+    contentManagementService.updateAnalytics(contentId as string, analytics);
 
     res.json({
       message: 'Analytics updated',

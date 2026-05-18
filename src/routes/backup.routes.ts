@@ -93,7 +93,8 @@ router.get('/config', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.get('/config/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -119,7 +120,8 @@ router.get('/config/:id', authenticate, (req: AuthRequest, res: Response): void 
  */
 router.patch('/config/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -148,7 +150,8 @@ router.patch('/config/:id', authenticate, (req: AuthRequest, res: Response): voi
  */
 router.delete('/config/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -175,7 +178,8 @@ router.delete('/config/:id', authenticate, (req: AuthRequest, res: Response): vo
  */
 router.post('/create/:configId', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const configId = req.params['configId'];
+    // TODO(P1.W1): use getQuery() helper
+    const configId = req.params['configId'] as string;
     if (!configId) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -206,6 +210,7 @@ router.post('/create/:configId', authenticate, async (req: AuthRequest, res: Res
  */
 router.get('/jobs', authenticate, (req: AuthRequest, res: Response): void => {
   try {
+    // TODO(P1.W1): use getQuery() helper
     const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100;
     const jobs = backupService.getAllBackupJobs(limit);
     res.json({ jobs });
@@ -222,7 +227,8 @@ router.get('/jobs', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.get('/jobs/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Missing job ID' });
       return;
@@ -248,7 +254,8 @@ router.get('/jobs/:id', authenticate, (req: AuthRequest, res: Response): void =>
  */
 router.post('/verify/:jobId', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobId = req.params['jobId'];
+    // TODO(P1.W1): use getQuery() helper
+    const jobId = req.params['jobId'] as string;
     if (!jobId) {
       res.status(400).json({ error: 'Missing job ID' });
       return;
@@ -285,7 +292,8 @@ router.get('/recovery-points', authenticate, (req: AuthRequest, res: Response): 
  */
 router.get('/recovery-points/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Missing recovery point ID' });
       return;
@@ -311,7 +319,8 @@ router.get('/recovery-points/:id', authenticate, (req: AuthRequest, res: Respons
  */
 router.post('/restore/:recoveryPointId', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const recoveryPointId = req.params['recoveryPointId'];
+    // TODO(P1.W1): use getQuery() helper
+    const recoveryPointId = req.params['recoveryPointId'] as string;
     if (!recoveryPointId) {
       res.status(400).json({ error: 'Missing recovery point ID' });
       return;
@@ -343,6 +352,7 @@ router.post('/restore/:recoveryPointId', authenticate, async (req: AuthRequest, 
  */
 router.get('/restore/jobs', authenticate, (req: AuthRequest, res: Response): void => {
   try {
+    // TODO(P1.W1): use getQuery() helper
     const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 50;
     const jobs = backupService.getAllRestoreJobs(limit);
     res.json({ jobs });
@@ -359,7 +369,8 @@ router.get('/restore/jobs', authenticate, (req: AuthRequest, res: Response): voi
  */
 router.get('/restore/jobs/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    // TODO(P1.W1): use getQuery() helper
+    const id = req.params['id'] as string;
     if (!id) {
       res.status(400).json({ error: 'Missing restore job ID' });
       return;

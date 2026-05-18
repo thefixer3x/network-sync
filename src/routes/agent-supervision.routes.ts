@@ -40,7 +40,8 @@ router.get('/status', (_req: Request, res: Response) => {
  */
 router.get('/agent/:agentName', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    // TODO(P1.W1): use getQuery() helper
+    const agentName = req.params['agentName'] as string;
     if (!agentName) {
       res.status(400).json({
         error: 'Agent name is required',
@@ -79,7 +80,8 @@ router.get('/agent/:agentName', (req: Request, res: Response) => {
  */
 router.get('/health/:agentName', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    // TODO(P1.W1): use getQuery() helper
+    const agentName = req.params['agentName'] as string;
     if (!agentName) {
       res.status(400).json({
         error: 'Agent name is required',
@@ -118,7 +120,8 @@ router.get('/health/:agentName', (req: Request, res: Response) => {
  */
 router.post('/reset/:agentName', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    // TODO(P1.W1): use getQuery() helper
+    const agentName = req.params['agentName'] as string;
     if (!agentName) {
       res.status(400).json({
         error: 'Agent name is required',
@@ -148,8 +151,9 @@ router.post('/reset/:agentName', (req: Request, res: Response) => {
  */
 router.post('/circuit/:agentName/:action', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
-    const action = req.params['action'];
+    // TODO(P1.W1): use getQuery() helper
+    const agentName = req.params['agentName'] as string;
+    const action = req.params['action'] as string;
 
     if (!agentName) {
       res.status(400).json({

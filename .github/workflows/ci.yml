@@ -190,7 +190,6 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@main
@@ -198,7 +197,6 @@ jobs:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
-        continue-on-error: true
 
   # Job 6: Build Verification
   build:

@@ -296,7 +296,8 @@ router.delete('/api-keys/:apiKeyId', authenticate, (req: AuthRequest, res: Respo
       return;
     }
 
-    const apiKeyId = req.params['apiKeyId'];
+    // TODO(P1.W1): use getQuery() helper
+    const apiKeyId = req.params['apiKeyId'] as string;
     if (!apiKeyId) {
       res.status(400).json({
         error: 'Bad Request',
@@ -519,7 +520,8 @@ router.delete(
   requireRole(UserRole.ADMIN),
   (req: Request, res: Response): void => {
     try {
-      const ipAddress = req.params['ipAddress'];
+      // TODO(P1.W1): use getQuery() helper
+      const ipAddress = req.params['ipAddress'] as string;
       if (!ipAddress) {
         res.status(400).json({
           error: 'Bad Request',

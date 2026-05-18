@@ -39,7 +39,8 @@ router.get('/', (_req: Request, res: Response) => {
  */
 router.get('/:contextId', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -71,7 +72,8 @@ router.get('/:contextId', (req: Request, res: Response) => {
  */
 router.post('/:contextId/set', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     const { key, value, scope, scopeId, metadata } = req.body;
 
     if (!contextId || !key || value === undefined) {
@@ -111,8 +113,9 @@ router.post('/:contextId/set', (req: Request, res: Response) => {
  */
 router.get('/:contextId/get/:key', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
-    const key = req.params['key'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
+    const key = req.params['key'] as string;
 
     if (!contextId || !key) {
       res.status(400).json({
@@ -153,7 +156,8 @@ router.get('/:contextId/get/:key', (req: Request, res: Response) => {
  */
 router.get('/:contextId/scope/:scope', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     const scope = req.params['scope'] as ContextScope;
     const scopeId = req.query['scopeId'] as string | undefined;
 
@@ -199,7 +203,8 @@ router.get('/:contextId/scope/:scope', (req: Request, res: Response) => {
  */
 router.delete('/:contextId', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -239,7 +244,8 @@ router.delete('/:contextId', (req: Request, res: Response) => {
  */
 router.post('/:contextId/clear', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     const { scope, scopeId } = req.body;
 
     if (!contextId) {
@@ -276,7 +282,8 @@ router.post('/:contextId/clear', (req: Request, res: Response) => {
  */
 router.post('/:contextId/prune', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -323,7 +330,8 @@ router.post('/:contextId/prune', (req: Request, res: Response) => {
  */
 router.post('/:contextId/snapshot', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     const { reason, createdBy } = req.body;
 
     if (!contextId) {
@@ -364,7 +372,8 @@ router.post('/:contextId/snapshot', (req: Request, res: Response) => {
  */
 router.get('/:contextId/snapshots', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -397,8 +406,9 @@ router.get('/:contextId/snapshots', (req: Request, res: Response) => {
  */
 router.get('/:contextId/snapshots/:version', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
-    const versionStr = req.params['version'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
+    const versionStr = req.params['version'] as string;
 
     if (!contextId || !versionStr) {
       res.status(400).json({
@@ -448,7 +458,8 @@ router.get('/:contextId/snapshots/:version', (req: Request, res: Response) => {
  */
 router.post('/:contextId/rollback', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     const { version, reason } = req.body;
 
     if (!contextId || version === undefined) {
@@ -484,7 +495,8 @@ router.post('/:contextId/rollback', (req: Request, res: Response) => {
  */
 router.post('/:contextId/restore', async (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    // TODO(P1.W1): use getQuery() helper
+    const contextId = req.params['contextId'] as string;
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',

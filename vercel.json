@@ -1,3 +1,5 @@
 {
-  "framework": "nextjs"
+  "buildCommand": "cd web-interface && npm install && npm run build",
+  "outputDirectory": "web-interface/.next",
+  "installCommand": "cd web-interface && npm install"
 }
