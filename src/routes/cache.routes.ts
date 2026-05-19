@@ -9,6 +9,7 @@ import { getCacheManager } from '../cache/cache-manager.js';
 import { getCacheStatistics, getCacheInvalidationHistory } from '../cache/cache-init.js';
 import { getCache } from '../cache/redis-cache.js';
 import { Logger } from '../utils/Logger.js';
+import { getQueryInt } from '../utils/http-query.js';
 
 const logger = new Logger('CacheRoutes');
 const router = Router();
@@ -63,7 +64,7 @@ router.get('/health', async (req: Request, res: Response) => {
  */
 router.get('/invalidations', (req: Request, res: Response) => {
   try {
-    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 50; // TODO(P1.W1): use getQueryInt()
+    const limit = getQueryInt(req, 'limit', 50);
     const history = getCacheInvalidationHistory(limit);
 
     res.json({

@@ -12,6 +12,7 @@
 
 import { Router, Request, Response } from 'express';
 import { Logger } from '@/utils/Logger';
+import { getQuery, getQueryInt } from '@/utils/http-query';
 import {
   securityService,
   UserRole,
@@ -336,13 +337,13 @@ router.get(
   requirePermission(Permission.ADMIN_SECURITY),
   (req: Request, res: Response): void => {
     try {
-      const type = req.query['type'] as SecurityEventType | undefined; // TODO(P1.W1): use getQuery()
-      const severity = req.query['severity'] as SecuritySeverity | undefined; // TODO(P1.W1): use getQuery()
-      const userId = req.query['userId'] as string | undefined; // TODO(P1.W1): use getQuery()
-      const ipAddress = req.query['ipAddress'] as string | undefined; // TODO(P1.W1): use getQuery()
-      const startTime = req.query['startTime'] ? parseInt(req.query['startTime'] as string) : undefined; // TODO(P1.W1): use getQueryInt()
-      const endTime = req.query['endTime'] ? parseInt(req.query['endTime'] as string) : undefined; // TODO(P1.W1): use getQueryInt()
-      const limit = req.query['limit'] ? parseInt(req.query['limit'] as string) : 100; // TODO(P1.W1): use getQueryInt()
+      const type = getQuery(req, 'type') as SecurityEventType | undefined;
+      const severity = getQuery(req, 'severity') as SecuritySeverity | undefined;
+      const userId = getQuery(req, 'userId');
+      const ipAddress = getQuery(req, 'ipAddress');
+      const startTime = getQueryInt(req, 'startTime');
+      const endTime = getQueryInt(req, 'endTime');
+      const limit = getQueryInt(req, 'limit', 100);
 
       // Build filters object conditionally
       const filters: {

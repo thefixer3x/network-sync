@@ -111,11 +111,11 @@ router.post('/metrics', (req: Request, res: Response) => {
  */
 router.get('/timeseries', (req: Request, res: Response) => {
   try {
-    const metric = String(req.query['metric'] ?? ''); // TODO(P1.W1): use getQuery()
-    const granularity = (req.query['granularity'] as TimeGranularity) || TimeGranularity.HOUR; // TODO(P1.W1): use getQuery()
-    const startTime = parseInt(String(req.query['startTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
-    const endTime = parseInt(String(req.query['endTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
-    const dimensionsStr = req.query['dimensions'] as string | undefined; // TODO(P1.W1): use getQuery()
+    const metric = getQuery(req, 'metric');
+    const granularity = (getQuery(req, 'granularity') as TimeGranularity) || TimeGranularity.HOUR;
+    const startTime = getQueryInt(req, 'startTime');
+    const endTime = getQueryInt(req, 'endTime');
+    const dimensionsStr = getQuery(req, 'dimensions');
 
     if (!metric || !startTime || !endTime) {
       res.status(400).json({
@@ -165,10 +165,10 @@ router.get('/timeseries', (req: Request, res: Response) => {
  */
 router.get('/aggregation', (req: Request, res: Response) => {
   try {
-    const metric = String(req.query['metric'] ?? ''); // TODO(P1.W1): use getQuery()
-    const startTime = parseInt(String(req.query['startTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
-    const endTime = parseInt(String(req.query['endTime'] ?? '')); // TODO(P1.W1): use getQueryInt()
-    const dimensionsStr = req.query['dimensions'] as string | undefined; // TODO(P1.W1): use getQuery()
+    const metric = getQuery(req, 'metric');
+    const startTime = getQueryInt(req, 'startTime');
+    const endTime = getQueryInt(req, 'endTime');
+    const dimensionsStr = getQuery(req, 'dimensions');
 
     if (!metric || !startTime || !endTime) {
       res.status(400).json({
@@ -328,7 +328,7 @@ router.get('/statistics', (_req: Request, res: Response) => {
  */
 router.delete('/data', (req: Request, res: Response) => {
   try {
-    const olderThan = parseInt(String(req.query['olderThan'] ?? '')) || 7 * 24 * 60 * 60 * 1000; // TODO(P1.W1): use getQueryInt() — 7 days default
+    const olderThan = getQueryInt(req, 'olderThan', 7 * 24 * 60 * 60 * 1000)!;
 
     analyticsService.clearOldData(olderThan);
 

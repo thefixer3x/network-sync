@@ -13,6 +13,7 @@ import {
   MediaType,
 } from '../services/content-management.js';
 import { Logger } from '../utils/Logger.js';
+import { getQuery } from '../utils/http-query.js';
 
 const logger = new Logger('ContentManagementRoutes');
 const router = Router();
@@ -64,9 +65,9 @@ router.post('/content', async (req: Request, res: Response) => {
  */
 router.get('/content', (req: Request, res: Response) => {
   try {
-    const status = req.query['status'] as ContentStatus | undefined; // TODO(P1.W1): use getQuery()
-    const platform = req.query['platform'] as string | undefined; // TODO(P1.W1): use getQuery()
-    const workflowId = req.query['workflowId'] as string | undefined; // TODO(P1.W1): use getQuery()
+    const status = getQuery(req, 'status') as ContentStatus | undefined;
+    const platform = getQuery(req, 'platform');
+    const workflowId = getQuery(req, 'workflowId');
 
     const filters: {
       status?: ContentStatus;
@@ -288,8 +289,8 @@ router.post('/templates', (req: Request, res: Response) => {
  */
 router.get('/templates', (req: Request, res: Response) => {
   try {
-    const platform = req.query['platform'] as string | undefined; // TODO(P1.W1): use getQuery()
-    const category = req.query['category'] as string | undefined; // TODO(P1.W1): use getQuery()
+    const platform = getQuery(req, 'platform');
+    const category = getQuery(req, 'category');
 
     const filters: {
       platform?: string;

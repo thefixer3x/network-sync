@@ -58,6 +58,7 @@
     "rate-limit-redis": "^4.2.3",
     "redis": "^5.9.0",
     "twitter-api-v2": "^1.28.0",
+    "vercel": "^54.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

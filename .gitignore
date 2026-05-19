@@ -75,3 +75,4 @@ temp/
 web-interface/.env.vercel
 
 .config/
+.env*.local
