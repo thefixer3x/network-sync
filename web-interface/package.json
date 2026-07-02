@@ -27,7 +27,7 @@
     "framer-motion": "^10.16.16",
     "lucide-react": "^0.554.0",
     "postcss": "^8.4.32",
-    "react-hook-form": "^7.48.2",
+    "react-hook-form": "^7.72.1",
     "react-hot-toast": "^2.6.0",
     "react-query": "^3.39.3",
     "reactflow": "^11.11.4",
