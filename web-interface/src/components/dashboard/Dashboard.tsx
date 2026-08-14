@@ -76,11 +76,11 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-ln-subtle text-ln-text flex">
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
       
       <main className="flex-1 ml-64">
-        <div className="p-8">
+        <div className="p-6 lg:p-8">
           {renderView()}
         </div>
       </main>

@@ -9,9 +9,9 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #fafafa;
-  color: #1a1a1a;
+  font-family: var(--font-body);
+  background: var(--bg-subtle);
+  color: var(--fg-1);
 }
 
 ::-webkit-scrollbar {
