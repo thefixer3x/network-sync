@@ -9,6 +9,7 @@ import { getCacheManager } from '../cache/cache-manager.js';
 import { getCacheStatistics, getCacheInvalidationHistory } from '../cache/cache-init.js';
 import { getCache } from '../cache/redis-cache.js';
 import { Logger } from '../utils/Logger.js';
+import { param } from './_helpers.js';
 
 const logger = new Logger('CacheRoutes');
 const router = Router();
@@ -121,7 +122,7 @@ router.post('/invalidate', async (req: Request, res: Response): Promise<void> =>
  */
 router.post('/invalidate/workflow/:workflowId?', async (req: Request, res: Response) => {
   try {
-    const { workflowId } = req.params;
+    const workflowId = param(req, 'workflowId');
     const { reason = 'manual' } = req.body;
 
     const affectedKeys = await cacheManager.invalidateWorkflow(workflowId, reason);
@@ -147,7 +148,7 @@ router.post('/invalidate/workflow/:workflowId?', async (req: Request, res: Respo
  */
 router.post('/invalidate/content/:contentId?', async (req: Request, res: Response) => {
   try {
-    const { contentId } = req.params;
+    const contentId = param(req, 'contentId');
     const { reason = 'manual' } = req.body;
 
     const affectedKeys = await cacheManager.invalidateContent(contentId, reason);
@@ -173,7 +174,7 @@ router.post('/invalidate/content/:contentId?', async (req: Request, res: Respons
  */
 router.post('/invalidate/user/:userId', async (req: Request, res: Response) => {
   try {
-    const userId = req.params['userId'];
+    const userId = param(req, 'userId');
     if (!userId) {
       res.status(400).json({
         error: 'userId is required',

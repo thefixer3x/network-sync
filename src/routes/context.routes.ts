@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { contextManager, ContextScope } from '../services/context-manager.js';
 import { Logger } from '../utils/Logger.js';
+import { param } from './_helpers.js';
 
 const logger = new Logger('ContextRoutes');
 const router = Router();
@@ -39,7 +40,7 @@ router.get('/', (_req: Request, res: Response) => {
  */
 router.get('/:contextId', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -71,7 +72,7 @@ router.get('/:contextId', (req: Request, res: Response) => {
  */
 router.post('/:contextId/set', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     const { key, value, scope, scopeId, metadata } = req.body;
 
     if (!contextId || !key || value === undefined) {
@@ -111,8 +112,8 @@ router.post('/:contextId/set', (req: Request, res: Response) => {
  */
 router.get('/:contextId/get/:key', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
-    const key = req.params['key'];
+    const contextId = param(req, 'contextId');
+    const key = param(req, 'key');
 
     if (!contextId || !key) {
       res.status(400).json({
@@ -153,8 +154,8 @@ router.get('/:contextId/get/:key', (req: Request, res: Response) => {
  */
 router.get('/:contextId/scope/:scope', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
-    const scope = req.params['scope'] as ContextScope;
+    const contextId = param(req, 'contextId');
+    const scope = param(req, 'scope') as ContextScope;
     const scopeId = req.query['scopeId'] as string | undefined;
 
     if (!contextId || !scope) {
@@ -199,7 +200,7 @@ router.get('/:contextId/scope/:scope', (req: Request, res: Response) => {
  */
 router.delete('/:contextId', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -239,7 +240,7 @@ router.delete('/:contextId', (req: Request, res: Response) => {
  */
 router.post('/:contextId/clear', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     const { scope, scopeId } = req.body;
 
     if (!contextId) {
@@ -276,7 +277,7 @@ router.post('/:contextId/clear', (req: Request, res: Response) => {
  */
 router.post('/:contextId/prune', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -323,7 +324,7 @@ router.post('/:contextId/prune', (req: Request, res: Response) => {
  */
 router.post('/:contextId/snapshot', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     const { reason, createdBy } = req.body;
 
     if (!contextId) {
@@ -364,7 +365,7 @@ router.post('/:contextId/snapshot', (req: Request, res: Response) => {
  */
 router.get('/:contextId/snapshots', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',
@@ -397,8 +398,8 @@ router.get('/:contextId/snapshots', (req: Request, res: Response) => {
  */
 router.get('/:contextId/snapshots/:version', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
-    const versionStr = req.params['version'];
+    const contextId = param(req, 'contextId');
+    const versionStr = param(req, 'version');
 
     if (!contextId || !versionStr) {
       res.status(400).json({
@@ -448,7 +449,7 @@ router.get('/:contextId/snapshots/:version', (req: Request, res: Response) => {
  */
 router.post('/:contextId/rollback', (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     const { version, reason } = req.body;
 
     if (!contextId || version === undefined) {
@@ -484,7 +485,7 @@ router.post('/:contextId/rollback', (req: Request, res: Response) => {
  */
 router.post('/:contextId/restore', async (req: Request, res: Response) => {
   try {
-    const contextId = req.params['contextId'];
+    const contextId = param(req, 'contextId');
     if (!contextId) {
       res.status(400).json({
         error: 'Context ID is required',

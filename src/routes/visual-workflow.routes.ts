@@ -14,6 +14,7 @@ import {
   ExecuteWorkflowRequest,
   WorkflowTemplate,
 } from '@/types/visual-workflow';
+import { param } from './_helpers.js';
 
 const logger = new Logger('VisualWorkflowRoutes');
 const router = Router();
@@ -63,7 +64,7 @@ router.get('/', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.get('/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -174,7 +175,7 @@ router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.patch('/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -241,7 +242,7 @@ router.patch('/:id', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.delete('/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -275,7 +276,7 @@ router.delete('/:id', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.post('/:id/execute', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;
@@ -344,7 +345,7 @@ router.post('/:id/execute', authenticate, async (req: AuthRequest, res: Response
  */
 router.get('/:id/executions/:executionId', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const executionId = req.params['executionId'];
+    const executionId = param(req, 'executionId');
     if (!executionId) {
       res.status(400).json({ error: 'Execution ID required' });
       return;
@@ -422,7 +423,7 @@ router.get('/templates/all', (req: Request, res: Response): void => {
  */
 router.post('/:id/template', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Workflow ID required' });
       return;

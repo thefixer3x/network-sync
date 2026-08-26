@@ -5,6 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { param } from './_helpers.js';
 import {
   analyticsService,
   EventType,
@@ -266,7 +267,7 @@ router.post('/funnel', (req: Request, res: Response) => {
  */
 router.get('/users/:userId', (req: Request, res: Response) => {
   try {
-    const userId = req.params['userId'];
+    const userId = param(req, 'userId');
 
     if (!userId) {
       res.status(400).json({

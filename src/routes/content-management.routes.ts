@@ -13,6 +13,7 @@ import {
   MediaType,
 } from '../services/content-management.js';
 import { Logger } from '../utils/Logger.js';
+import { param } from './_helpers.js';
 
 const logger = new Logger('ContentManagementRoutes');
 const router = Router();
@@ -99,7 +100,7 @@ router.get('/content', (req: Request, res: Response) => {
  */
 router.get('/content/:contentId', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     if (!contentId) {
       res.status(400).json({
         error: 'Content ID is required',
@@ -138,7 +139,7 @@ router.get('/content/:contentId', (req: Request, res: Response) => {
  */
 router.put('/content/:contentId', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const { content, status, scheduledFor, metadata, changelog, updatedBy } = req.body;
 
     if (!contentId) {
@@ -177,7 +178,7 @@ router.put('/content/:contentId', async (req: Request, res: Response) => {
  */
 router.get('/content/:contentId/versions', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     if (!contentId) {
       res.status(400).json({
         error: 'Content ID is required',
@@ -211,7 +212,7 @@ router.get('/content/:contentId/versions', (req: Request, res: Response) => {
  */
 router.post('/content/:contentId/rollback', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const { version, reason } = req.body;
 
     if (!contentId || version === undefined) {
@@ -320,7 +321,7 @@ router.get('/templates', (req: Request, res: Response) => {
  */
 router.get('/templates/:templateId', (req: Request, res: Response) => {
   try {
-    const templateId = req.params['templateId'];
+    const templateId = param(req, 'templateId');
     if (!templateId) {
       res.status(400).json({
         error: 'Template ID is required',
@@ -359,7 +360,7 @@ router.get('/templates/:templateId', (req: Request, res: Response) => {
  */
 router.post('/templates/:templateId/create', async (req: Request, res: Response) => {
   try {
-    const templateId = req.params['templateId'];
+    const templateId = param(req, 'templateId');
     const { variables, platform, workflowId, createdBy } = req.body;
 
     if (!templateId || !variables) {
@@ -398,7 +399,7 @@ router.post('/templates/:templateId/create', async (req: Request, res: Response)
  */
 router.post('/content/:contentId/variations', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const { name, content, weight } = req.body;
 
     if (!contentId || !name || !content) {
@@ -436,8 +437,8 @@ router.post('/content/:contentId/variations', (req: Request, res: Response) => {
  */
 router.put('/content/:contentId/variations/:variationId/performance', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
-    const variationId = req.params['variationId'];
+    const contentId = param(req, 'contentId');
+    const variationId = param(req, 'variationId');
     const metrics = req.body;
 
     if (!contentId || !variationId) {
@@ -472,7 +473,7 @@ router.put('/content/:contentId/variations/:variationId/performance', (req: Requ
  */
 router.get('/content/:contentId/best-variation', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     if (!contentId) {
       res.status(400).json({
         error: 'Content ID is required',
@@ -512,7 +513,7 @@ router.get('/content/:contentId/best-variation', (req: Request, res: Response) =
  */
 router.post('/content/:contentId/approval', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const { requestedBy, approvers, requiredApprovals, notes } = req.body;
 
     if (!contentId || !requestedBy || !approvers || !requiredApprovals) {
@@ -551,7 +552,7 @@ router.post('/content/:contentId/approval', async (req: Request, res: Response) 
  */
 router.post('/content/:contentId/approval/process', async (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const { userId, decision, comment } = req.body;
 
     if (!contentId || !userId || !decision) {
@@ -602,7 +603,7 @@ router.post('/content/:contentId/approval/process', async (req: Request, res: Re
  */
 router.post('/content/:contentId/media', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const media = req.body;
 
     if (!contentId || !media.type || !media.url || !media.filename) {
@@ -636,7 +637,7 @@ router.post('/content/:contentId/media', (req: Request, res: Response) => {
  */
 router.put('/content/:contentId/analytics', (req: Request, res: Response) => {
   try {
-    const contentId = req.params['contentId'];
+    const contentId = param(req, 'contentId');
     const analytics = req.body;
 
     if (!contentId) {

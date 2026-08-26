@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { workflowManager } from '../services/workflow-manager.js';
 import { Logger } from '../utils/Logger.js';
+import { param } from './_helpers.js';
 
 const logger = new Logger('WorkflowManagementRoutes');
 const router = Router();
@@ -55,7 +56,7 @@ router.post('/versions', async (req: Request, res: Response): Promise<void> => {
  */
 router.get('/:workflowId/versions', (req: Request, res: Response) => {
   try {
-    const workflowId = req.params['workflowId'];
+    const workflowId = param(req, 'workflowId');
     if (!workflowId) {
       res.status(400).json({
         error: 'workflowId is required',
@@ -88,8 +89,8 @@ router.get('/:workflowId/versions', (req: Request, res: Response) => {
  */
 router.get('/:workflowId/versions/:version', (req: Request, res: Response) => {
   try {
-    const workflowId = req.params['workflowId'];
-    const versionStr = req.params['version'];
+    const workflowId = param(req, 'workflowId');
+    const versionStr = param(req, 'version');
 
     if (!workflowId) {
       res.status(400).json({
@@ -131,7 +132,7 @@ router.get('/:workflowId/versions/:version', (req: Request, res: Response) => {
  */
 router.post('/:workflowId/rollback', async (req: Request, res: Response) => {
   try {
-    const workflowId = req.params['workflowId'];
+    const workflowId = param(req, 'workflowId');
     const { targetVersion, reason } = req.body;
 
     if (!workflowId || !targetVersion) {
@@ -167,7 +168,7 @@ router.post('/:workflowId/rollback', async (req: Request, res: Response) => {
  */
 router.post('/:workflowId/execute', async (req: Request, res: Response) => {
   try {
-    const workflowId = req.params['workflowId'];
+    const workflowId = param(req, 'workflowId');
     const { inputs, version } = req.body;
 
     if (!workflowId) {
@@ -204,7 +205,7 @@ router.post('/:workflowId/execute', async (req: Request, res: Response) => {
  */
 router.get('/executions/:executionId', (req: Request, res: Response) => {
   try {
-    const executionId = req.params['executionId'];
+    const executionId = param(req, 'executionId');
     if (!executionId) {
       res.status(400).json({
         error: 'executionId is required',
@@ -251,7 +252,7 @@ router.get('/executions/:executionId', (req: Request, res: Response) => {
  */
 router.post('/executions/:executionId/cancel', async (req: Request, res: Response) => {
   try {
-    const executionId = req.params['executionId'];
+    const executionId = param(req, 'executionId');
     if (!executionId) {
       res.status(400).json({
         error: 'executionId is required',
@@ -339,7 +340,7 @@ router.get('/templates', (req: Request, res: Response) => {
  */
 router.get('/templates/:templateId', (req: Request, res: Response) => {
   try {
-    const templateId = req.params['templateId'];
+    const templateId = param(req, 'templateId');
     if (!templateId) {
       res.status(400).json({
         error: 'templateId is required',
@@ -378,7 +379,7 @@ router.get('/templates/:templateId', (req: Request, res: Response) => {
  */
 router.post('/templates/:templateId/create', async (req: Request, res: Response) => {
   try {
-    const templateId = req.params['templateId'];
+    const templateId = param(req, 'templateId');
     const { parameters, workflowId } = req.body;
 
     if (!templateId) {

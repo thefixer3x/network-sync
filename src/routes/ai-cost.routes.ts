@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { aiCostTracker } from '../services/ai-cost-tracker.js';
 import { Logger } from '../utils/Logger.js';
+import { param } from './_helpers.js';
 
 const logger = new Logger('AICostRoutes');
 const router = Router();
@@ -55,7 +56,7 @@ router.get('/current', async (req: Request, res: Response) => {
  */
 router.get('/user/:userId', async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = param(req, 'userId');
     const cost = await aiCostTracker.getCost('day', userId);
 
     res.json({
@@ -82,7 +83,7 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
  */
 router.get('/workflow/:workflowId', async (req: Request, res: Response) => {
   try {
-    const { workflowId } = req.params;
+    const workflowId = param(req, 'workflowId');
     const cost = await aiCostTracker.getCost('day', undefined, workflowId);
 
     res.json({
