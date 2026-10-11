@@ -21,6 +21,7 @@ import {
 } from '@/services/compliance';
 import { authenticate, requirePermission, AuthRequest } from '@/middleware/auth';
 import { Permission } from '@/services/security';
+import { param } from './_helpers';
 
 const logger = new Logger('ComplianceRoutes');
 const router = Router();
@@ -193,7 +194,7 @@ router.get('/consent/:userId', authenticate, (req: AuthRequest, res: Response): 
       return;
     }
 
-    const userId = req.params['userId'];
+    const userId = param(req, 'userId');
     if (!userId) {
       res.status(400).json({
         error: 'Bad Request',
@@ -348,7 +349,7 @@ router.post(
         return;
       }
 
-      const requestId = req.params['requestId'];
+      const requestId = param(req, 'requestId');
       if (!requestId) {
         res.status(400).json({
           error: 'Bad Request',
@@ -416,7 +417,7 @@ router.get('/data/:userId', authenticate, (req: AuthRequest, res: Response): voi
       return;
     }
 
-    const userId = req.params['userId'];
+    const userId = param(req, 'userId');
     if (!userId) {
       res.status(400).json({
         error: 'Bad Request',
@@ -470,7 +471,7 @@ router.get('/export/:userId', authenticate, (req: AuthRequest, res: Response): v
       return;
     }
 
-    const userId = req.params['userId'];
+    const userId = param(req, 'userId');
     if (!userId) {
       res.status(400).json({
         error: 'Bad Request',
