@@ -39,8 +39,8 @@ export function DashboardOverview() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="font-display text-3xl font-bold text-ln-text">Dashboard Overview</h1>
+        <p className="mt-2 text-[color:var(--fg-2)]">
           Monitor your social media automation performance
         </p>
       </div>
@@ -52,18 +52,18 @@ export function DashboardOverview() {
           return (
             <Card key={stat.name} className="p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Icon className="w-6 h-6 text-blue-600" />
+                <div className="rounded-ln bg-[color:var(--ln-green-50)] p-2">
+                  <Icon className="h-6 w-6 text-ln-green" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-[color:var(--fg-2)]">{stat.name}</p>
+                  <p className="font-display text-2xl font-bold text-ln-text">{stat.value}</p>
                 </div>
               </div>
               <div className="mt-4">
                 <p className={`text-sm ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 
-                  stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
+                  stat.changeType === 'positive' ? 'text-[color:var(--status-success)]' :
+                  stat.changeType === 'negative' ? 'text-[color:var(--status-danger)]' : 'text-[color:var(--fg-2)]'
                 }`}>
                   {stat.change}
                 </p>
@@ -76,20 +76,20 @@ export function DashboardOverview() {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Posts</h3>
+          <h3 className="mb-4 font-display text-lg font-semibold text-ln-text">Recent Posts</h3>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-600 font-medium">T</span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-ln bg-[color:var(--ln-navy-50)]">
+                  <span className="font-medium text-ln-navy">T</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-ln-text">
                     Twitter post published
                   </p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
+                  <p className="text-xs text-[color:var(--fg-3)]">2 hours ago</p>
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-[color:var(--fg-4)]">
                   12 likes
                 </div>
               </div>
@@ -98,23 +98,23 @@ export function DashboardOverview() {
         </Card>
 
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+          <h3 className="mb-4 font-display text-lg font-semibold text-ln-text">System Health</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">API Status</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+              <span className="text-sm text-[color:var(--fg-2)]">API Status</span>
+              <span className="rounded-full bg-[color:var(--ln-green-50)] px-2 py-1 text-xs text-[color:var(--ln-green-800)]">
                 Healthy
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Database</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+              <span className="text-sm text-[color:var(--fg-2)]">Database</span>
+              <span className="rounded-full bg-[color:var(--ln-green-50)] px-2 py-1 text-xs text-[color:var(--ln-green-800)]">
                 Connected
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Queue</span>
-              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+              <span className="text-sm text-[color:var(--fg-2)]">Queue</span>
+              <span className="rounded-full bg-[color:var(--ln-gold-50)] px-2 py-1 text-xs text-[color:var(--ln-gold-800)]">
                 Processing
               </span>
             </div>
