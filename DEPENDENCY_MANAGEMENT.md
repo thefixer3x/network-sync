@@ -30,8 +30,8 @@ Location: `.github/dependabot.yml`
 
 ### Ecosystems Monitored
 
-1. **Backend (npm)** - Root package.json
-2. **Frontend (npm)** - web-interface/package.json
+1. **Backend (bun)** - Root package.json
+2. **Frontend (bun)** - web-interface/package.json
 3. **GitHub Actions** - Workflow dependencies
 4. **Docker** - Base image updates
 
@@ -140,8 +140,8 @@ https://github.com/:owner/:repo/security/dependabot
 
 | Day | Ecosystem | Time (UTC) |
 |-----|-----------|------------|
-| **Monday** | Backend npm | 06:00 |
-| **Monday** | Frontend npm | 07:00 |
+| **Monday** | Backend bun | 06:00 |
+| **Monday** | Frontend bun | 07:00 |
 | **Tuesday** | GitHub Actions | 06:00 |
 | **Wednesday** | Docker | 06:00 |
 
@@ -196,16 +196,16 @@ Related dependencies are grouped into single PRs:
 git checkout -b test/dependency-update
 
 # Update dependency
-npm install package@latest
+bun add package@latest
 
 # Run tests
-npm test
+bun run test
 
 # Build
-npm run build
+bun run build
 
 # Test locally
-npm run dev
+bun run dev
 
 # If successful, update in Dependabot PR
 ```
@@ -270,13 +270,13 @@ For main/master branch:
 
 ```bash
 # Check for outdated dependencies
-npm outdated
+bun outdated
 
 # Update minor/patch versions
-npm update
+bun update
 
 # Update major versions (carefully!)
-npm install package@latest
+bun add package@latest
 ```
 
 ### 2. Lock File Hygiene
@@ -286,20 +286,20 @@ npm install package@latest
 bun install --frozen-lockfile
 
 # Frontend
-npm ci
+bun install --frozen-lockfile
 ```
 
 ### 3. Audit Regularly
 
 ```bash
 # Check for vulnerabilities
-npm audit
+bun audit
 
-# Fix automatically (if safe)
-npm audit fix
+# Apply in-range fixes (safe patches/minors)
+bun update
 
-# Fix with breaking changes (review first!)
-npm audit fix --force
+# Review what's behind before bumping majors
+bun outdated
 ```
 
 ### 4. Monitor Dependabot Activity

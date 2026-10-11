@@ -1,10 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "bun run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_VERSION = "8"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
@@ -25,7 +24,7 @@
   status = 200
 
 [dev]
-  command = "npm run dev"
+  command = "bun run dev"
   port = 3000
 
 # Environment variables template

@@ -48,7 +48,7 @@ A modern, responsive web interface for managing your AI-powered social media aut
 
 2. **Install dependencies**
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Environment Setup**
@@ -59,7 +59,7 @@ A modern, responsive web interface for managing your AI-powered social media aut
 
 4. **Run development server**
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 5. **Open your browser**
@@ -190,7 +190,7 @@ CREATE POLICY "Users can only see their own analytics" ON analytics
 
 1. **Connect to Vercel**
    ```bash
-   npm i -g vercel
+   bun add -g vercel
    vercel login
    vercel
    ```
@@ -208,7 +208,7 @@ CREATE POLICY "Users can only see their own analytics" ON analytics
 
 1. **Connect to Netlify**
    ```bash
-   npm install -g netlify-cli
+   bun add -g netlify-cli
    netlify login
    netlify init
    ```
@@ -346,8 +346,8 @@ theme: {
    ```bash
    # Clear cache and reinstall
    rm -rf .next node_modules
-   npm install
-   npm run build
+   bun install
+   bun run build
    ```
 
 2. **Environment Variables**
@@ -359,7 +359,7 @@ theme: {
 3. **Database Connection**
    ```bash
    # Test Supabase connection
-   npm run db:test
+   bun run db:test
    ```
 
 4. **Authentication Issues**

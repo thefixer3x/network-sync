@@ -13,22 +13,22 @@ This document outlines the coding standards for the network-sync project.
 
 ```bash
 # Format code
-npm run format
+bun run format
 
 # Check formatting
-npm run format:check
+bun run format:check
 
 # Lint code
-npm run lint
+bun run lint
 
 # Fix linting issues
-npm run lint:fix
+bun run lint:fix
 
 # Type check
-npm run type-check
+bun run type-check
 
 # Run all checks (format, lint, type-check, tests)
-npm run validate
+bun run validate
 ```
 
 ## Code Style
@@ -206,9 +206,9 @@ describe('UserService', () => {
 
 Before committing code:
 
-1. ✅ Run `npm run format` to format code
-2. ✅ Run `npm run lint:fix` to auto-fix linting issues
-3. ✅ Run `npm test` to ensure tests pass
+1. ✅ Run `bun run format` to format code
+2. ✅ Run `bun run lint:fix` to auto-fix linting issues
+3. ✅ Run `bun run test` to ensure tests pass
 4. ✅ Add tests for new functionality
 5. ✅ Update documentation if needed
 
@@ -221,7 +221,7 @@ The following checks run on every pull request:
 - TypeScript compilation (must pass)
 - Tests (must pass with >70% coverage)
 
-Use `npm run validate` to run all checks locally before pushing.
+Use `bun run validate` to run all checks locally before pushing.
 
 ## Exceptions
 

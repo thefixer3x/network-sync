@@ -118,5 +118,5 @@ DEFAULT_TIMEZONE=America/New_York
 EOF
 
 echo "✅ Project structure created"
-echo "📦 Run 'npm install' to install dependencies"
+echo "📦 Run 'bun install' to install dependencies"
 echo "🔧 Copy .env.example to .env and configure your API keys"

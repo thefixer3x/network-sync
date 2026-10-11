@@ -227,23 +227,23 @@ Phase 2 builds on the testing infrastructure from Phase 1 to add critical securi
 ### New Packages Required
 ```bash
 # Authentication
-npm install jsonwebtoken bcrypt
-npm install --save-dev @types/jsonwebtoken @types/bcrypt
+bun add jsonwebtoken bcrypt
+bun add -d @types/jsonwebtoken @types/bcrypt
 
 # Rate Limiting
-npm install express-rate-limit rate-limit-redis
+bun add express-rate-limit rate-limit-redis
 
 # Encryption
-npm install crypto-js
-npm install --save-dev @types/crypto-js
+bun add crypto-js
+bun add -d @types/crypto-js
 
 # Redis & Queue
-npm install redis bullmq
-npm install --save-dev @bull-board/api @bull-board/express
+bun add redis bullmq
+bun add -d @bull-board/api @bull-board/express
 
 # Security
-npm install helmet cors
-npm install --save-dev @types/cors
+bun add helmet cors
+bun add -d @types/cors
 ```
 
 ### Environment Variables

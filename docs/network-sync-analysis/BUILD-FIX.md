@@ -154,8 +154,8 @@ After build succeeds:
 6. **Run web interface** (15 min)
    ```bash
    cd web-interface
-   npm install
-   npm run dev
+   bun install
+   bun run dev
    ```
 
 7. **Prepare demo scenarios** (1 hour)
@@ -183,7 +183,7 @@ bunx tsc src/orchestrator/agent-orchestrator.ts --outDir dist
 
 **Option 3: Use tsx for demo**
 ```bash
-npm install -g tsx
+bun add -g tsx
 tsx src/example-usage.ts
 ```
 

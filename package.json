@@ -4,6 +4,7 @@
   "description": "Multi-Agent AI Orchestration System for Social Media",
   "main": "src/orchestrator/agent-orchestrator.ts",
   "type": "module",
+  "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run src/example-usage.ts",
     "build": "tsc",
@@ -19,7 +20,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md}\"",
     "type-check": "tsc --noEmit",
-    "validate": "npm run format:check && npm run lint:check && npm run type-check && npm run test:ci",
+    "validate": "bun run format:check && bun run lint:check && bun run type-check && bun run test:ci",
     "validate:env": "bun scripts/validate-env.ts",
     "orchestrate": "bun run src/orchestrator/agent-orchestrator.ts",
     "demo": "bun run src/example-usage.ts",
