@@ -129,7 +129,7 @@ jobs:
           NODE_ENV: test
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         if: success()
         with:
           files: ./coverage/coverage-final.json
