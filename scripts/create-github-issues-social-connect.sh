@@ -80,10 +80,10 @@ gh issue create --repo $REPO \
 
 ### Test Scripts
 \`\`\`bash
-npm run test              # Run all tests
-npm run test:watch        # Watch mode
-npm run test:coverage     # Generate coverage
-npm run test:ci           # CI mode
+bun run test              # Run all tests
+bun run test:watch        # Watch mode
+bun run test:coverage     # Generate coverage
+bun run test:ci           # CI mode
 \`\`\`
 
 ### Next Steps
@@ -138,7 +138,7 @@ Set up ESLint with TypeScript support and enforce coding standards.
 ## Tasks
 - [ ] Install ESLint and TypeScript plugin
 \`\`\`bash
-npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+bun add -d eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
 \`\`\`
 - [ ] Create .eslintrc.js configuration
 - [ ] Configure rules (Airbnb or Standard base)
@@ -173,7 +173,7 @@ Configure Prettier for consistent code formatting across the project.
 ## Tasks
 - [ ] Install Prettier
 \`\`\`bash
-npm install --save-dev prettier
+bun add -d prettier
 \`\`\`
 - [ ] Create .prettierrc configuration
 - [ ] Integrate with ESLint (no conflicts)
@@ -342,8 +342,8 @@ Replace in-memory automation scheduling with Redis-backed Bull queue for horizon
 ## Tasks
 - [ ] Install Redis and Bull
 \`\`\`bash
-npm install redis bull
-npm install --save-dev @types/bull
+bun add redis bull
+bun add -d @types/bull
 \`\`\`
 - [ ] Set up Redis connection
 - [ ] Create queue management service
@@ -441,7 +441,7 @@ gh issue create --repo $REPO \
 ### What Was Done
 - Created comprehensive CI/CD pipeline
 - Jobs: lint, test, build, docker, security, deploy
-- Automated security scanning (npm audit, Snyk)
+- Automated security scanning (bun audit, Snyk)
 - Docker image building and pushing
 - Coverage reporting to Codecov
 - Branch-based deployment strategy
@@ -505,7 +505,7 @@ Set up Sentry for comprehensive error tracking and monitoring.
 - [ ] Create Sentry account and project
 - [ ] Install Sentry SDK
 \`\`\`bash
-npm install @sentry/node @sentry/tracing
+bun add @sentry/node @sentry/tracing
 \`\`\`
 - [ ] Configure Sentry in backend
 - [ ] Configure Sentry in frontend
@@ -672,7 +672,7 @@ Conduct comprehensive security audit and address vulnerabilities.
 
 ## Tasks
 - [ ] Complete OWASP Top 10 checklist
-- [ ] Run dependency vulnerability scan (npm audit)
+- [ ] Run dependency vulnerability scan (bun audit)
 - [ ] Scan for leaked secrets (git-secrets, trufflehog)
 - [ ] Test for SQL injection vulnerabilities
 - [ ] Test for XSS vulnerabilities
@@ -683,7 +683,7 @@ Conduct comprehensive security audit and address vulnerabilities.
 - [ ] Test API endpoint authorization
 
 ## Tools
-- npm audit / bun audit
+- bun audit
 - OWASP ZAP
 - Snyk
 - git-secrets

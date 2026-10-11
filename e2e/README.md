@@ -35,45 +35,45 @@ e2e/
 
 3. **Start the application server** (if testing against local server):
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 ### Test Commands
 
 ```bash
 # Run all E2E tests
-npm run e2e
+bun run e2e
 
 # Run tests with browser UI visible
-npm run e2e:headed
+bun run e2e:headed
 
 # Run tests in interactive UI mode
-npm run e2e:ui
+bun run e2e:ui
 
 # Run tests in debug mode
-npm run e2e:debug
+bun run e2e:debug
 
 # View test report
-npm run e2e:report
+bun run e2e:report
 
 # Generate test code (record actions)
-npm run e2e:codegen
+bun run e2e:codegen
 ```
 
 ### Test Filtering
 
 ```bash
 # Run only API tests
-npm run e2e -- --grep "API"
+bun run e2e -- --grep "API"
 
 # Run only workflow tests
-npm run e2e -- --grep "Workflow"
+bun run e2e -- --grep "Workflow"
 
 # Run specific test file
-npm run e2e -- health-check.api.spec.ts
+bun run e2e -- health-check.api.spec.ts
 
 # Run tests matching a pattern
-npm run e2e -- --grep "should.*post"
+bun run e2e -- --grep "should.*post"
 ```
 
 ## Writing Tests
@@ -208,13 +208,13 @@ All tests are currently marked as `.skip()` because they require:
 
 ```bash
 # Run with browser visible
-npm run e2e:headed
+bun run e2e:headed
 
 # Run in UI mode (best for debugging)
-npm run e2e:ui
+bun run e2e:ui
 
 # Run in debug mode (step through)
-npm run e2e:debug
+bun run e2e:debug
 ```
 
 ### Trace Viewer
@@ -246,7 +246,7 @@ Example GitHub Actions workflow:
   run: npx playwright install --with-deps
 
 - name: Run E2E tests
-  run: npm run e2e
+  run: bun run e2e
   env:
     CI: true
     E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}

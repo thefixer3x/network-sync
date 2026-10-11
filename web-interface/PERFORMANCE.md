@@ -40,7 +40,7 @@ Run bundle analyzer to visualize bundle composition:
 
 ```bash
 # Analyze client bundle
-npm run analyze
+bun run analyze
 
 # View report
 open .next/analyze/client.html
@@ -273,10 +273,10 @@ function Dashboard() {
 
 ```bash
 # Generate bundle analysis report
-npm run analyze
+bun run analyze
 
 # Check specific route bundle
-npm run build -- --analyze
+bun run build -- --analyze
 ```
 
 **Targets:**
@@ -416,7 +416,7 @@ const inter = Inter({
 
 Before deploying to production:
 
-- [ ] Run `npm run analyze` and review bundle sizes
+- [ ] Run `bun run analyze` and review bundle sizes
 - [ ] Run Lighthouse audit (all scores >90)
 - [ ] Check Core Web Vitals in Chrome DevTools
 - [ ] Test on slow 3G network
@@ -433,7 +433,7 @@ Before deploying to production:
 
 ### Bundle is too large
 
-1. Run `npm run analyze`
+1. Run `bun run analyze`
 2. Identify large dependencies
 3. Consider alternatives or dynamic imports
 4. Remove unused dependencies

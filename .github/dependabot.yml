@@ -53,8 +53,8 @@ updates:
         update-types: ["version-update:semver-major"]
     # Note: versioning-strategy is not supported for the bun ecosystem
 
-  # Frontend Dependencies (web-interface)
-  - package-ecosystem: "npm"
+  # Frontend Dependencies (web-interface; bun lockfile)
+  - package-ecosystem: "bun"
     directory: "/web-interface"
     schedule:
       interval: "weekly"
@@ -124,7 +124,7 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "react-dom"
         update-types: ["version-update:semver-major"]
-    versioning-strategy: "increase"
+    # Note: versioning-strategy is not supported for the bun ecosystem
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

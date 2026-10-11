@@ -173,7 +173,7 @@ const stats = httpClient.getCircuitBreakerStats();
    - Test artifacts saved for 7 days
 
 5. **Security Audit** (10min timeout)
-   - npm audit for vulnerabilities
+   - bun audit for vulnerabilities
    - TruffleHog secret scanning
 
 6. **Build Verification** (10min timeout)

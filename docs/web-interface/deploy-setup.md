@@ -6,7 +6,7 @@
 
 1. **Install Vercel CLI**
    ```bash
-   npm i -g vercel
+   bun add -g vercel
    ```
 
 2. **Login to Vercel**
@@ -34,7 +34,7 @@
 
 1. **Install Netlify CLI**
    ```bash
-   npm install -g netlify-cli
+   bun add -g netlify-cli
    ```
 
 2. **Login to Netlify**
@@ -242,7 +242,7 @@ POST /api/webhooks/instagram
 
 ```bash
 # Check build locally
-npm run build
+bun run build
 
 # Verify environment variables
 vercel env ls  # or netlify env:list

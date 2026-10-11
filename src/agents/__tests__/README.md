@@ -6,16 +6,16 @@ This directory contains unit tests for all AI agents in the system.
 
 ```bash
 # Run all tests
-npm test
+bun run test
 
 # Run tests in watch mode
-npm run test:watch
+bun run test:watch
 
 # Run tests with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Run tests for CI
-npm run test:ci
+bun run test:ci
 ```
 
 ## Test Coverage

@@ -307,11 +307,11 @@ Plan and visualize your content strategy:
 2. **Install dependencies**
    ```bash
    # Backend
-   npm install
+   bun install
 
    # Frontend
    cd web-interface
-   npm install
+   bun install
    ```
 
 3. **Configure environment variables**
@@ -333,10 +333,10 @@ Plan and visualize your content strategy:
    ```bash
    # Frontend (port 3000)
    cd web-interface
-   npm run dev
+   bun run dev
 
    # Backend services (optional, for orchestration)
-   npm run dev
+   bun run dev
    ```
 
 6. **Access the application**
@@ -418,20 +418,20 @@ network-sync/
 
 ### Backend
 ```bash
-npm run dev          # Run development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run test         # Run tests
-npm run orchestrate  # Run AI orchestrator
-npm run cli          # Interactive CLI
+bun run dev          # Run development server
+bun run build        # Build for production
+bun run start        # Start production server
+bun run test         # Run tests
+bun run orchestrate  # Run AI orchestrator
+bun run cli          # Interactive CLI
 ```
 
 ### Frontend
 ```bash
-npm run dev          # Development server (port 3000)
-npm run build        # Production build
-npm run start        # Start production server
-npm run lint         # Run ESLint
+bun run dev          # Development server (port 3000)
+bun run build        # Production build
+bun run start        # Start production server
+bun run lint         # Run ESLint
 ```
 
 ---

@@ -49,7 +49,7 @@ Please include the following information:
 
 We use **Dependabot** for automated dependency updates:
 
-- **Weekly scans** on Mondays for npm packages
+- **Weekly scans** on Mondays for dependency packages
 - **Security updates** are prioritized and auto-merged when safe
 - **Patch updates** are automatically merged after CI passes
 - **Minor/major updates** require manual review
@@ -88,7 +88,7 @@ We employ multiple layers of security scanning:
    - Custom security queries
    - Pull request checks
 
-4. **npm audit** / **bun audit**
+4. **bun audit** / **bun audit**
    - Run during CI/CD pipeline
    - Blocks builds with high/critical vulnerabilities
 

@@ -908,7 +908,7 @@ Comprehensive security audit and penetration testing.
 
 **Acceptance Criteria:**
 - [ ] OWASP Top 10 checklist completed
-- [ ] Dependency vulnerability scan (npm audit)
+- [ ] Dependency vulnerability scan (bun audit)
 - [ ] Secrets scanning (no leaked credentials)
 - [ ] SQL injection testing
 - [ ] XSS vulnerability testing
@@ -916,7 +916,7 @@ Comprehensive security audit and penetration testing.
 - [ ] Authentication bypass testing
 
 **Tools:**
-- npm audit / bun audit
+- bun audit
 - OWASP ZAP
 - Snyk or similar
 

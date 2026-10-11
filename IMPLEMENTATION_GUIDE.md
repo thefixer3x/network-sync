@@ -59,7 +59,7 @@ Sequential lower bound: ~6 weeks.
 
 ## 2. Phase 0 — Stop the bleed
 
-**Goal:** Make `npm run build` and `npm test` resolve. Close the remote code execution path. Nothing else.
+**Goal:** Make `bun run build` and `bun run test` resolve. Close the remote code execution path. Nothing else.
 
 **Branch:** `hotfix/phase-0-unblock` → main (fast-track review).
 
@@ -76,7 +76,7 @@ Sequential lower bound: ~6 weeks.
 
 ### Definition of Done (Phase 0 gate)
 
-- [ ] `npm run build` exits 0 in both `/` and `/web-interface`
+- [ ] `bun run build` exits 0 in both `/` and `/web-interface`
 - [ ] `tsc --noEmit` reports zero errors
 - [ ] `POST /backup/restore` returns 401 for unauthenticated callers (integration test included)
 - [ ] No `execAsync` with template-string interpolation remains in `backup.ts` (replaced with `execFile` + arg array, or disabled entirely with a `503 Not Implemented`)
@@ -116,7 +116,7 @@ A green CI run on `main`. Screenshot/log link in PR description.
 - [ ] Every route file uses `getQuery()` — `grep -r "req.query" src/routes/ | grep -v getQuery` returns empty
 - [ ] `src/database/Repository.ts` exists with unit tests at >90% coverage
 - [ ] At least one route (`/health/db`) uses `requireAuth()` end-to-end
-- [ ] `npm test` runs 0 hangs, all suites load (pass-rate target deferred to Phase 6)
+- [ ] `bun run test` runs 0 hangs, all suites load (pass-rate target deferred to Phase 6)
 - [ ] `scripts/run-migrations.js` applies all migrations in order against a clean Postgres; verified by `make db-reset && make db-migrate` in CI
 - [ ] Duplicate migration filenames eliminated (rename `002_performance_indexes.sql` → `009_performance_indexes.sql`, etc., document in `migrations/README.md`)
 - [ ] Connection pool and migrations target the **same** schema (decision: use `network_sync`; migrations updated)
@@ -211,7 +211,7 @@ For each service:
 |----|-------|-------|-------|
 | P4.W1 | Apply `requireAuth()` to 8 unprotected routers | Security | ai-cost, ai-optimization, agent-supervision, content-management, analytics, context, cache, workflow-management |
 | P4.W2 | Replace 2 stub `authenticate` functions with real middleware | Security | `backup.routes.ts:13-17`, `visual-workflow.routes.ts:30-34` |
-| P4.W3 | Resolve `npm audit` critical + high (12 issues) | Platform | Root + `web-interface` |
+| P4.W3 | Resolve `bun audit` critical + high (12 issues) | Platform | Root + `web-interface` |
 | P4.W4 | Replace MD5 cache key with SHA-256 | BE | `src/middleware/cache.ts:232` |
 | P4.W5 | Replace `new Function()` transform evaluator with sandboxed VM (`vm2` or `isolated-vm`) | BE | `src/services/visual-workflow-executor.ts:342` |
 | P4.W6 | Wire helmet + rate-limiter that are imported but unused | Platform | `src/server/app.ts` |
@@ -221,7 +221,7 @@ For each service:
 ### Definition of Done
 
 - [ ] `grep -r "req.user = {" src/routes/` returns empty (no stub auth)
-- [ ] `npm audit --omit=dev` reports 0 critical, 0 high in both `/` and `/web-interface`
+- [ ] `bun audit` reports 0 critical, 0 high in both `/` and `/web-interface`
 - [ ] OWASP ZAP baseline scan in CI reports 0 high-severity findings
 - [ ] RBAC matrix documented in `SECURITY.md` and enforced by middleware on at least 90% of routes
 - [ ] Transform node sandbox documented with explicit allowlist of globals

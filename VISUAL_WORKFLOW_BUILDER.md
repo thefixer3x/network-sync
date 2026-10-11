@@ -577,7 +577,7 @@ Content-Type: application/json
 **Install dependencies:**
 
 ```bash
-npm install reactflow zustand
+bun add reactflow zustand
 ```
 
 **Basic setup:**

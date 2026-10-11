@@ -1,51 +1,31 @@
 #!/bin/bash
+# Fixes the web-interface ESLint/TypeScript toolchain.
+# Package manager: bun (see web-interface/package.json "packageManager").
+
+set -e
 
 echo "🔧 Fixing web-interface ESLint configuration..."
 
 cd web-interface
 
-echo "📦 Installing TypeScript ESLint dependencies..."
-# Try different package managers
-if command -v bun &> /dev/null; then
-    bun install
-elif command -v npm &> /dev/null; then
-    npm install
-elif command -v yarn &> /dev/null; then
-    yarn install
-else
-    echo "❌ No package manager found. Please install dependencies manually:"
-    echo "   cd web-interface"
-    echo "   bun install  # or npm install"
+if ! command -v bun &> /dev/null; then
+    echo "❌ bun is required but was not found on PATH."
+    echo "   Install it with: curl -fsSL https://bun.sh/install | bash"
     exit 1
 fi
+
+echo "📦 Installing dependencies..."
+bun install
 
 echo "✅ Dependencies installed!"
 
 echo "🧹 Running lint check..."
-if command -v bun &> /dev/null; then
-    bun run lint
-elif command -v npm &> /dev/null; then
-    npm run lint
-elif command -v yarn &> /dev/null; then
-    yarn lint
-fi
+bun run lint
 
 echo "🔨 Running type check..."
-if command -v bun &> /dev/null; then
-    bun run type-check
-elif command -v npm &> /dev/null; then
-    npm run type-check
-elif command -v yarn &> /dev/null; then
-    yarn type-check
-fi
+bun run type-check
 
 echo "🏗️  Running build..."
-if command -v bun &> /dev/null; then
-    bun run build
-elif command -v npm &> /dev/null; then
-    npm run build
-elif command -v yarn &> /dev/null; then
-    yarn build
-fi
+bun run build
 
 echo "✅ Web interface configuration fixed!"
