@@ -72,7 +72,7 @@ Sequential lower bound: ~6 weeks.
 | P0.W3 | Fix frontend build (`motion` unused) | FE | `web-interface/src/components/auth/LoginForm.tsx:4` |
 | P0.W4 | Add `.dockerignore` and drop `bun.lockb` reference | Platform | `Dockerfile:9,34` |
 
-> Note: P0.W2 is a *bandage*, not the real fix. Phase 1 introduces the shared helper; here we only need code to compile. Use `String(req.query.x ?? '')` or `req.query.x as string` inline, and tag each line with `// TODO(P1.W1): use getQuery()`.
+> **Status (Oct 2026): P0.W2 shipped on `main` in `68d71b3`.** It used a `param()` helper in `src/routes/_helpers.ts` instead of inline casts, so no `TODO(P1.W1)` debt was left. P1.W1 should extend that file with the query helpers below rather than creating `src/utils/http-query.ts`.
 
 ### Definition of Done (Phase 0 gate)
 
@@ -98,7 +98,7 @@ A green CI run on `main`. Screenshot/log link in PR description.
 
 | ID | Title | Owner | Deliverable |
 |----|-------|-------|-------------|
-| P1.W1 | `getQuery()` helper + refactor of all 15 route files | BE | `src/utils/http-query.ts` + replaced TODOs |
+| P1.W1 | `getQuery()` helpers alongside existing `param()` + refactor of route files reading `req.query` | BE | `src/routes/_helpers.ts` |
 | P1.W2 | Base repository pattern + connection-pool fix | BE | `src/database/Repository.ts`, schema alignment commit |
 | P1.W3 | `requireAuth()` middleware + role checks | Security | `src/middleware/auth.ts`, used by one demo route |
 | P1.W4 | Jest harness with stubbed Redis/Supabase/SDKs | Platform | `jest.setup.ts`, `__mocks__/`, CI green |
@@ -324,7 +324,9 @@ A staging URL + Grafana dashboard link in `DEPLOYMENT.md`.
 
 Every workstream consumes these. If you find a sharper version, edit this section in a dedicated PR, then refactor consumers.
 
-### 10.1 Query parameter helper (`src/utils/http-query.ts`)
+### 10.1 Query parameter helper (`src/routes/_helpers.ts`)
+
+`param()` for `req.params` already exists in this file on `main`. Add the query helpers below next to it.
 
 ```ts
 import type { Request } from 'express';
