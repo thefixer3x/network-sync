@@ -75,3 +75,6 @@ temp/
 web-interface/.env.vercel
 
 .config/
+
+# bun.lock is the root lockfile; npm lockfile would drift
+/package-lock.json
