@@ -22,7 +22,7 @@ const sidebar = read('src/components/dashboard/Sidebar.tsx');
 const overview = read('src/components/dashboard/DashboardOverview.tsx');
 
 assertIncludes(app, "@lanonasis/brand-kit/css", 'src/pages/_app.tsx');
-assertIncludes(tailwind, "@lanonasis/brand-kit/tailwind-preset", 'tailwind.config.js');
+assertIncludes(tailwind, "@lanonasis/brand-kit/tailwind", 'tailwind.config.js');
 assertIncludes(globals, 'font-family: var(--font-body)', 'src/styles/globals.css');
 assertIncludes(dashboard, 'bg-ln-subtle', 'src/components/dashboard/Dashboard.tsx');
 assertIncludes(sidebar, 'bg-ln-navy-deep', 'src/components/dashboard/Sidebar.tsx');
