@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Social Media Orchestrator API
 # Stage 1: Build
-FROM oven/bun:1.3-alpine AS builder
+FROM oven/bun:1.4-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile --production=false
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -18,7 +18,7 @@ COPY . .
 RUN bun run build
 
 # Stage 2: Production
-FROM oven/bun:1.3-alpine AS production
+FROM oven/bun:1.4-alpine AS production
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
@@ -34,7 +34,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install production dependencies only
-RUN bun install --frozen-lockfile --production=true
+RUN bun install --frozen-lockfile --production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
