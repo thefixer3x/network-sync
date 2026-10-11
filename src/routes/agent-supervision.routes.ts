@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { agentSupervisor } from '../services/agent-supervisor.js';
 import { Logger } from '../utils/Logger.js';
+import { param } from './_helpers.js';
 
 const logger = new Logger('AgentSupervisionRoutes');
 const router = Router();
@@ -40,7 +41,7 @@ router.get('/status', (_req: Request, res: Response) => {
  */
 router.get('/agent/:agentName', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    const agentName = param(req, 'agentName');
     if (!agentName) {
       res.status(400).json({
         error: 'Agent name is required',
@@ -79,7 +80,7 @@ router.get('/agent/:agentName', (req: Request, res: Response) => {
  */
 router.get('/health/:agentName', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    const agentName = param(req, 'agentName');
     if (!agentName) {
       res.status(400).json({
         error: 'Agent name is required',
@@ -118,7 +119,7 @@ router.get('/health/:agentName', (req: Request, res: Response) => {
  */
 router.post('/reset/:agentName', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    const agentName = param(req, 'agentName');
     if (!agentName) {
       res.status(400).json({
         error: 'Agent name is required',
@@ -148,7 +149,7 @@ router.post('/reset/:agentName', (req: Request, res: Response) => {
  */
 router.post('/circuit/:agentName/:action', (req: Request, res: Response) => {
   try {
-    const agentName = req.params['agentName'];
+    const agentName = param(req, 'agentName');
     const action = req.params['action'];
 
     if (!agentName) {

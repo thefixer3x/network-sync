@@ -26,6 +26,7 @@ import {
   rateLimit,
   AuthRequest,
 } from '@/middleware/auth';
+import { param } from './_helpers.js';
 
 const logger = new Logger('SecurityRoutes');
 const router = Router();
@@ -296,7 +297,7 @@ router.delete('/api-keys/:apiKeyId', authenticate, (req: AuthRequest, res: Respo
       return;
     }
 
-    const apiKeyId = req.params['apiKeyId'];
+    const apiKeyId = param(req, 'apiKeyId');
     if (!apiKeyId) {
       res.status(400).json({
         error: 'Bad Request',
@@ -519,7 +520,7 @@ router.delete(
   requireRole(UserRole.ADMIN),
   (req: Request, res: Response): void => {
     try {
-      const ipAddress = req.params['ipAddress'];
+      const ipAddress = param(req, 'ipAddress');
       if (!ipAddress) {
         res.status(400).json({
           error: 'Bad Request',

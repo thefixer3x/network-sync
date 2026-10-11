@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { backupService, BackupConfig } from '@/services/backup';
 import { Logger } from '@/utils/Logger';
+import { param } from './_helpers';
 
 // Simple authenticate middleware (in production, use a real auth middleware)
 interface AuthRequest extends Request {
@@ -93,7 +94,7 @@ router.get('/config', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.get('/config/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -119,7 +120,7 @@ router.get('/config/:id', authenticate, (req: AuthRequest, res: Response): void 
  */
 router.patch('/config/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -148,7 +149,7 @@ router.patch('/config/:id', authenticate, (req: AuthRequest, res: Response): voi
  */
 router.delete('/config/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -175,7 +176,7 @@ router.delete('/config/:id', authenticate, (req: AuthRequest, res: Response): vo
  */
 router.post('/create/:configId', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const configId = req.params['configId'];
+    const configId = param(req, 'configId');
     if (!configId) {
       res.status(400).json({ error: 'Missing configuration ID' });
       return;
@@ -222,7 +223,7 @@ router.get('/jobs', authenticate, (req: AuthRequest, res: Response): void => {
  */
 router.get('/jobs/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Missing job ID' });
       return;
@@ -248,7 +249,7 @@ router.get('/jobs/:id', authenticate, (req: AuthRequest, res: Response): void =>
  */
 router.post('/verify/:jobId', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const jobId = req.params['jobId'];
+    const jobId = param(req, 'jobId');
     if (!jobId) {
       res.status(400).json({ error: 'Missing job ID' });
       return;
@@ -285,7 +286,7 @@ router.get('/recovery-points', authenticate, (req: AuthRequest, res: Response): 
  */
 router.get('/recovery-points/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Missing recovery point ID' });
       return;
@@ -311,7 +312,7 @@ router.get('/recovery-points/:id', authenticate, (req: AuthRequest, res: Respons
  */
 router.post('/restore/:recoveryPointId', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const recoveryPointId = req.params['recoveryPointId'];
+    const recoveryPointId = param(req, 'recoveryPointId');
     if (!recoveryPointId) {
       res.status(400).json({ error: 'Missing recovery point ID' });
       return;
@@ -359,7 +360,7 @@ router.get('/restore/jobs', authenticate, (req: AuthRequest, res: Response): voi
  */
 router.get('/restore/jobs/:id', authenticate, (req: AuthRequest, res: Response): void => {
   try {
-    const id = req.params['id'];
+    const id = param(req, 'id');
     if (!id) {
       res.status(400).json({ error: 'Missing restore job ID' });
       return;
