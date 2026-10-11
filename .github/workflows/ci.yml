@@ -190,7 +190,6 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@main
@@ -253,7 +252,7 @@ jobs:
           # Provide minimal required env vars
           JWT_SECRET: test-jwt-secret
           ENCRYPTION_KEY: test-encryption-key-32-characters
-          DATABASE_URL: file::memory:
+          DATABASE_URL: "file::memory:"
         continue-on-error: true
 
   # Summary Job
