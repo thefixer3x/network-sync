@@ -13,7 +13,7 @@
     "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
-    "@headlessui/react": "^1.7.17",
+    "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.0.18",
     "@hookform/resolvers": "^3.0.0",
     "@lanonasis/brand-kit": "^2.1.0-rc.1",
